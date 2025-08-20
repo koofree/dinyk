@@ -1,51 +1,48 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Space_Mono } from "next/font/google";
 
 import { cn } from "@acme/ui";
-import { ThemeProvider, ThemeToggle } from "@acme/ui/theme";
 import { Toaster } from "@acme/ui/toast";
 
-import { TRPCReactProvider } from "~/trpc/react";
+import { Web3Provider } from "@/context/Web3Provider";
+import { Navbar } from "@/components/common/Navbar";
 
 import "~/app/globals.css";
 
-import { env } from "~/env";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    env.VERCEL_ENV === "production"
-      ? "https://turbo.t3.gg"
-      : "http://localhost:3000",
-  ),
-  title: "Create T3 Turbo",
-  description: "Simple monorepo with shared backend for web & mobile apps",
+  title: "DIN - Decentralized Insurance Platform",
+  description: "Parametric insurance products on Kaia blockchain",
   openGraph: {
-    title: "Create T3 Turbo",
-    description: "Simple monorepo with shared backend for web & mobile apps",
-    url: "https://create-t3-turbo.vercel.app",
-    siteName: "Create T3 Turbo",
+    title: "DIN - Decentralized Insurance",
+    description: "Protect your crypto assets with on-chain parametric insurance",
+    url: "https://din-insurance.vercel.app",
+    siteName: "DIN Insurance",
   },
   twitter: {
     card: "summary_large_image",
-    site: "@jullerino",
-    creator: "@jullerino",
+    site: "@din_insurance",
+    creator: "@din_insurance",
   },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
+    { media: "(prefers-color-scheme: light)", color: "#0EA5E9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0F172A" },
   ],
 };
 
-const geistSans = Geist({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-geist-sans",
+  variable: "--font-inter",
+  display: "swap",
 });
-const geistMono = Geist_Mono({
+
+const spaceMono = Space_Mono({
   subsets: ["latin"],
-  variable: "--font-geist-mono",
+  weight: ["400", "700"],
+  variable: "--font-space-mono",
+  display: "swap",
 });
 
 export default function RootLayout(props: { children: React.ReactNode }) {
@@ -53,18 +50,20 @@ export default function RootLayout(props: { children: React.ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          "min-h-screen bg-background font-sans text-foreground antialiased",
-          geistSans.variable,
-          geistMono.variable,
+          "min-h-screen bg-gray-900 text-white antialiased",
+          inter.variable,
+          spaceMono.variable,
         )}
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <TRPCReactProvider>{props.children}</TRPCReactProvider>
-          <div className="absolute bottom-4 right-4">
-            <ThemeToggle />
+        <Web3Provider>
+          <div className="min-h-screen flex flex-col">
+            <Navbar />
+            <main className="flex-1">
+              {props.children}
+            </main>
           </div>
           <Toaster />
-        </ThemeProvider>
+        </Web3Provider>
       </body>
     </html>
   );

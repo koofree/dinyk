@@ -3,8 +3,9 @@
   "extends": ["//"],
   "tasks": {
     "dev": {
-      "persistent": true,
-      "interactive": true
+      "persistent": false,
+      "interactive": false,
+      "cache": false
     }
   }
 }

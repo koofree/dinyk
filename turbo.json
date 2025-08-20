@@ -10,9 +10,8 @@
       "outputs": [".cache/tsbuildinfo.json", "dist/**"]
     },
     "dev": {
-      "dependsOn": ["^dev"],
       "cache": false,
-      "persistent": false
+      "persistent": true
     },
     "format": {
       "outputs": [".cache/.prettiercache"],
@@ -46,11 +45,13 @@
     }
   },
   "globalEnv": [
-    "POSTGRES_URL",
-    "AUTH_DISCORD_ID",
-    "AUTH_DISCORD_SECRET",
-    "AUTH_REDIRECT_PROXY_URL",
-    "AUTH_SECRET",
+    "NEXT_PUBLIC_CHAIN_ID",
+    "NEXT_PUBLIC_RPC_URL",
+    "NEXT_PUBLIC_INSURANCE_CONTRACT",
+    "NEXT_PUBLIC_TREASURY_CONTRACT",
+    "NEXT_PUBLIC_TRANCHE_POOL_CONTRACT",
+    "NEXT_PUBLIC_ENABLE_TESTNETS",
+    "NEXT_PUBLIC_SHOW_DEBUG_INFO",
     "PORT"
   ],
   "globalPassThroughEnv": [
