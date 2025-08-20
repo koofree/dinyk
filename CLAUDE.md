@@ -2,20 +2,43 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project: DIN (Dinyk) - Decentralized Insurance Platform
+
+**DIN** is a decentralized insurance platform on the Kaia blockchain that provides parametric insurance products. The platform enables users to purchase insurance for risk hedging or provide liquidity to earn premiums and staking rewards.
+
+### Key Features
+- **Parametric Insurance**: Automatic payouts based on predefined conditions (e.g., BTC price drops)
+- **Tranche-based Risk Segmentation**: Multiple risk levels (-5%, -10%, -15% triggers)
+- **Dual-sided Market**: Insurance buyers and liquidity providers
+- **Automatic Claims**: Oracle-based automatic claim processing
+- **Re-staking**: Conservative yield generation on locked collateral
+
 ## Architecture Overview
 
-This is a T3 Turbo monorepo that implements a full-stack TypeScript application with the following structure:
+This project is transitioning from a T3 Turbo monorepo to a Web3-focused architecture for decentralized insurance on Kaia blockchain.
 
-### Apps
-- **Next.js (`apps/nextjs`)**: Web application with Next.js 15, React 19, tRPC client, and Tailwind CSS
-- **Expo (`apps/expo`)**: React Native mobile app with Expo SDK 53, NativeWind for styling, and tRPC client
+### Current Structure (Transitioning)
+- **Next.js (`apps/nextjs`)**: Web application with Next.js 15, React 19, and Tailwind CSS
+- **Expo (`apps/expo`)**: React Native mobile app (to be deprecated for Web3 focus)
 
-### Core Packages
-- **`@acme/api`**: tRPC v11 router definitions and API endpoints
-- **`@acme/auth`**: Authentication layer using better-auth with Discord OAuth support
-- **`@acme/db`**: Database layer using Drizzle ORM with Supabase/Vercel Postgres
-- **`@acme/ui`**: Shared UI components using shadcn/ui
-- **`@acme/validators`**: Shared validation schemas using Zod
+### Target Web3 Architecture
+
+#### Frontend
+- **Next.js 15**: Main web application
+- **Web3 Integration**: @kaiachain/ethers-ext for Kaia blockchain interaction
+- **Wallet Support**: MetaMask (primary), Kaikas, WalletConnect
+- **State Management**: React Context with session persistence
+
+#### Smart Contracts (To be implemented)
+- **`Insurance.sol`**: Core insurance logic and product management
+- **`TranchePool.sol`**: Liquidity pool management for each risk tranche
+- **`Treasury.sol`**: Protocol fee collection and distribution
+- **`OracleRouter.sol`**: Multi-oracle price feed aggregation
+
+#### Oracle System
+- **Primary**: Kaia Price Feed for standard crypto prices
+- **Fallback**: OO-lite (Optimistic Oracle) for special events
+- **Aggregation**: Median calculation with outlier detection
 
 ### Tooling
 - **Turborepo**: Monorepo orchestration and build caching
@@ -99,31 +122,122 @@ pnpm turbo gen init
 
 ## Key Architectural Decisions
 
-1. **Edge-First Database**: The database package uses Vercel Postgres driver optimized for edge runtime. All API routes export `runtime = "edge"` for optimal performance.
+### Web3 Migration Strategy
+1. **Remove Server Dependencies**: Eliminate tRPC, auth, and database layers for full decentralization
+2. **Direct Blockchain Interaction**: All data and logic on-chain via smart contracts
+3. **Client-Side Only**: No backend API, all logic executes in browser
+4. **Session Persistence**: Maintain wallet state across page refreshes
 
-2. **Authentication Proxy**: Better-auth includes an OAuth proxy plugin for handling authentication in preview deployments and local development, especially for Expo apps.
+### Insurance Model
+1. **Round-based Sales**: Fixed funding periods with automatic refunds for unmatched liquidity
+2. **Tranche System**: Risk segmentation with different trigger levels and premiums
+3. **100% Collateralization**: Full backing of insurance payouts in TranchePool
+4. **Automatic Settlement**: Oracle-triggered claim processing without manual intervention
 
-3. **Type-Safe API**: tRPC provides end-to-end type safety between backend and frontend without code generation.
-
-4. **Shared Validation**: Validators package ensures consistent data validation across client and server using Zod schemas.
-
-5. **Monorepo Structure**: Turborepo manages dependencies and build orchestration, with workspace protocol (`workspace:*`) for internal packages.
+### Technical Stack
+1. **Blockchain**: Kaia Mainnet (Chain ID: 8217)
+2. **Web3 Library**: @kaiachain/ethers-ext v1.1.1 with ethers.js v6
+3. **Frontend**: Next.js 15 with React 19
+4. **Styling**: Tailwind CSS with dark theme
+5. **Monorepo**: Turborepo for build orchestration
 
 ## Environment Setup
 
+### Development Environment
 1. Copy `.env.example` to `.env`
-2. Configure `POSTGRES_URL` with your Supabase connection string
-3. Set `AUTH_SECRET` (generate with `openssl rand -base64 32`)
-4. Configure OAuth providers (`AUTH_DISCORD_ID`, `AUTH_DISCORD_SECRET`)
+2. Configure Kaia network settings:
+   ```bash
+   NEXT_PUBLIC_CHAIN_ID=8217
+   NEXT_PUBLIC_RPC_URL=https://public-en-cypress.klaytn.net
+   ```
+3. Add contract addresses (after deployment):
+   ```bash
+   NEXT_PUBLIC_INSURANCE_CONTRACT=0x...
+   NEXT_PUBLIC_TRANCHE_POOL_CONTRACT=0x...
+   NEXT_PUBLIC_TREASURY_CONTRACT=0x...
+   ```
 
-## Testing Approach
+### Kaia Network Configuration
+- **Mainnet Chain ID**: 8217 (0x2019 in hex)
+- **RPC URL**: https://public-en-cypress.klaytn.net
+- **Block Explorer**: https://kaiascope.com
+- **Native Token**: KLAY
 
-Check individual package.json files in apps and packages directories for specific test commands. The monorepo uses Turborepo to orchestrate test runs across packages.
+## Implementation Roadmap
+
+### Phase 1: Foundation (Current)
+- [ ] Remove server-side dependencies (tRPC, auth, database)
+- [ ] Set up Web3 provider with Kaia support
+- [ ] Implement wallet connection (MetaMask, Kaikas)
+- [ ] Create basic insurance catalog UI
+
+### Phase 2: Smart Contracts
+- [ ] Deploy Insurance.sol contract
+- [ ] Deploy TranchePool.sol for liquidity management
+- [ ] Deploy Treasury.sol for fee handling
+- [ ] Integrate Oracle Router for price feeds
+
+### Phase 3: Core Features
+- [ ] Insurance purchase flow
+- [ ] Liquidity provision interface
+- [ ] Portfolio management dashboard
+- [ ] Automatic claim processing
+
+### Phase 4: Production
+- [ ] Security audit
+- [ ] Mainnet deployment
+- [ ] Re-staking integration
+- [ ] Analytics dashboard
+
+## UI/UX Guidelines
+
+### Design System
+- **Primary Color**: #0EA5E9 (Kaia Blue)
+- **Background**: #0F172A (Dark theme)
+- **Typography**: Inter for UI, Space Mono for numbers
+- **Components**: Rounded cards with subtle shadows
+
+### Key User Flows
+1. **Insurance Purchase**: Browse → Select Tranche → Review → Confirm → Receipt
+2. **Liquidity Provision**: Select Pool → Deposit → Monitor → Withdraw
+3. **Claim Process**: Automatic trigger → Oracle verification → Auto-payout
+
+## Insurance Products
+
+### Tranche Structure
+Each insurance product offers multiple risk tranches:
+
+| Tranche | Trigger | Premium | Risk Level |
+|---------|---------|---------|------------|
+| A | -5% | 2% | Low |
+| B | -10% | 5% | Medium |
+| C | -15% | 10% | High |
+
+### Round Lifecycle
+1. **Funding Phase** (3 days): Users deposit or purchase
+2. **Matching Phase** (1 hour): System matches buyers and sellers
+3. **Active Phase** (7-30 days): Insurance coverage active
+4. **Settlement Phase** (1 day): Claims processed and settled
+
+## Security Considerations
+
+1. **Multi-signature Controls**: Critical functions require 3/5 multisig
+2. **Emergency Pause**: Circuit breaker for critical issues
+3. **Oracle Redundancy**: Multiple oracle sources with fallback
+4. **Audit Requirements**: All contracts must pass security audit
 
 ## Common Patterns
 
-- All packages use ESM modules (`"type": "module"`)
+- Use ESM modules (`"type": "module"`)
 - TypeScript configurations extend from `@acme/tsconfig`
 - Prettier configurations extend from `@acme/prettier-config`
 - ESLint configurations use the new flat config format
 - Tailwind configurations extend from `@acme/tailwind-config`
+- Web3 hooks follow `use{ContractName}` pattern
+- All amounts handle BigNumber/BigInt properly
+
+## References
+
+- **Whitepaper**: `@docs/whitepaper.md` - Full protocol specification
+- **UI Wireframes**: `@docs/ui-flow-wireframe.md` - Detailed UI flows
+- **Architecture**: `@docs/din-architecture.md` - Complete Web3 technical architecture and implementation guide
