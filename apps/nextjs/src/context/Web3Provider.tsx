@@ -4,6 +4,13 @@ import React, { createContext, useContext, useEffect, useState, useCallback, typ
 import { Web3Provider as KaiaWeb3Provider } from "@kaiachain/ethers-ext/v6";
 import { ethers } from "ethers";
 import { ACTIVE_NETWORK, switchToKaiaNetwork, STORAGE_KEYS, ProviderType, KAIA_RPC_ENDPOINTS } from "@/lib/constants";
+import { KAIA_TESTNET_ADDRESSES } from "@dinsure/contracts";
+
+// USDT contract ABI
+const USDT_ABI = [
+  "function balanceOf(address account) view returns (uint256)",
+  "function decimals() view returns (uint8)"
+];
 
 // Context type
 interface Web3ContextType {
@@ -15,6 +22,7 @@ interface Web3ContextType {
   isConnecting: boolean;
   error: Error | null;
   balance: string;
+  usdtBalance: string;
   
   // Actions
   connectWallet: (type?: ProviderType) => Promise<void>;
@@ -25,6 +33,8 @@ interface Web3ContextType {
   getSigner: () => Promise<ethers.JsonRpcSigner | null>;
   getBalance: () => Promise<string>;
   refreshBalance: () => Promise<void>;
+  getUSDTBalance: () => Promise<string>;
+  refreshUSDTBalance: () => Promise<void>;
 }
 
 const Web3Context = createContext<Web3ContextType | undefined>(undefined);
@@ -37,6 +47,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [balance, setBalance] = useState<string>("0");
+  const [usdtBalance, setUsdtBalance] = useState<string>("0");
 
   // Initialize from session storage
   useEffect(() => {
@@ -62,6 +73,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setAccount(accounts[0]);
         sessionStorage.setItem(STORAGE_KEYS.ACCOUNT, accounts[0]);
         refreshBalance();
+        refreshUSDTBalance();
       }
     };
 
@@ -77,6 +89,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const newProvider = new KaiaWeb3Provider(detectedProvider);
           setProvider(newProvider);
           updateBalance(newProvider, account);
+          updateUSDTBalance(newProvider, account);
         }
       } else if (newChainId !== ACTIVE_NETWORK.chainId) {
         setError(new Error(`Please switch to ${ACTIVE_NETWORK.name} network`));
@@ -149,6 +162,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setChainId(Number(network.chainId));
           setIsConnected(true);
           await updateBalance(web3Provider, accounts[0].address);
+          await updateUSDTBalance(web3Provider, accounts[0].address);
         }
       }
     } catch (err) {
@@ -198,6 +212,24 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updateUSDTBalance = async (providerInstance: KaiaWeb3Provider, accountAddress: string) => {
+    try {
+      const reliableProvider = await createJsonRpcProviderWithFallback();
+      const usdtContract = new ethers.Contract(
+        KAIA_TESTNET_ADDRESSES.DinUSDT,
+        USDT_ABI,
+        reliableProvider
+      );
+      const balance = await usdtContract.balanceOf(accountAddress);
+      const formattedBalance = ethers.formatUnits(balance, 6); // USDT has 6 decimals
+      setUsdtBalance(formattedBalance);
+      console.log(`USDT Balance fetched: ${formattedBalance} USDT`);
+    } catch (err) {
+      console.error("Failed to fetch USDT balance:", err);
+      setUsdtBalance("0");
+    }
+  };
+
   const connectWallet = async (type: ProviderType = ProviderType.METAMASK) => {
     setIsConnecting(true);
     setError(null);
@@ -244,6 +276,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setAccount(accounts[0]);
       setIsConnected(true);
       await updateBalance(web3Provider, accounts[0]);
+      await updateUSDTBalance(web3Provider, accounts[0]);
 
       // Persist to session
       sessionStorage.setItem(STORAGE_KEYS.ACCOUNT, accounts[0]);
@@ -266,6 +299,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsConnected(false);
     setError(null);
     setBalance("0");
+    setUsdtBalance("0");
 
     // Clear session storage
     Object.values(STORAGE_KEYS).forEach(key => {
@@ -304,6 +338,29 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [provider, account]);
 
+  const refreshUSDTBalance = useCallback(async () => {
+    if (provider && account) {
+      await updateUSDTBalance(provider, account);
+    }
+  }, [provider, account]);
+
+  const getUSDTBalance = async (): Promise<string> => {
+    if (!account) return "0";
+    try {
+      const reliableProvider = await createJsonRpcProviderWithFallback();
+      const usdtContract = new ethers.Contract(
+        KAIA_TESTNET_ADDRESSES.DinUSDT,
+        USDT_ABI,
+        reliableProvider
+      );
+      const balance = await usdtContract.balanceOf(account);
+      return ethers.formatUnits(balance, 6);
+    } catch (err) {
+      console.error("Failed to get USDT balance:", err);
+      return "0";
+    }
+  };
+
   const value: Web3ContextType = {
     provider,
     account,
@@ -312,12 +369,15 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isConnecting,
     error,
     balance,
+    usdtBalance,
     connectWallet,
     disconnectWallet,
     switchNetwork,
     getSigner,
     getBalance,
     refreshBalance,
+    getUSDTBalance,
+    refreshUSDTBalance,
   };
 
   return (

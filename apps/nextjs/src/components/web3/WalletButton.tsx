@@ -11,6 +11,7 @@ export const WalletButton: React.FC = () => {
     account, 
     chainId, 
     balance,
+    usdtBalance,
     connectWallet, 
     disconnectWallet, 
     switchNetwork,
@@ -77,7 +78,7 @@ export const WalletButton: React.FC = () => {
     return (
       <div className="flex items-center gap-3">
         <div className="text-right text-sm">
-          <div className="text-gray-300">{formatBalance(balance)} KAIA</div>
+          <div className="text-gray-300">{formatBalance(usdtBalance)} USDT</div>
           <div className="text-gray-400">{formatAddress(account)}</div>
         </div>
         <button
