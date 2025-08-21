@@ -1,16 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ProductCard } from "@/components/insurance/ProductCard";
 import { PurchaseModal } from "@/components/insurance/PurchaseModal";
 import { useWeb3 } from "@/context/Web3Provider";
-import { INSURANCE_PRODUCTS, KAIA_TESTNET } from "@/lib/constants";
-import type { InsuranceProduct, InsuranceTranche } from "@/lib/types";
+import { useContracts, useContractFactory, useProducts, useBuyInsurance } from "@dinsure/contracts";
+import { KAIA_TESTNET } from "@/lib/constants";
+import type { Product, Tranche } from "@dinsure/contracts";
+import { ethers } from "ethers";
 
 export default function InsurancePage() {
   const { isConnected } = useWeb3();
-  const [selectedProduct, setSelectedProduct] = useState<InsuranceProduct | null>(null);
-  const [selectedTranche, setSelectedTranche] = useState<InsuranceTranche | null>(null);
+  const { isInitialized, error: contractError } = useContracts();
+  const factory = useContractFactory();
+  const { products, tranches, loading: productsLoading, error: productsError } = useProducts(factory);
+  const { buyInsurance, loading: purchaseLoading, error: purchaseError } = useBuyInsurance(factory);
+  
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedTranche, setSelectedTranche] = useState<Tranche | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filter, setFilter] = useState({
     asset: 'All',
@@ -18,7 +25,7 @@ export default function InsurancePage() {
     duration: 'All'
   });
 
-  const handleTrancheSelect = (product: InsuranceProduct, tranche: InsuranceTranche) => {
+  const handleTrancheSelect = (product: Product, tranche: Tranche) => {
     if (!isConnected) {
       alert("Please connect your wallet first");
       return;
@@ -30,41 +37,32 @@ export default function InsurancePage() {
   };
 
   const handlePurchase = async (amount: string) => {
-    // Mock purchase transaction
-    console.log(`Purchasing ${amount} USDT coverage for ${selectedProduct?.name} - ${selectedTranche?.id}`);
+    if (!selectedTranche || !selectedProduct) return;
     
-    // Simulate transaction delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Mock success
-    alert(`Successfully purchased ${amount} USDT coverage!`);
+    try {
+      const result = await buyInsurance({
+        trancheId: BigInt(selectedTranche.trancheId),
+        roundId: BigInt(selectedTranche.currentRound?.roundId || 1),
+        amount: ethers.parseUnits(amount, 6), // USDT has 6 decimals
+      });
+      
+      alert(`Successfully purchased ${amount} USDT coverage! Token ID: ${result.tokenId?.toString()}`);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Purchase failed:', error);
+      alert(`Purchase failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
-  const assets = ['All', ...new Set(INSURANCE_PRODUCTS.map(p => p.asset))];
+  // Extract filter options from real contract data
+  const assets = ['All', 'BTC']; // For now, we know we have BTC products
   const triggers = ['All', 'Below $110K', 'Below $100K', 'Below $90K', 'Above $130K'];
   const durations = ['All', '30 days'];
 
-  const filteredProducts = INSURANCE_PRODUCTS.filter(product => {
-    if (filter.asset !== 'All' && product.asset !== filter.asset) return false;
-    
-    if (filter.trigger !== 'All') {
-      const hasTrigger = product.tranches.some(t => {
-        if (filter.trigger.includes('Below $110K')) return t.triggerPrice === 110000;
-        if (filter.trigger.includes('Below $100K')) return t.triggerPrice === 100000;
-        if (filter.trigger.includes('Below $90K')) return t.triggerPrice === 90000;
-        if (filter.trigger.includes('Above $130K')) return t.triggerPrice === 130000;
-        return false;
-      });
-      if (!hasTrigger) return false;
-    }
-    
-    if (filter.duration !== 'All') {
-      const durationDays = parseInt(filter.duration.split(' ')[0]);
-      const hasDuration = product.tranches.some(t => t.maturityDays === durationDays);
-      if (!hasDuration) return false;
-    }
-    
-    return true;
+  // Filter products based on real contract data
+  const filteredProducts = products.filter(product => {
+    // For now, simplified filtering - can be enhanced based on product metadata
+    return true; // Show all products for now
   });
 
   return (
@@ -157,27 +155,51 @@ export default function InsurancePage() {
           </div>
         )}
 
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {filteredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onTrancheSelect={handleTrancheSelect}
-            />
-          ))}
-        </div>
-
-        {filteredProducts.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-lg">No products match your filters</div>
-            <button
-              onClick={() => setFilter({ asset: 'All', trigger: 'All', duration: 'All' })}
-              className="mt-4 text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              Clear filters to see all products
-            </button>
+        {/* Contract Error */}
+        {contractError && (
+          <div className="bg-red-900 border border-red-600 rounded-lg p-4 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="text-red-400 text-xl">⚠️</div>
+              <div>
+                <h3 className="text-red-400 font-medium">Contract Error</h3>
+                <p className="text-red-300 text-sm">
+                  {contractError.message}
+                </p>
+              </div>
+            </div>
           </div>
+        )}
+
+        {/* Loading State */}
+        {productsLoading && isInitialized && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+            <div className="text-gray-400">Loading insurance products...</div>
+          </div>
+        )}
+
+        {/* Products Grid */}
+        {!productsLoading && isInitialized && !contractError && (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.productId}
+                  product={product}
+                  onTrancheSelect={handleTrancheSelect}
+                />
+              ))}
+            </div>
+
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-lg">No insurance products available</div>
+                <p className="text-gray-500 text-sm mt-2">
+                  Products are being loaded from the smart contracts
+                </p>
+              </div>
+            )}
+          </>
         )}
 
         {/* Purchase Modal */}

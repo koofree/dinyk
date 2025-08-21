@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { InsuranceProduct, InsuranceTranche } from "@/lib/types";
+import { Product, Tranche, formatCurrency, formatPercentage, formatTimeRemaining, TriggerType } from "@dinsure/contracts";
 import { useWeb3 } from "@/context/Web3Provider";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 
 interface PurchaseModalProps {
-  product: InsuranceProduct | null;
-  tranche: InsuranceTranche | null;
+  product: Product | null;
+  tranche: Tranche | null;
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (amount: string) => Promise<void>;
@@ -29,7 +29,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
 
   const calculatePremium = (coverageAmount: string) => {
     if (!coverageAmount || isNaN(parseFloat(coverageAmount))) return "0";
-    return (parseFloat(coverageAmount) * tranche.premium / 100).toFixed(2);
+    return (parseFloat(coverageAmount) * tranche.premiumRateBps / 10000).toFixed(2);
   };
 
   const calculateTotal = (coverageAmount: string) => {
@@ -74,7 +74,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
 
   const premium = calculatePremium(amount);
   const total = calculateTotal(amount);
-  const maxAmount = Math.min(parseInt(tranche.available), parseFloat(balance) * 100); // Assuming USDT conversion
+  const maxAmount = Math.min(Number(tranche.availableCapacity / BigInt(1e6)), parseFloat(balance) * 100); // USDT conversion
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -96,23 +96,27 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
           {step === 'input' && (
             <>
               <div className="bg-gray-700 rounded-lg p-4 mb-6">
-                <h3 className="text-white font-medium mb-2">{product.name}</h3>
+                <h3 className="text-white font-medium mb-2">{product.metadata?.name || `Product #${product.productId}`}</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Trigger:</span>
-                    <span className="text-white">{product.asset} drops {Math.abs(tranche.triggerLevel)}% or more</span>
+                    <span className="text-white">
+                      {tranche.triggerType === TriggerType.PRICE_BELOW ? 'Price Below' : 
+                       tranche.triggerType === TriggerType.PRICE_ABOVE ? 'Price Above' : 'Custom'} 
+                      {' '}{formatCurrency(tranche.threshold, '$', 8, 0)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Premium:</span>
-                    <span className="text-white">{tranche.premium}%</span>
+                    <span className="text-white">{formatPercentage(tranche.premiumRateBps)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Expiry:</span>
-                    <span className="text-white">{tranche.expiry} days</span>
+                    <span className="text-white">{tranche.isExpired ? 'Expired' : formatTimeRemaining(tranche.maturityTimestamp)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Available:</span>
-                    <span className="text-white">${parseInt(tranche.available).toLocaleString()} USDT</span>
+                    <span className="text-white">{formatCurrency(tranche.availableCapacity, 'USDT', 6)}</span>
                   </div>
                 </div>
               </div>
@@ -147,7 +151,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                       <span className="text-white">${parseFloat(amount).toLocaleString()} USDT</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Premium ({tranche.premium}%):</span>
+                      <span className="text-gray-400">Premium ({formatPercentage(tranche.premiumRateBps)}):</span>
                       <span className="text-white">${premium} USDT</span>
                     </div>
                     <div className="flex justify-between">
@@ -189,7 +193,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Product:</span>
-                    <span className="text-white">{product.name}</span>
+                    <span className="text-white">{product.metadata?.name || `Product #${product.productId}`}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Coverage:</span>
@@ -201,7 +205,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Maturity:</span>
-                    <span className="text-white">{tranche.maturityDays} days</span>
+                    <span className="text-white">{tranche.isExpired ? 'Expired' : formatTimeRemaining(tranche.maturityTimestamp)}</span>
                   </div>
                 </div>
               </div>

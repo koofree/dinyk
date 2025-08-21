@@ -4,7 +4,7 @@ import { Inter, Space_Mono } from "next/font/google";
 import { cn } from "@dinsure/ui";
 import { Toaster } from "@dinsure/ui/toast";
 
-import { Web3Provider } from "@/context/Web3Provider";
+import { AppProviders } from "@/components/providers/AppProviders";
 import { Navbar } from "@/components/common/Navbar";
 
 import "~/app/globals.css";
@@ -55,7 +55,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
           spaceMono.variable,
         )}
       >
-        <Web3Provider>
+        <AppProviders>
           <div className="min-h-screen flex flex-col">
             <Navbar />
             <main className="flex-1">
@@ -63,7 +63,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
             </main>
           </div>
           <Toaster />
-        </Web3Provider>
+        </AppProviders>
       </body>
     </html>
   );

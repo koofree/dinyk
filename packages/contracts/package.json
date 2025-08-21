@@ -1,0 +1,52 @@
+{
+  "name": "@dinsure/contracts",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./hooks": {
+      "types": "./dist/hooks.d.ts",
+      "import": "./dist/hooks.js",
+      "require": "./dist/hooks.cjs"
+    },
+    "./providers": {
+      "types": "./dist/providers.d.ts",
+      "import": "./dist/providers.js",
+      "require": "./dist/providers.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "generate-types": "typechain --target ethers-v6 --out-dir src/types/contracts 'src/config/abis/**/*.json'"
+  },
+  "dependencies": {
+    "@kaiachain/ethers-ext": "1.1.1",
+    "ethers": "^6.15.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@dinsure/eslint-config": "workspace:*",
+    "@dinsure/tsconfig": "workspace:*",
+    "@typechain/ethers-v6": "^0.5.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "tsup": "^8.0.0",
+    "typechain": "^8.3.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  }
+}
