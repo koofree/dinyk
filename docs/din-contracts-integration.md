@@ -20,8 +20,9 @@ This document provides a comprehensive guide for integrating DIN Protocol smart 
 
 ### Deployed Contracts (Kaia Testnet - Chain ID: 1001)
 
+All contracts are deployed and verified on Kaia Kairos testnet. The deployment uses Hardhat Ignition for deterministic and reproducible deployments.
+
 | Contract | Address | Purpose |
-|----------|---------|---------|
 | **DinRegistry** | `0x0000760e713fed5b6F866d3Bad87927337DF61c0` | Central registry for all contract addresses and global parameters |
 | **ProductCatalog** | `0x5c251A3561E47700a9bcbD6ec91e61fB52Eb50d2` | Manages products, tranches, and rounds |
 | **InsuranceToken** | `0x147f4660515aE91c81FdB43Cf743C6faCACa9903` | ERC721 NFT representing insurance positions |
@@ -39,22 +40,51 @@ This document provides a comprehensive guide for integrating DIN Protocol smart 
 ```mermaid
 graph TD
     Registry[DinRegistry] --> |stores addresses| All[All Contracts]
+    Registry --> |global parameters| Params[Max Premium, Fees, Maturity]
     ProductCatalog --> |creates rounds| Rounds[Round Lifecycle]
+    ProductCatalog --> |manages| Tranches[Tranche Specs]
     Factory[TranchePoolFactory] --> |deploys| Pools[TranchePoolCore]
     Pools --> |mints| NFT[InsuranceToken]
-    Pools --> |uses| USDT[USDT Token]
-    Settlement[SettlementEngine] --> |queries| Oracle[OracleRouter]
-    Oracle --> |aggregates| Orakl[OraklPriceFeed]
+    Pools --> |transfers| USDT[USDT Token]
+    Pools --> |queries state| ProductCatalog
+    Settlement[SettlementEngine] --> |triggers| Pools
+    Settlement --> |queries| Oracle[OracleRouter]
+    Oracle --> |primary feed| Orakl[OraklPriceFeed]
     Oracle --> |fallback| Dino[DinoOracle]
+    Treasury[FeeTreasury] --> |collects| Fees[Protocol Fees]
 ```
 
 ### Insurance Flow Architecture
 
-1. **Product Creation**: Operators create products with multiple risk tranches
-2. **Round Lifecycle**: ANNOUNCED → OPEN → MATCHED → ACTIVE → MATURED → SETTLED
-3. **Buyer Flow**: Purchase insurance → Pay premium → Receive NFT → Claim if triggered
-4. **Seller Flow**: Provide collateral → Earn premiums → Get collateral back if not triggered
-5. **Settlement**: Oracle verification → Automatic payout → NFT burn
+#### Product & Tranche Creation
+1. **Product Registration**: Operator calls `ProductCatalog.createProduct()` with metadata hash
+2. **Tranche Setup**: Create tranches with specific triggers, premiums, and caps
+3. **Pool Deployment**: Factory deploys dedicated `TranchePoolCore` for each tranche
+4. **Oracle Configuration**: Link oracle routes for price feeds
+
+#### Round Operations
+1. **Announcement**: `announceRound(trancheId, startTime, endTime)` creates new round
+2. **Sales Opening**: `openRound(roundId)` when startTime reached
+3. **Order Placement**:
+   - Buyers: `buyInsurance(roundId, purchaseAmount)` pays premium, mints NFT
+   - Sellers: `provideLiquidity(roundId, collateralAmount)` locks USDT, mints shares
+4. **Matching**: `closeAndMarkMatched(roundId)` calculates matched amounts
+5. **Activation**: Round becomes active, monitoring for triggers begins
+
+#### Settlement Process
+1. **Trigger Detection**: Oracle reports price breach or maturity reached
+2. **Settlement Initiation**: `SettlementEngine.initSettlement(roundId, triggerData)`
+3. **Payout Calculation**:
+   - If triggered: Buyers receive purchase amount, sellers lose collateral
+   - If not triggered: Sellers keep collateral + premiums, buyers lose premiums
+4. **Distribution**: Automatic USDT transfers to eligible accounts
+5. **NFT Management**: Burn or mark as expired based on outcome
+
+#### Economic Model
+- **Premium Calculation**: `purchaseAmount * premiumRateBps / 10000`
+- **Collateral Requirement**: 1:1 with matched purchase amount
+- **Protocol Fee**: `premiumAmount * protocolFeeBps / 10000`
+- **NAV Calculation**: `(totalAssets - lockedAssets + premiumReserve) / totalShares`
 
 ## Package Design & Structure
 
@@ -186,6 +216,20 @@ packages/contracts/
 - [ ] Analytics and monitoring
 - [ ] Performance optimization
 - [ ] Comprehensive testing
+
+## Current Insurance Products (Testnet)
+
+### Bitcoin Price Protection Insurance
+Live product with 4 risk tranches deployed on testnet:
+
+| Tranche | Trigger Type | Trigger Price | Premium | Per Account | Cap | Status |
+|---------|-------------|---------------|---------|-------------|-----|--------|
+| Conservative | PRICE_BELOW | $110,000 | 3% | $100-$5,000 | $50K | Active |
+| Moderate | PRICE_BELOW | $100,000 | 5% | $100-$10,000 | $100K | Active |
+| Aggressive | PRICE_BELOW | $90,000 | 8% | $100-$20,000 | $200K | Active |
+| Bull Protection | PRICE_ABOVE | $130,000 | 4% | $100-$8,000 | $75K | Active |
+
+All tranches have 30-day maturity periods and use OracleRoute ID 1 (Orakl BTC/USD feed).
 
 ## Service Layer Architecture
 
@@ -543,6 +587,96 @@ export class ContractServiceFactory {
     });
   }
 }
+```
+
+## Contract Interaction Examples
+
+### Connect to Contracts
+```typescript
+import { ethers } from 'ethers';
+import { Web3Provider } from '@kaiachain/ethers-ext/v6';
+
+// Connect to Kaia testnet
+const provider = new Web3Provider(window.ethereum);
+await provider.send("eth_requestAccounts", []);
+const signer = provider.getSigner();
+
+// Load contract instances
+const registry = new ethers.Contract(
+  '0x0000760e713fed5b6F866d3Bad87927337DF61c0',
+  DinRegistryABI,
+  signer
+);
+
+const productCatalog = new ethers.Contract(
+  '0x5c251A3561E47700a9bcbD6ec91e61fB52Eb50d2',
+  ProductCatalogABI,
+  signer
+);
+```
+
+### Purchase Insurance
+```typescript
+// Get tranche details
+const tranche = await productCatalog.getTranche(trancheId);
+const premium = await productCatalog.calculatePremium(trancheId, purchaseAmount);
+
+// Approve USDT spending
+const usdt = new ethers.Contract(usdtAddress, USDTABI, signer);
+await usdt.approve(poolAddress, purchaseAmount + premium);
+
+// Buy insurance
+const pool = new ethers.Contract(poolAddress, TranchePoolCoreABI, signer);
+const tx = await pool.buyInsurance(roundId, purchaseAmount, {
+  gasLimit: 500000
+});
+
+const receipt = await tx.wait();
+console.log('Insurance NFT minted:', receipt.logs);
+```
+
+### Provide Liquidity
+```typescript
+// Approve USDT for collateral
+await usdt.approve(poolAddress, collateralAmount);
+
+// Provide liquidity to earn premiums
+const tx = await pool.provideLiquidity(roundId, collateralAmount, {
+  gasLimit: 400000
+});
+
+await tx.wait();
+console.log('Shares minted for liquidity provision');
+```
+
+### Check Round Status
+```typescript
+// Get round details from ProductCatalog
+const round = await productCatalog.getRound(roundId);
+console.log('Round state:', round.state);
+console.log('Matched amount:', ethers.formatUnits(round.matchedAmount, 6));
+
+// Get pool economics
+const economics = await pool.getRoundEconomics(roundId);
+console.log('Total buyers:', ethers.formatUnits(economics.totalBuyerPurchases, 6));
+console.log('Total sellers:', ethers.formatUnits(economics.totalSellerCollateral, 6));
+```
+
+### Monitor Oracle Prices
+```typescript
+const oracleRouter = new ethers.Contract(oracleAddress, OracleRouterABI, provider);
+
+// Get current BTC price
+const routeId = 1; // BTC/USD route
+const price = await oracleRouter.getPrice(routeId);
+console.log('BTC Price:', ethers.formatUnits(price, 8)); // 8 decimals for price
+
+// Check if insurance triggered
+const triggered = await oracleRouter.checkTrigger(
+  routeId,
+  tranche.triggerType,
+  tranche.threshold
+);
 ```
 
 ## Integration Patterns
