@@ -28,7 +28,7 @@ export const KAIA_RPC_ENDPOINTS = [
 // Provider types
 export enum ProviderType {
   METAMASK = "metamask",
-  KAIKAS = "kaikas", 
+  KAIA = "kaia", 
   WALLET_CONNECT = "walletconnect",
 }
 

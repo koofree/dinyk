@@ -21,7 +21,7 @@ DIN enables users to:
 
 ### Technical Features
 - **Web3 Integration**: Direct blockchain interaction with no backend
-- **Multi-wallet Support**: MetaMask and Kaikas compatibility
+- **Multi-wallet Support**: MetaMask and Kaia Wallet compatibility
 - **Session Persistence**: Maintains wallet state across refreshes
 - **Responsive Design**: Mobile-friendly dark theme interface
 - **Real-time Updates**: Live price feeds and position tracking
@@ -38,7 +38,7 @@ DIN enables users to:
 
 ### Prerequisites
 - Node.js 20+ and pnpm 9.6.0+
-- MetaMask or Kaikas wallet
+- MetaMask or Kaia Wallet
 - KAIA tokens for transactions
 
 ### Installation
@@ -180,7 +180,7 @@ pnpm contracts:verify
 ### Supported Wallets
 
 - MetaMask (recommended)
-- Kaikas (Kaia native wallet)
+- Kaia Wallet (Official Kaia wallet)
 - WalletConnect (coming soon)
 
 ## Security
@@ -212,7 +212,7 @@ Please read our [Contributing Guide](./CONTRIBUTING.md) for details on our code 
 
 ### Phase 1: Foundation ✅
 - [x] Web3 integration with Kaia
-- [x] Wallet connection (MetaMask/Kaikas)
+- [x] Wallet connection (MetaMask/Kaia Wallet)
 - [x] Insurance catalog UI
 - [x] Portfolio management dashboard
 

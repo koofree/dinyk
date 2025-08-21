@@ -51,9 +51,9 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  // Listen for account changes
+  // Listen for account and network changes
   useEffect(() => {
-    if (typeof window === "undefined" || !window.ethereum) return;
+    if (typeof window === "undefined") return;
 
     const handleAccountsChanged = (accounts: string[]) => {
       if (accounts.length === 0) {
@@ -71,7 +71,8 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Update provider if we're on the correct network
       if (newChainId === KAIA_MAINNET.chainId && provider && account) {
-        const detectedProvider = detectProvider();
+        const storedProviderType = sessionStorage.getItem(STORAGE_KEYS.PROVIDER_TYPE) as ProviderType;
+        const detectedProvider = detectProvider(storedProviderType);
         if (detectedProvider) {
           const newProvider = new KaiaWeb3Provider(detectedProvider);
           setProvider(newProvider);
@@ -86,23 +87,43 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       disconnectWallet();
     };
 
-    window.ethereum.on("accountsChanged", handleAccountsChanged);
-    window.ethereum.on("chainChanged", handleChainChanged);
-    window.ethereum.on("disconnect", handleDisconnect);
+    // Get the current provider based on what's stored
+    const storedProviderType = sessionStorage.getItem(STORAGE_KEYS.PROVIDER_TYPE) as ProviderType;
+    let targetProvider: any;
+    
+    if (storedProviderType === ProviderType.KAIA && window.klaytn) {
+      targetProvider = window.klaytn;
+    } else if (window.ethereum) {
+      targetProvider = window.ethereum;
+    }
 
-    return () => {
-      if (window.ethereum?.removeListener) {
-        window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
-        window.ethereum.removeListener("chainChanged", handleChainChanged);
-        window.ethereum.removeListener("disconnect", handleDisconnect);
-      }
-    };
-  }, [account]);
+    if (targetProvider) {
+      targetProvider.on("accountsChanged", handleAccountsChanged);
+      targetProvider.on("chainChanged", handleChainChanged);
+      targetProvider.on("disconnect", handleDisconnect);
 
-  const detectProvider = (): any => {
+      return () => {
+        if (targetProvider?.removeListener) {
+          targetProvider.removeListener("accountsChanged", handleAccountsChanged);
+          targetProvider.removeListener("chainChanged", handleChainChanged);
+          targetProvider.removeListener("disconnect", handleDisconnect);
+        }
+      };
+    }
+  }, [account, provider]);
+
+  const detectProvider = (type?: ProviderType): any => {
     if (typeof window === "undefined") return null;
     
-    // Check for Kaikas first (Kaia native wallet)
+    // If specific type is requested
+    if (type === ProviderType.KAIA) {
+      return window.klaytn || null;
+    } else if (type === ProviderType.METAMASK) {
+      return window.ethereum || null;
+    }
+    
+    // Default: check for any available provider
+    // Check for Kaia Wallet first (Kaia native wallet)
     if (window.klaytn) return window.klaytn;
     
     // Check for MetaMask or other ethereum wallets
@@ -113,7 +134,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const reconnectWallet = async (providerType: ProviderType) => {
     try {
-      const detectedProvider = detectProvider();
+      const detectedProvider = detectProvider(providerType);
       if (!detectedProvider) return;
 
       const web3Provider = new KaiaWeb3Provider(detectedProvider);
@@ -149,10 +170,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setError(null);
 
     try {
-      const detectedProvider = detectProvider();
+      const detectedProvider = detectProvider(type);
       
       if (!detectedProvider) {
-        throw new Error("No Web3 wallet detected. Please install MetaMask or Kaikas.");
+        const walletName = type === ProviderType.KAIA ? "Kaia Wallet" : "MetaMask";
+        throw new Error(`${walletName} not detected. Please install ${walletName}.`);
       }
 
       // First check and switch network if needed BEFORE creating provider

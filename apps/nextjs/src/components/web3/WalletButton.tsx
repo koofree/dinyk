@@ -77,7 +77,7 @@ export const WalletButton: React.FC = () => {
     return (
       <div className="flex items-center gap-3">
         <div className="text-right text-sm">
-          <div className="text-gray-300">{formatBalance(balance)} KLAY</div>
+          <div className="text-gray-300">{formatBalance(balance)} KAIA</div>
           <div className="text-gray-400">{formatAddress(account)}</div>
         </div>
         <button
@@ -118,13 +118,13 @@ export const WalletButton: React.FC = () => {
               </button>
 
               <button
-                onClick={() => handleConnect(ProviderType.KAIKAS)}
+                onClick={() => handleConnect(ProviderType.KAIA)}
                 className="w-full flex items-center gap-3 p-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
               >
                 <div className="text-2xl">🔷</div>
                 <div className="text-left">
-                  <div className="text-white font-medium">Kaikas</div>
-                  <div className="text-gray-400 text-sm">Kaia Native Wallet</div>
+                  <div className="text-white font-medium">Kaia Wallet</div>
+                  <div className="text-gray-400 text-sm">Official Kaia Wallet</div>
                 </div>
               </button>
 
@@ -144,6 +144,30 @@ export const WalletButton: React.FC = () => {
             {error && (
               <div className="mt-4 p-3 bg-red-900 text-red-300 rounded-lg text-sm">
                 {error.message}
+                {error.message.includes("Kaia Wallet") && (
+                  <div className="mt-2">
+                    <a 
+                      href="https://chromewebstore.google.com/detail/kaia-wallet/jblndlipeogpafnldhgmapagcccfchpi"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 underline"
+                    >
+                      Install Kaia Wallet from Chrome Store
+                    </a>
+                  </div>
+                )}
+                {error.message.includes("MetaMask") && (
+                  <div className="mt-2">
+                    <a 
+                      href="https://metamask.io/download/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 underline"
+                    >
+                      Install MetaMask
+                    </a>
+                  </div>
+                )}
               </div>
             )}
 
