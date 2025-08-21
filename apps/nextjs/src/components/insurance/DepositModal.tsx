@@ -204,9 +204,9 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                 <button
                   onClick={handleConfirm}
                   disabled={!amount || parseFloat(amount) <= 0 || parseFloat(amount) > maxAmount || isProcessing}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
+                  className="flex-1 py-3 relative bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white rounded-lg transition-all duration-300 hover:scale-98 hover:shadow-lg group overflow-hidden disabled:bg-gray-600 disabled:cursor-not-allowed"
                 >
-                  Confirm Deposit
+                                      <span className="font-outfit">Confirm Deposit</span>
                 </button>
               </div>
             </>

@@ -85,7 +85,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({
 
         {position.status === 'claimable' && (
           <div className="mb-4">
-            <div className="bg-blue-900 border border-blue-600 rounded-lg p-3">
+            <div className="bg-gradient-to-br from-[#86D99C]/20 to-[#00B1B8]/20 border border-[#86D99C] rounded-lg p-3">
               <div className="text-blue-400 font-medium">Payout Available</div>
               <div className="text-blue-300 text-2xl font-bold">${position.payout} USDT</div>
             </div>
@@ -96,9 +96,9 @@ export const PositionCard: React.FC<PositionCardProps> = ({
           {position.status === 'claimable' && onClaim && (
             <button
               onClick={() => onClaim(position.id)}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors"
+              className="flex-1 relative bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white py-2 px-4 rounded-lg transition-all duration-300 hover:scale-98 hover:shadow-lg group overflow-hidden"
             >
-              Claim Now
+                              <span className="font-outfit">Claim Now</span>
             </button>
           )}
           <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">

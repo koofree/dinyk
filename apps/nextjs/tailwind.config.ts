@@ -10,10 +10,18 @@ export default {
   presets: [baseConfig],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ["var(--font-geist-sans)", ...fontFamily.sans],
-        mono: ["var(--font-geist-mono)", ...fontFamily.mono],
-      },
+              fontFamily: {
+          sans: ["var(--font-sans)", "Pretendard", "Outfit", ...fontFamily.sans],
+          mono: ["var(--font-geist-mono)", ...fontFamily.mono],
+          display: ["var(--font-display)", "Outfit", "Pretendard", ...fontFamily.sans],
+          header: ["var(--font-header)", "Outfit", "Pretendard", ...fontFamily.sans],
+          outfit: ["Outfit", "Pretendard", ...fontFamily.sans],
+        },
+        borderRadius: {
+          'lg': '16px',
+          'xl': '16px',
+          '2xl': '16px',
+        },
     },
   },
 } satisfies Config;

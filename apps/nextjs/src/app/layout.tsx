@@ -5,7 +5,9 @@ import { cn } from "@dinsure/ui";
 import { Toaster } from "@dinsure/ui/toast";
 
 import { Web3Provider } from "@/context/Web3Provider";
+import { LanguageProvider } from "@/context/LanguageProvider";
 import { Navbar } from "@/components/common/Navbar";
+import { ConnectNotice } from "@/components/common/ConnectNotice";
 
 import "~/app/globals.css";
 
@@ -36,6 +38,7 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 const spaceMono = Space_Mono({
@@ -56,13 +59,16 @@ export default function RootLayout(props: { children: React.ReactNode }) {
         )}
       >
         <Web3Provider>
-          <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="flex-1">
-              {props.children}
-            </main>
-          </div>
-          <Toaster />
+          <LanguageProvider>
+            <div className="min-h-screen flex flex-col">
+                          <ConnectNotice />
+              <Navbar />
+              <main className="flex-1">
+                {props.children}
+              </main>
+            </div>
+            <Toaster />
+          </LanguageProvider>
         </Web3Provider>
       </body>
     </html>

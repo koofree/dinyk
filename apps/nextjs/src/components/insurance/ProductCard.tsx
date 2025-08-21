@@ -60,7 +60,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onTrancheSele
                 </div>
                 <div className="w-full bg-gray-600 rounded-full h-2">
                   <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all"
+                    className="bg-gradient-to-r from-[#86D99C] to-[#00B1B8] h-2 rounded-full transition-all"
                     style={{ width: `${filledPercentage}%` }}
                   />
                 </div>
@@ -80,10 +80,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onTrancheSele
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isLowCapacity
                       ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'relative bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white hover:scale-98 hover:shadow-lg transition-all duration-300 group overflow-hidden'
                   }`}
                 >
-                  {isLowCapacity ? 'Low Capacity' : 'Buy Insurance'}
+                  {isLowCapacity ? 'Low Capacity' : <span className="font-outfit">Buy Insurance</span>}
                 </button>
               </div>
             </div>

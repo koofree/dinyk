@@ -174,9 +174,9 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                 <button
                   onClick={handleContinue}
                   disabled={!isConnected || !amount || parseFloat(amount) <= 0 || parseFloat(amount) > maxAmount}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
+                  className="flex-1 py-3 relative bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white rounded-lg transition-all duration-300 hover:scale-98 hover:shadow-lg group overflow-hidden disabled:bg-gray-600 disabled:cursor-not-allowed"
                 >
-                  Continue
+                                      <span className="font-outfit">Continue</span>
                 </button>
               </div>
             </>

@@ -64,7 +64,7 @@ export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
         </div>
         <div className="w-full bg-gray-700 rounded-full h-2">
           <div 
-            className="bg-gradient-to-r from-blue-600 to-green-500 h-2 rounded-full transition-all"
+            className="bg-gradient-to-r from-[#86D99C] to-[#00B1B8] h-2 rounded-full transition-all"
             style={{ width: `${pool.utilization}%` }}
           />
         </div>
@@ -94,18 +94,18 @@ export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
         {!hasUserShare ? (
           <button
             onClick={() => onDeposit(pool)}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition-colors"
+            className="w-full relative bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white py-3 rounded-lg transition-all duration-300 hover:scale-98 hover:shadow-lg group overflow-hidden"
           >
-            Deposit USDT
+                          <span className="font-outfit">Deposit USDT</span>
           </button>
         ) : (
           <div className="flex gap-2">
             {onAddMore && (
               <button
                 onClick={() => onAddMore(pool)}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors"
+                className="flex-1 relative bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white py-2 rounded-lg transition-all duration-300 hover:scale-98 hover:shadow-lg group overflow-hidden"
               >
-                Add More
+                                  <span className="font-outfit">Add More</span>
               </button>
             )}
             {onWithdraw && (
