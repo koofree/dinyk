@@ -8,9 +8,9 @@ This document provides a comprehensive guide for the DIN Protocol UI architectur
 
 1. [Platform Overview](#platform-overview)
 2. [Navigation & Layout](#navigation--layout)
-3. [Insurance Catalog & Purchase](#insurance-catalog--purchase)
-4. [Liquidity Provision](#liquidity-provision)
-5. [Portfolio Management](#portfolio-management)
+3. [Insurance Tab](#insurance-tab)
+4. [Tranche Tab](#tranche-tab)
+5. [Portfolio Tab](#portfolio-tab)
 6. [Oracle & Price Feeds](#oracle--price-feeds)
 7. [Settlement & Claims](#settlement--claims)
 8. [State Management Architecture](#state-management-architecture)
@@ -28,7 +28,7 @@ DIN is a decentralized insurance platform on Kaia blockchain providing parametri
 ```
 ┌─────────────────────────────────────────────────┐
 │                   Header                         │
-│  [DIN Logo]  Insurance  Liquidity  Portfolio     │
+│  [DIN Logo]  Insurance  Tranche  Portfolio       │
 │                              [Connect Wallet]     │
 └─────────────────────────────────────────────────┘
 ```
@@ -91,366 +91,271 @@ interface DashboardState {
 }
 ```
 
-## Insurance Catalog & Purchase
+## Insurance Tab
 
-### Product Browsing Flow
+### Insurance Summary Cards
+
+The Insurance tab displays a summary view of all available insurance products. Each card shows aggregated information about all tranches and pools for that insurance product.
 
 ```
 ┌─────────────────────────────────────────────────┐
-│ Filter: Asset [All ▼] Trigger [All ▼] Duration  │
+│                Insurance Products                │
 ├─────────────────────────────────────────────────┤
 │ ┌───────────────────────────────────────────┐   │
-│ │ BTC Price Protection                       │   │
+│ │ 🪙 BTC Price Protection                    │   │
 │ │ ┌─────────────────────────────────────┐   │   │
-│ │ │ Tranche A: -5%  | Premium: 2%       │   │   │
-│ │ │ Capacity: 100K | Filled: 60%        │   │   │
-│ │ │ [Buy Insurance]                     │   │   │
+│ │ │ Summary Stats:                       │   │   │
+│ │ │ • 3 Active Tranches                 │   │   │
+│ │ │ • Total TVL: $2.5M USDT             │   │   │
+│ │ │ • Premium Range: 2% - 10%           │   │   │
+│ │ │ • Current Price: $45,234            │   │   │
+│ │ │ • 24h Change: +2.3%                 │   │   │
 │ │ └─────────────────────────────────────┘   │   │
+│ │ [View Tranches →]                         │   │
+│ └───────────────────────────────────────────┘   │
+│ ┌───────────────────────────────────────────┐   │
+│ │ ⚡ ETH Price Protection                    │   │
 │ │ ┌─────────────────────────────────────┐   │   │
-│ │ │ Tranche B: -10% | Premium: 5%       │   │   │
-│ │ │ Capacity: 50K  | Filled: 80%        │   │   │
-│ │ │ [Buy Insurance]                     │   │   │
+│ │ │ Summary Stats:                       │   │   │
+│ │ │ • 3 Active Tranches                 │   │   │
+│ │ │ • Total TVL: $1.8M USDT             │   │   │
+│ │ │ • Premium Range: 3% - 12%           │   │   │
+│ │ │ • Current Price: $2,456             │   │   │
+│ │ │ • 24h Change: -1.2%                 │   │   │
 │ │ └─────────────────────────────────────┘   │   │
+│ │ [View Tranches →]                         │   │
 │ └───────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────┘
 ```
+
+When a user clicks "View Tranches →" on an insurance card, it automatically navigates to the Tranche tab with that insurance product pre-filtered.
 
 #### Contract Integration
 ```solidity
 // ProductCatalog.sol
 - getActiveProducts() → Product[]
 - getProductTranches(productId) → Tranche[]
-- getTranche(trancheId) → TrancheSpec
-- calculatePremium(trancheId, amount) → premium
-- getRound(roundId) → Round
 
-// TranchePoolCore.sol
-- roundEconomics(roundId) → RoundEconomics
+// TranchePoolCore.sol (multiple pools)
+- poolAccounting() → PoolAccounting (TVL per tranche)
+
+// OracleRouter.sol
+- getLatestPrice(oracleRouteId) → (price, timestamp)
 ```
 
 #### Components
 ```typescript
-// components/insurance/ProductGrid.tsx
-interface ProductGridProps {
+// components/insurance/InsuranceSummaryGrid.tsx
+interface InsuranceSummaryGridProps {
   products: Product[];
-  onSelectProduct: (productId: number) => void;
+  onViewTranches: (productId: number) => void;
 }
 
-// components/insurance/TrancheCard.tsx
-interface TrancheCardProps {
-  tranche: Tranche;
-  round: Round;
-  capacity: BigNumber;
-  filled: number; // percentage
-  onBuyInsurance: () => void;
+// components/insurance/InsuranceSummaryCard.tsx
+interface InsuranceSummaryCardProps {
+  product: Product;
+  tranches: Tranche[];
+  totalTVL: BigNumber;
+  premiumRange: { min: number; max: number };
+  currentPrice: BigNumber;
+  priceChange: number;
+  onViewTranches: () => void;
 }
 
 // State
-interface ProductState {
+interface InsuranceState {
   products: Product[];
-  selectedProduct: Product | null;
-  selectedTranche: Tranche | null;
-  filters: {
-    asset: string;
-    triggerType: TriggerType;
-    duration: number;
-  };
+  productSummaries: ProductSummary[];
+  loading: boolean;
   
   fetchProducts: () => Promise<void>;
-  applyFilters: (filters: Filters) => void;
-  selectProduct: (productId: number) => void;
+  calculateSummaries: () => Promise<void>;
+}
+
+interface ProductSummary {
+  productId: number;
+  activeTranches: number;
+  totalTVL: BigNumber;
+  premiumRange: { min: number; max: number };
+  currentPrice: BigNumber;
+  priceChange: number;
 }
 ```
 
-### Insurance Purchase Flow
+## Tranche Tab
 
-#### Step 1: Product Selection & Premium Calculation
+### Tranche List with Filtering
+
+The Tranche tab shows all individual tranches with detailed information. Users can filter by insurance product and activeness.
 
 ```
 ┌─────────────────────────────────────────────────┐
-│           BTC -10% Price Protection              │
+│                   All Tranches                   │
 ├─────────────────────────────────────────────────┤
-│ Coverage Details:                                │
-│ • Trigger: BTC drops 10% from baseline           │
-│ • Baseline: $45,000                              │
-│ • Expiry: March 10, 2025                        │
-│                                                   │
-│ Coverage Amount: [1000] USDT                     │
-│ Premium (5%): 50 USDT                           │
-│ Total Payment: 50 USDT                          │
-│                                                   │
-│ [← Back]              [Continue to Review →]     │
-└─────────────────────────────────────────────────┘
-```
-
-#### Contract Functions
-```solidity
-// ProductCatalog.sol
-- calculatePremium(trancheId, purchaseAmount) → premium
-
-// USDT.sol
-- balanceOf(buyer) → balance
-- allowance(buyer, poolAddress) → allowance
-```
-
-#### Components
-```typescript
-// components/insurance/PurchaseModal.tsx
-interface PurchaseModalProps {
-  tranche: Tranche;
-  round: Round;
-  onPurchase: (amount: string) => Promise<void>;
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-// components/insurance/PremiumCalculator.tsx
-interface PremiumCalculatorProps {
-  trancheId: number;
-  onCalculate: (amount: string) => void;
-  premium?: BigNumber;
-  balance: BigNumber;
-}
-```
-
-#### Step 2: Approval & Confirmation
-
-```
-┌─────────────────────────────────────────────────┐
-│              Review Your Insurance               │
+│ Filter: Insurance [BTC ▼] Status [Active ▼]     │
 ├─────────────────────────────────────────────────┤
-│ Product: BTC -10% Protection                     │
-│ Coverage: 1000 USDT                             │
-│ Premium: 50 USDT                                │
-│                                                   │
-│ Step 1: Approve USDT                            │
-│ [Approve USDT] ✓ Approved                       │
-│                                                   │
-│ Step 2: Purchase Insurance                       │
-│ □ I understand the terms                        │
-│                                                   │
-│ [← Back]                    [Confirm Purchase]   │
-└─────────────────────────────────────────────────┘
-```
-
-#### Contract Functions
-```solidity
-// USDT.sol
-- approve(poolAddress, amount) → success
-
-// TranchePoolCore.sol
-- buyInsurance(roundId, amount, recipient) → tokenId
-```
-
-#### Components & State
-```typescript
-// components/insurance/ApprovalStep.tsx
-interface ApprovalStepProps {
-  amount: BigNumber;
-  currentAllowance: BigNumber;
-  poolAddress: string;
-  onApprove: () => Promise<void>;
-  approved: boolean;
-}
-
-// State Management
-interface PurchaseState {
-  // Transaction state
-  status: 'idle' | 'approving' | 'purchasing' | 'success' | 'error';
-  txHash: string | null;
-  tokenId: string | null;
-  
-  // Form state
-  purchaseAmount: string;
-  calculatedPremium: BigNumber | null;
-  totalPayment: BigNumber | null;
-  
-  // Approval state
-  allowance: BigNumber;
-  needsApproval: boolean;
-  
-  // Actions
-  approveUSDT: () => Promise<void>;
-  executePurchase: () => Promise<void>;
-}
-```
-
-#### Step 3: Transaction Status & Receipt
-
-```
-┌─────────────────────────────────────────────────┐
-│           ✓ Insurance Purchased!                 │
-├─────────────────────────────────────────────────┤
-│                                                   │
-│   Policy NFT #1234 has been minted              │
-│                                                   │
-│   Transaction: 0x1234...5678                    │
-│   [View on Kaiascope]                           │
-│                                                   │
-│   [View in Portfolio]    [Buy More Insurance]    │
-└─────────────────────────────────────────────────┘
-```
-
-#### Contract Events
-```solidity
-// TranchePoolCore.sol events
-event BuyerOrderPlaced(
-  address indexed buyer,
-  uint256 indexed roundId,
-  uint256 purchaseAmount,
-  uint256 premiumPaid,
-  uint256 insuranceTokenId
-);
-
-// InsuranceToken.sol events
-event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-```
-
-## Liquidity Provision
-
-### Liquidity Dashboard
-
-```
-┌─────────────────────────────────────────────────┐
-│            Liquidity Provider Dashboard          │
-├──────────────┬──────────────┬──────────────────┤
-│ Total Deposit│ Active Pools │ Total Earnings   │
-│ 10,000 USDT  │      3       │   450 USDT      │
-├──────────────┴──────────────┴──────────────────┤
-│              Available Tranche Pools             │
 │ ┌───────────────────────────────────────────┐   │
-│ │ BTC -10% Tranche                          │   │
-│ │ Expected Premium: 5% (500 USDT/10K)       │   │
-│ │ Staking APY: 3.5%                         │   │
-│ │ Risk Level: MEDIUM                        │   │
-│ │ Your Share: 5,000 USDT                    │   │
-│ │ [Add More] [Withdraw]                     │   │
+│ │ BTC -5% Protection (Tranche A)            │   │
+│ │ ┌─────────────────────────────────────┐   │   │
+│ │ │ • Premium Rate: 2%                   │   │   │
+│ │ │ • Pool TVL: 850K USDT               │   │   │
+│ │ │ • Capacity: 100K USDT               │   │   │
+│ │ │ • Utilization: 60% filled           │   │   │
+│ │ │ • Round Status: OPEN (2 days left)  │   │   │
+│ │ │ • Start: Jan 15 | End: Jan 22       │   │   │
+│ │ └─────────────────────────────────────┘   │   │
+│ │ [Buy Insurance] [Provide Liquidity]       │   │
+│ └───────────────────────────────────────────┘   │
+│ ┌───────────────────────────────────────────┐   │
+│ │ BTC -10% Protection (Tranche B)           │   │
+│ │ ┌─────────────────────────────────────┐   │   │
+│ │ │ • Premium Rate: 5%                   │   │   │
+│ │ │ • Pool TVL: 650K USDT               │   │   │
+│ │ │ • Capacity: 50K USDT                │   │   │
+│ │ │ • Utilization: 80% filled           │   │   │
+│ │ │ • Round Status: ACTIVE              │   │   │
+│ │ │ • Start: Jan 10 | End: Jan 17       │   │   │
+│ │ └─────────────────────────────────────┘   │   │
+│ │ [View Details]                            │   │
 │ └───────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────┘
 ```
 
+### Filter Behavior
+- **Default State**: Shows all tranches from all insurance products
+- **From Insurance Tab**: When user clicks "View Tranches" from Insurance tab, automatically filters by that insurance product
+- **Filter Options**:
+  - Insurance: All, BTC Protection, ETH Protection, etc.
+  - Status: All, Active Only, Open for Sales, Settling
+
 #### Contract Functions
 ```solidity
+// ProductCatalog.sol
+- getActiveTranches() → Tranche[]
+- getTranche(trancheId) → TrancheSpec
+- getRound(roundId) → Round
+- calculatePremium(trancheId, amount) → premium
+
 // TranchePoolCore.sol
-- depositCollateral(roundId, amount) → shares
-- withdrawCollateral(amount) → withdrawn
-- getSellerPosition(roundId, seller) → SellerPosition
-- shareBalances(account) → balance
-- navPerShare() → price
+- roundEconomics(roundId) → RoundEconomics
 - poolAccounting() → PoolAccounting
 ```
 
 #### Components
 ```typescript
-// components/liquidity/LiquidityDashboard.tsx
-interface LiquidityDashboardProps {
-  totalDeposit: BigNumber;
-  activePools: number;
-  totalEarnings: BigNumber;
-  pools: PoolInfo[];
+// components/tranche/TrancheList.tsx
+interface TrancheListProps {
+  tranches: Tranche[];
+  filters: TrancheFilters;
+  onFilterChange: (filters: TrancheFilters) => void;
+  onBuyInsurance: (tranche: Tranche) => void;
+  onProvideLiquidity: (tranche: Tranche) => void;
 }
 
-// components/liquidity/PoolCard.tsx
-interface PoolCardProps {
-  pool: PoolInfo;
-  userPosition: SellerPosition;
-  navPerShare: BigNumber;
-  onDeposit: () => void;
-  onWithdraw: () => void;
-}
-
-// components/liquidity/DepositModal.tsx
-interface DepositModalProps {
-  pool: PoolInfo;
+// components/tranche/TrancheCard.tsx
+interface TrancheCardProps {
+  tranche: Tranche;
   round: Round;
-  balance: BigNumber;
-  onDeposit: (amount: string) => Promise<void>;
+  economics: RoundEconomics;
+  poolStats: PoolAccounting;
+  onBuyInsurance: () => void;
+  onProvideLiquidity: () => void;
+}
+
+// components/tranche/TrancheFilters.tsx
+interface TrancheFiltersProps {
+  filters: TrancheFilters;
+  products: Product[];
+  onFilterChange: (filters: TrancheFilters) => void;
+}
+
+// State
+interface TrancheState {
+  tranches: Tranche[];
+  filteredTranches: Tranche[];
+  filters: TrancheFilters;
+  selectedTranche: Tranche | null;
+  
+  fetchTranches: () => Promise<void>;
+  applyFilters: (filters: TrancheFilters) => void;
+  setSelectedInsurance: (productId: number) => void; // From Insurance tab navigation
+}
+
+interface TrancheFilters {
+  insuranceProduct: number | null; // null = All
+  status: 'all' | 'active' | 'open' | 'settling';
 }
 ```
 
-### Deposit Flow
+## Portfolio Tab
+
+### User's Joined Pools
+
+The Portfolio tab shows all pools that the user has joined as either an insurance buyer or liquidity provider. Each pool entry includes start and end times.
 
 ```
 ┌─────────────────────────────────────────────────┐
-│           Provide Liquidity to Pool              │
+│                  My Portfolio                    │
 ├─────────────────────────────────────────────────┤
-│ Pool: BTC -10% Tranche                          │
-│ Current Round: #12 (Ends in 2 days)             │
-│                                                   │
-│ Deposit Amount: [5000] USDT                     │
-│ Balance: 15,000 USDT                            │
-│ [25%] [50%] [75%] [MAX]                        │
-│                                                   │
-│ Expected Returns:                                │
-│ • Premium Income: ~250 USDT (5%)                │
-│ • Staking Rewards: ~175 USDT (3.5%)            │
-│                                                   │
-│ Step 1: Approve USDT [Approve]                  │
-│ Step 2: Deposit Funds                           │
-│                                                   │
-│ [Cancel]                    [Confirm Deposit]    │
+│ Tabs: [Insurance Positions] [Liquidity Positions]│
+├─────────────────────────────────────────────────┤
+│              Insurance Positions                 │
+│ ┌───────────────────────────────────────────┐   │
+│ │ Policy #1234 - BTC -10% Protection       │   │
+│ │ ┌─────────────────────────────────────┐   │   │
+│ │ │ • Coverage: 1,000 USDT              │   │   │
+│ │ │ • Premium Paid: 50 USDT             │   │   │
+│ │ │ • Status: 🟢 Active                 │   │   │
+│ │ │ • Start: Jan 10, 2025 14:00        │   │   │
+│ │ │ • End: Jan 17, 2025 14:00          │   │   │
+│ │ │ • Current BTC: $44,500 (-1.1%)     │   │   │
+│ │ └─────────────────────────────────────┘   │   │
+│ │ [View Details] [Claim if Triggered]       │   │
+│ └───────────────────────────────────────────┘   │
+│ ┌───────────────────────────────────────────┐   │
+│ │ Policy #1235 - ETH -15% Protection       │   │
+│ │ ┌─────────────────────────────────────┐   │   │
+│ │ │ • Coverage: 500 USDT                │   │   │
+│ │ │ • Premium Paid: 60 USDT             │   │   │
+│ │ │ • Status: ✅ Claimable              │   │   │
+│ │ │ • Start: Jan 8, 2025 10:00         │   │   │
+│ │ │ • End: Jan 15, 2025 10:00          │   │   │
+│ │ │ • Payout: 500 USDT                 │   │   │
+│ │ └─────────────────────────────────────┘   │   │
+│ │ [Claim Payout]                            │   │
+│ └───────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────┘
 ```
 
-#### Contract Functions & State
-```solidity
-// USDT.sol
-- approve(poolAddress, amount)
-
-// TranchePoolCore.sol
-- depositCollateral(roundId, amount) → shares
-- roundEconomics(roundId) → RoundEconomics
-```
-
-```typescript
-// State Management
-interface LiquidityState {
-  // Pool data
-  pools: PoolInfo[];
-  selectedPool: PoolInfo | null;
-  poolStats: PoolStats | null;
-  
-  // User positions
-  positions: SellerPosition[];
-  totalShares: BigNumber;
-  totalValue: BigNumber;
-  
-  // Transaction state
-  depositStatus: TransactionStatus;
-  withdrawStatus: TransactionStatus;
-  
-  // Actions
-  deposit: (poolId: number, amount: string) => Promise<void>;
-  withdraw: (poolId: number, shares: string) => Promise<void>;
-  calculateWithdrawAmount: (shares: string) => BigNumber;
-}
-```
-
-## Portfolio Management
-
-### Portfolio Overview
-
 ```
 ┌─────────────────────────────────────────────────┐
-│                 My Portfolio                     │
+│               Liquidity Positions                │
 ├─────────────────────────────────────────────────┤
-│ Tabs: [Active Insurance] [LP Positions] [History]│
-├─────────────────────────────────────────────────┤
-│              Active Insurance Policies           │
 │ ┌───────────────────────────────────────────┐   │
-│ │ Policy #1234                              │   │
-│ │ BTC -10% Protection                       │   │
-│ │ Coverage: 1000 USDT                       │   │
-│ │ Status: ● Active                          │   │
-│ │ Current BTC: $44,500 (-1.1%)              │   │
-│ │ Expires: 5 days                           │   │
+│ │ BTC -5% Tranche Pool                      │   │
+│ │ ┌─────────────────────────────────────┐   │   │
+│ │ │ • Deposited: 5,000 USDT             │   │   │
+│ │ │ • Current Value: 5,120 USDT         │   │   │
+│ │ │ • Earnings: +120 USDT (+2.4%)       │   │   │
+│ │ │ • Share: 850 pool tokens            │   │   │
+│ │ │ • Start: Jan 10, 2025 09:00        │   │   │
+│ │ │ • End: Jan 17, 2025 09:00          │   │   │
+│ │ │ • Status: 🟡 Active Round          │   │   │
+│ │ └─────────────────────────────────────┘   │   │
+│ │ [Add More] [Withdraw Available]           │   │
 │ └───────────────────────────────────────────┘   │
 │ ┌───────────────────────────────────────────┐   │
-│ │ Policy #1235                              │   │
-│ │ ETH -15% Protection                       │   │
-│ │ Status: ✓ Claimable                      │   │
-│ │ Payout: 500 USDT                          │   │
-│ │ [Claim Now]                               │   │
+│ │ ETH -10% Tranche Pool                     │   │
+│ │ ┌─────────────────────────────────────┐   │   │
+│ │ │ • Deposited: 2,000 USDT             │   │   │
+│ │ │ • Current Value: 1,950 USDT         │   │   │
+│ │ │ • Earnings: -50 USDT (-2.5%)        │   │   │
+│ │ │ • Share: 340 pool tokens            │   │   │
+│ │ │ • Start: Jan 5, 2025 16:00         │   │   │
+│ │ │ • End: Jan 12, 2025 16:00          │   │   │
+│ │ │ • Status: ⚫ Settled (Paid Claims) │   │   │
+│ │ └─────────────────────────────────────┘   │   │
+│ │ [Withdraw Final Amount]                   │   │
 │ └───────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────┘
 ```
@@ -465,67 +370,104 @@ interface LiquidityState {
 // TranchePoolCore.sol
 - buyerOrders(roundId, buyer) → BuyerOrder
 - sellerPositions(roundId, seller) → SellerPosition
+- shareBalances(account) → balance
+- navPerShare() → currentValue
 
 // SettlementEngine.sol
 - getClaimStatus(tokenId) → ClaimStatus
 - processClaim(tokenId) → payout
+
+// ProductCatalog.sol
+- getRound(roundId) → Round (for start/end times)
 ```
 
-#### Components
+#### Components & State
 ```typescript
 // components/portfolio/PortfolioDashboard.tsx
 interface PortfolioDashboardProps {
-  insurancePositions: InsurancePosition[];
-  liquidityPositions: LiquidityPosition[];
-  totalValue: BigNumber;
-  activeTab: 'insurance' | 'liquidity' | 'history';
+  activeTab: 'insurance' | 'liquidity';
+  onTabChange: (tab: 'insurance' | 'liquidity') => void;
 }
 
 // components/portfolio/InsurancePositionCard.tsx
 interface InsurancePositionCardProps {
   position: InsurancePosition;
-  currentPrice: BigNumber;
+  round: Round;
+  currentPrice?: BigNumber;
   triggerPrice: BigNumber;
-  timeToMaturity: number;
-  claimable: boolean;
+  claimStatus: ClaimStatus;
   onClaim: () => Promise<void>;
+  onViewDetails: () => void;
 }
 
 // components/portfolio/LiquidityPositionCard.tsx
 interface LiquidityPositionCardProps {
   position: LiquidityPosition;
+  round: Round;
+  poolStats: PoolAccounting;
   shares: BigNumber;
   currentValue: BigNumber;
-  earnings: BigNumber;
+  onAddMore: () => void;
   onWithdraw: () => Promise<void>;
 }
-```
 
-#### State Management
-```typescript
+// State Management
 interface PortfolioState {
   // Insurance positions
   insuranceTokens: InsuranceToken[];
   insurancePositions: InsurancePosition[];
   
-  // Liquidity positions
+  // Liquidity positions  
   liquidityPositions: LiquidityPosition[];
-  totalShares: Map<number, BigNumber>;
+  poolShares: Map<number, BigNumber>;
   
   // Claims
   claimablePayouts: ClaimablePayout[];
-  
-  // Aggregated stats
-  totalPortfolioValue: BigNumber;
-  totalAtRisk: BigNumber;
-  totalEarnings: BigNumber;
   
   // Actions
   fetchPortfolio: () => Promise<void>;
   checkClaimable: () => Promise<void>;
   claimPayout: (tokenId: number) => Promise<void>;
+  withdrawLiquidity: (poolId: number, shares: BigNumber) => Promise<void>;
+}
+
+interface InsurancePosition {
+  tokenId: number;
+  trancheId: number;
+  roundId: number;
+  coverage: BigNumber;
+  premiumPaid: BigNumber;
+  startTime: number;
+  endTime: number;
+  status: 'active' | 'expired' | 'claimable' | 'claimed';
+}
+
+interface LiquidityPosition {
+  poolId: number;
+  trancheId: number;
+  roundId: number;
+  deposited: BigNumber;
+  shares: BigNumber;
+  currentValue: BigNumber;
+  earnings: BigNumber;
+  startTime: number;
+  endTime: number;
+  status: 'active' | 'settled' | 'claimable';
 }
 ```
+
+### Tab Navigation Behavior
+
+#### Navigation Flow
+1. **Insurance Tab → Tranche Tab**: When user clicks "View Tranches →" on any insurance card, navigate to Tranche tab with that insurance product pre-filtered
+2. **Tranche Tab → Portfolio Tab**: After user buys insurance or provides liquidity, they can navigate to Portfolio to see their positions
+3. **Direct Navigation**: Users can navigate directly to any tab, with appropriate default states
+
+#### URL Structure
+- `/insurance` - Insurance summary cards
+- `/tranche?insurance=btc` - Tranche list filtered by BTC
+- `/tranche` - All tranches (default filter state)
+- `/portfolio` - User's positions
 
 ## Oracle & Price Feeds
 

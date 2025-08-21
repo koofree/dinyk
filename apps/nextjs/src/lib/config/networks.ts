@@ -48,10 +48,10 @@ export const NETWORK_CONFIGS: Record<string, NetworkConfig> = {
       decimals: 18,
     },
     contracts: {
-      insurance: process.env.NEXT_PUBLIC_TESTNET_INSURANCE_CONTRACT,
-      treasury: process.env.NEXT_PUBLIC_TESTNET_TREASURY_CONTRACT,
-      tranchePool: process.env.NEXT_PUBLIC_TESTNET_TRANCHE_POOL_CONTRACT,
-      oracleRouter: process.env.NEXT_PUBLIC_TESTNET_ORACLE_ROUTER_CONTRACT,
+      insurance: "0x147f4660515aE91c81FdB43Cf743C6faCACa9903",
+      treasury: "0x9C20316Ba669e762Fb43dbb6d3Ff63062b89945D",
+      tranchePool: "0x563e95673d4210148eD59eDb6310AC7d488F5Ec0",
+      oracleRouter: "0x5d83444EBa6899f1B7abD34eF04dDF7Dd7b38a37",
     },
   },
 };

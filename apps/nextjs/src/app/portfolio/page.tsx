@@ -13,35 +13,41 @@ const MOCK_NFT_POSITIONS: UserPosition[] = [
     tokenId: 1,
     asset: 'BTC',
     type: 'insurance',
-    tranche: 'Conservative Downside',
+    tranche: 'BTC -10% Protection',
     trancheId: 1,
     roundId: 1,
-    coverage: '5000',
-    premiumPaid: '150',
+    coverage: '1000',
+    premiumPaid: '50',
     status: 'active',
-    expiresIn: 25,
-    currentPrice: 115000,
-    triggerPrice: 110000,
-    baseline: 120000,
+    expiresIn: 7,
+    currentPrice: 44500,
+    triggerPrice: 40500,
+    baseline: 45000,
     roundState: 'ACTIVE',
-    maturityTimestamp: Date.now() + 25 * 24 * 60 * 60 * 1000
+    maturityTimestamp: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    startTime: new Date('2025-01-10T14:00:00Z'),
+    endTime: new Date('2025-01-17T14:00:00Z')
   },
   {
     id: 'nft-2',
     tokenId: 2,
-    asset: 'BTC',
+    asset: 'ETH',
     type: 'insurance',
-    tranche: 'Moderate Downside',
-    trancheId: 2,
-    roundId: 1,
-    coverage: '10000',
-    premiumPaid: '500',
-    status: 'active',
-    expiresIn: 25,
-    currentPrice: 115000,
-    triggerPrice: 100000,
-    baseline: 120000,
-    roundState: 'ACTIVE'
+    tranche: 'ETH -15% Protection',
+    trancheId: 3,
+    roundId: 2,
+    coverage: '500',
+    premiumPaid: '60',
+    status: 'claimable',
+    expiresIn: 0,
+    currentPrice: 2080,
+    triggerPrice: 2088,
+    baseline: 2456,
+    roundState: 'SETTLED',
+    maturityTimestamp: Date.now() - 1 * 24 * 60 * 60 * 1000,
+    startTime: new Date('2025-01-08T10:00:00Z'),
+    endTime: new Date('2025-01-15T10:00:00Z'),
+    claimAmount: '500'
   }
 ];
 
@@ -51,18 +57,40 @@ const MOCK_LP_POSITIONS: UserPosition[] = [
     id: 'lp-1',
     asset: 'BTC',
     type: 'liquidity',
-    tranche: 'Conservative Downside',
+    tranche: 'BTC -5% Tranche Pool',
     trancheId: 1,
     roundId: 1,
-    deposited: '20000',
-    shares: '20000',
-    currentValue: '20400',
-    earnedPremium: '300',
-    stakingRewards: '100',
-    lockedAmount: '15000',
+    deposited: '5000',
+    shares: '850',
+    currentValue: '5120',
+    earnedPremium: '120',
+    stakingRewards: '0',
+    lockedAmount: '5000',
     roundStatus: 'active',
     roundState: 'ACTIVE',
-    daysLeft: 25
+    daysLeft: 7,
+    startTime: new Date('2025-01-10T09:00:00Z'),
+    endTime: new Date('2025-01-17T09:00:00Z')
+  },
+  {
+    id: 'lp-2',
+    asset: 'ETH',
+    type: 'liquidity',
+    tranche: 'ETH -10% Tranche Pool',
+    trancheId: 3,
+    roundId: 2,
+    deposited: '2000',
+    shares: '340',
+    currentValue: '1950',
+    earnedPremium: '0',
+    stakingRewards: '0',
+    lockedAmount: '0',
+    roundStatus: 'settled',
+    roundState: 'SETTLED',
+    daysLeft: 0,
+    startTime: new Date('2025-01-05T16:00:00Z'),
+    endTime: new Date('2025-01-12T16:00:00Z'),
+    lossAmount: '50'
   }
 ];
 
@@ -194,7 +222,7 @@ export default function PortfolioPage() {
                 : 'text-gray-400 hover:text-white'
             }`}
           >
-            🛡️ Active Insurance ({insurancePositions.length})
+            🛡️ Insurance Positions ({insurancePositions.length})
           </button>
           <button
             onClick={() => setActiveTab('liquidity')}
@@ -204,7 +232,7 @@ export default function PortfolioPage() {
                 : 'text-gray-400 hover:text-white'
             }`}
           >
-            💰 LP Positions ({liquidityPositions.length})
+            💰 Liquidity Positions ({liquidityPositions.length})
           </button>
           <button
             onClick={() => setActiveTab('history')}
@@ -269,7 +297,7 @@ export default function PortfolioPage() {
                   You haven't provided liquidity to any pools yet
                 </p>
                 <a
-                  href="/liquidity"
+                  href="/tranche"
                   className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
                 >
                   Provide Liquidity

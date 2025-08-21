@@ -46,20 +46,22 @@ export interface Tranche {
   triggerType: TriggerType;
   threshold: bigint;
   maturityTimestamp: number;
+  maturityDays?: number; // Days to maturity
   premiumRateBps: number;
   perAccountMin: bigint;
   perAccountMax: bigint;
   trancheCap: bigint;
   oracleRouteId: number;
-  active: boolean;
-  createdAt: number;
-  updatedAt: number;
-  rounds: Round[];
+  poolAddress?: string; // Pool contract address
+  active?: boolean;
+  createdAt?: number;
+  updatedAt?: number;
+  rounds?: number[]; // Array of round IDs
   currentRound?: Round;
   
   // Derived fields
-  premiumRate: number;
-  maturityDate: Date;
+  premiumRate?: number;
+  maturityDate?: Date;
   isExpired: boolean;
   availableCapacity: bigint;
   utilizationRate: number;
@@ -68,24 +70,28 @@ export interface Tranche {
 // Round types
 export interface Round {
   roundId: number;
-  trancheId: number;
-  salesStartTime: number;
-  salesEndTime: number;
+  trancheId?: number;
+  salesStartTime?: number;
+  salesEndTime?: number;
+  salesDeadline?: number; // Alternative field for sales closing
+  startTime?: number; // Round start time
+  endTime?: number; // Round end time
   state: RoundState;
-  totalBuyerPurchases: bigint;
+  totalBuyerPurchases?: bigint;
+  totalBuyerOrders?: bigint; // Alternative field
   totalSellerCollateral: bigint;
   matchedAmount: bigint;
-  createdAt: number;
-  stateChangedAt: number;
+  createdAt?: number;
+  stateChangedAt?: number;
   
   // Derived fields
-  salesStartDate: Date;
-  salesEndDate: Date;
-  isActive: boolean;
+  salesStartDate?: Date;
+  salesEndDate?: Date;
+  isActive?: boolean;
   isOpen: boolean;
-  isClosed: boolean;
-  utilizationRate: number;
-  fillRate: number;
+  isClosed?: boolean;
+  utilizationRate?: number;
+  fillRate?: number;
 }
 
 // Purchase and order types

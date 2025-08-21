@@ -4,6 +4,9 @@
 export * from './types/products';
 export * from './types/common';
 
+// Services
+export { ProductCatalogService } from './services/ProductCatalogService';
+
 // Utilities  
 export { formatCurrency, formatPercentage, formatTimeRemaining, formatAddress, isValidAddress } from './utils/formatters';
 export { CacheManager } from './utils/cache';

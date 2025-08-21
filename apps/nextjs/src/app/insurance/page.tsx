@@ -1,78 +1,63 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ProductCard } from "@/components/insurance/ProductCard";
-import { PurchaseModal } from "@/components/insurance/PurchaseModal";
+import { useRouter } from "next/navigation";
+import { InsuranceSummaryCard } from "@/components/insurance/InsuranceSummaryCard";
 import { useWeb3 } from "@/context/Web3Provider";
-import { useContracts, useContractFactory, useProducts, useBuyInsurance } from "@dinsure/contracts";
+import { useContracts, useContractFactory, useProducts } from "@dinsure/contracts";
 import { KAIA_TESTNET } from "@/lib/constants";
-import type { Product, Tranche } from "@dinsure/contracts";
-import { ethers } from "ethers";
+import type { Product } from "@dinsure/contracts";
 
 export default function InsurancePage() {
   const { isConnected } = useWeb3();
   const { isInitialized, error: contractError } = useContracts();
   const factory = useContractFactory();
   const { products, tranches, loading: productsLoading, error: productsError } = useProducts(factory);
-  const { buyInsurance, loading: purchaseLoading, error: purchaseError } = useBuyInsurance(factory);
-  
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedTranche, setSelectedTranche] = useState<Tranche | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filter, setFilter] = useState({
-    asset: 'All',
-    trigger: 'All',
-    duration: 'All'
-  });
+  const router = useRouter();
 
-  const handleTrancheSelect = (product: Product, tranche: Tranche) => {
-    if (!isConnected) {
-      alert("Please connect your wallet first");
-      return;
-    }
-    
-    setSelectedProduct(product);
-    setSelectedTranche(tranche);
-    setIsModalOpen(true);
-  };
-
-  const handlePurchase = async (amount: string) => {
-    if (!selectedTranche || !selectedProduct) return;
-    
-    try {
-      const result = await buyInsurance({
-        trancheId: BigInt(selectedTranche.trancheId),
-        roundId: BigInt(selectedTranche.currentRound?.roundId || 1),
-        amount: ethers.parseUnits(amount, 6), // USDT has 6 decimals
-      });
-      
-      alert(`Successfully purchased ${amount} USDT coverage! Token ID: ${result.tokenId?.toString()}`);
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error('Purchase failed:', error);
-      alert(`Purchase failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  const handleViewTranches = (productId: number) => {
+    // Navigate to tranche tab with product filter
+    const product = products.find(p => p.productId === productId);
+    if (product && product.name) {
+      // Get product name for URL parameter
+      const productName = product.name.toLowerCase().replace(/\s+/g, '-');
+      router.push(`/tranche?insurance=${productName}&productId=${productId}`);
+    } else {
+      router.push('/tranche');
     }
   };
 
-  // Extract filter options from real contract data
-  const assets = ['All', 'BTC']; // For now, we know we have BTC products
-  const triggers = ['All', 'Below $110K', 'Below $100K', 'Below $90K', 'Above $130K'];
-  const durations = ['All', '30 days'];
-
-  // Filter products based on real contract data
-  const filteredProducts = products.filter(product => {
-    // For now, simplified filtering - can be enhanced based on product metadata
-    return true; // Show all products for now
-  });
+  // Debug logging
+  useEffect(() => {
+    console.log('Insurance Page Debug:', {
+      isConnected,
+      isInitialized,
+      contractError,
+      productsLoading,
+      productsError,
+      productsCount: products.length,
+      products,
+      tranchesCount: tranches.length
+    });
+  }, [isConnected, isInitialized, contractError, productsLoading, productsError, products, tranches]);
 
   return (
     <div className="min-h-screen bg-gray-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Debug Info */}
+        <div className="mb-4 p-2 bg-gray-800 rounded text-xs text-gray-400">
+          Debug: isInitialized={String(isInitialized)} | 
+          productsLoading={String(productsLoading)} | 
+          products={products.length} | 
+          tranches={tranches.length} |
+          error={productsError ? 'Yes' : 'No'}
+        </div>
+
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-4">DIN Insurance Catalog</h1>
+          <h1 className="text-3xl font-bold text-white mb-4">Insurance Products</h1>
           <p className="text-gray-400">
-            Live on Kaia Testnet - Choose parametric insurance to protect against price movements
+            Overview of all available insurance products with aggregated statistics from all tranches
           </p>
           <div className="mt-2 flex items-center gap-4 text-sm">
             <span className="text-green-400">● Connected to {KAIA_TESTNET.name}</span>
@@ -86,74 +71,6 @@ export default function InsurancePage() {
             </a>
           </div>
         </div>
-
-        {/* Filters */}
-        <div className="bg-gray-800 rounded-lg p-4 mb-8 border border-gray-700">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-            <div>
-              <label className="block text-white font-medium mb-2">Asset</label>
-              <select
-                value={filter.asset}
-                onChange={(e) => setFilter(prev => ({ ...prev, asset: e.target.value }))}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
-              >
-                {assets.map(asset => (
-                  <option key={asset} value={asset}>{asset}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-white font-medium mb-2">Trigger</label>
-              <select
-                value={filter.trigger}
-                onChange={(e) => setFilter(prev => ({ ...prev, trigger: e.target.value }))}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
-              >
-                {triggers.map(trigger => (
-                  <option key={trigger} value={trigger}>{trigger}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-white font-medium mb-2">Duration</label>
-              <select
-                value={filter.duration}
-                onChange={(e) => setFilter(prev => ({ ...prev, duration: e.target.value }))}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
-              >
-                {durations.map(duration => (
-                  <option key={duration} value={duration}>{duration}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <button
-                onClick={() => setFilter({ asset: 'All', trigger: 'All', duration: 'All' })}
-                className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Clear Filters
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Connection Notice */}
-        {!isConnected && (
-          <div className="bg-blue-900 border border-blue-600 rounded-lg p-4 mb-8">
-            <div className="flex items-center gap-3">
-              <div className="text-blue-400 text-xl">💡</div>
-              <div>
-                <h3 className="text-blue-400 font-medium">Connect Your Wallet</h3>
-                <p className="text-blue-300 text-sm">
-                  Connect your wallet to purchase insurance products
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Contract Error */}
         {contractError && (
@@ -182,34 +99,36 @@ export default function InsurancePage() {
         {!productsLoading && isInitialized && !contractError && (
           <>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {filteredProducts.map((product) => (
-                <ProductCard
+              {products.map((product) => (
+                <InsuranceSummaryCard
                   key={product.productId}
                   product={product}
-                  onTrancheSelect={handleTrancheSelect}
+                  tranches={tranches.filter(t => t.productId === product.productId)}
+                  onViewTranches={() => handleViewTranches(product.productId)}
                 />
               ))}
             </div>
 
-            {filteredProducts.length === 0 && (
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-lg">No insurance products available</div>
-                <p className="text-gray-500 text-sm mt-2">
-                  Products are being loaded from the smart contracts
+            {products.length === 0 && (
+              <div className="bg-gray-800 border border-gray-700 rounded-lg p-8 text-center">
+                <div className="text-yellow-400 text-4xl mb-4">📋</div>
+                <div className="text-gray-300 text-lg font-medium mb-2">No Insurance Products Available</div>
+                <p className="text-gray-400 text-sm mb-4">
+                  There are currently no active insurance products on the smart contracts.
                 </p>
+                <div className="text-xs text-gray-500 space-y-1">
+                  <p>Contract: {KAIA_TESTNET.contracts.productCatalog}</p>
+                  <p>Network: Kaia Testnet (Chain ID: 1001)</p>
+                </div>
+                {productsError && (
+                  <div className="mt-4 p-3 bg-red-900/20 border border-red-600 rounded text-red-400 text-xs">
+                    Error: {productsError?.message || 'Failed to fetch products'}
+                  </div>
+                )}
               </div>
             )}
           </>
         )}
-
-        {/* Purchase Modal */}
-        <PurchaseModal
-          product={selectedProduct}
-          tranche={selectedTranche}
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={handlePurchase}
-        />
       </div>
     </div>
   );

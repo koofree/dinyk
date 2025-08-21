@@ -15,9 +15,9 @@ export const KAIA_MAINNET = {
   wsUrl: 'wss://public-en.node.kaia.io/ws',
   blockExplorer: 'https://kaiascan.io',
   contracts: {
-    insurance: process.env.NEXT_PUBLIC_MAINNET_INSURANCE_CONTRACT || '0x742d35Cc64C9b16b2E4517b44b6BBAe6C4e3b5C5',
-    treasury: process.env.NEXT_PUBLIC_MAINNET_TREASURY_CONTRACT || '0x9f1B8F0A8aA8A8aA8A8aA8A8aA8A8aA8A8aA8A8a',
-    tranchePool: process.env.NEXT_PUBLIC_MAINNET_TRANCHE_POOL_CONTRACT || '0x1234567890abcdef1234567890abcdef12345678',
+    insurance: process.env.NEXT_PUBLIC_MAINNET_INSURANCE_CONTRACT || '',
+    treasury: process.env.NEXT_PUBLIC_MAINNET_TREASURY_CONTRACT || '',
+    tranchePool: process.env.NEXT_PUBLIC_MAINNET_TRANCHE_POOL_CONTRACT || '',
   }
 } as const;
 
