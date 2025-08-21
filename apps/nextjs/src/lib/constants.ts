@@ -58,16 +58,16 @@ export const KAIA_TESTNET = {
 // Active network configuration based on environment
 export const ACTIVE_NETWORK = isTestnet ? KAIA_TESTNET : KAIA_MAINNET;
 
-// Alternative RPC endpoints for failover
+// Alternative RPC endpoints for failover (only verified working endpoints)
 export const KAIA_RPC_ENDPOINTS = isTestnet 
   ? [
-      'https://public-en-kairos.node.kaia.io',
       'https://rpc.ankr.com/klaytn_testnet',
+      'https://public-en-kairos.node.kaia.io',
     ] as const
   : [
-      'https://public-en.node.kaia.io',
-      'https://archive-en.node.kaia.io',
       'https://rpc.ankr.com/klaytn',
+      'https://public-en.node.kaia.io',
+      'https://archive-en.node.kaia.io', 
     ] as const;
 
 // Provider types

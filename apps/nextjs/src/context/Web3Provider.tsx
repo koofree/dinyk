@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import { Web3Provider as KaiaWeb3Provider } from "@kaiachain/ethers-ext/v6";
 import { ethers } from "ethers";
-import { ACTIVE_NETWORK, switchToKaiaNetwork, STORAGE_KEYS, ProviderType } from "@/lib/constants";
+import { ACTIVE_NETWORK, switchToKaiaNetwork, STORAGE_KEYS, ProviderType, KAIA_RPC_ENDPOINTS } from "@/lib/constants";
 
 // Context type
 interface Web3ContextType {
@@ -58,7 +58,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const handleAccountsChanged = (accounts: string[]) => {
       if (accounts.length === 0) {
         disconnectWallet();
-      } else if (accounts[0] !== account) {
+      } else if (accounts[0] && accounts[0] !== account) {
         setAccount(accounts[0]);
         sessionStorage.setItem(STORAGE_KEYS.ACCOUNT, accounts[0]);
         refreshBalance();
@@ -144,10 +144,12 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const network = await web3Provider.getNetwork();
         
         setProvider(web3Provider);
-        setAccount(accounts[0].address);
-        setChainId(Number(network.chainId));
-        setIsConnected(true);
-        await updateBalance(web3Provider, accounts[0].address);
+        if (accounts[0]?.address) {
+          setAccount(accounts[0].address);
+          setChainId(Number(network.chainId));
+          setIsConnected(true);
+          await updateBalance(web3Provider, accounts[0].address);
+        }
       }
     } catch (err) {
       console.error("Failed to reconnect wallet:", err);
@@ -155,12 +157,43 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const updateBalance = async (provider: KaiaWeb3Provider, account: string) => {
+  // Helper function to create a reliable JSON RPC provider
+  const createJsonRpcProviderWithFallback = async (): Promise<ethers.JsonRpcProvider> => {
+    // Try RPC endpoints in order until one works
+    for (const rpcUrl of KAIA_RPC_ENDPOINTS) {
+      try {
+        const jsonRpcProvider = new ethers.JsonRpcProvider(rpcUrl, {
+          chainId: ACTIVE_NETWORK.chainId,
+          name: ACTIVE_NETWORK.name,
+        });
+        
+        // Test the connection with a timeout
+        const blockNumberPromise = jsonRpcProvider.getBlockNumber();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Connection timeout")), 5000)
+        );
+        
+        await Promise.race([blockNumberPromise, timeoutPromise]);
+        console.log(`Successfully connected to RPC: ${rpcUrl}`);
+        return jsonRpcProvider;
+      } catch (error) {
+        console.warn(`RPC endpoint ${rpcUrl} failed, trying next...`, error);
+        continue;
+      }
+    }
+    
+    throw new Error("All RPC endpoints failed");
+  };
+
+  const updateBalance = async (providerInstance: KaiaWeb3Provider, account: string) => {
+    // Always use our reliable RPC endpoints for balance queries instead of wallet provider
     try {
-      const balance = await provider.getBalance(account);
+      const reliableProvider = await createJsonRpcProviderWithFallback();
+      const balance = await reliableProvider.getBalance(account);
       setBalance(ethers.formatEther(balance));
+      console.log(`Balance fetched successfully: ${ethers.formatEther(balance)} KAIA`);
     } catch (err) {
-      console.error("Failed to fetch balance:", err);
+      console.error("Failed to fetch balance from reliable RPC endpoints:", err);
       setBalance("0");
     }
   };
@@ -253,9 +286,16 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const getBalance = async (): Promise<string> => {
-    if (!provider || !account) return "0";
-    const balance = await provider.getBalance(account);
-    return ethers.formatEther(balance);
+    if (!account) return "0";
+    // Always use reliable RPC endpoints for balance queries
+    try {
+      const reliableProvider = await createJsonRpcProviderWithFallback();
+      const balance = await reliableProvider.getBalance(account);
+      return ethers.formatEther(balance);
+    } catch (err) {
+      console.error("Failed to get balance from reliable RPC endpoints:", err);
+      return "0";
+    }
   };
 
   const refreshBalance = useCallback(async () => {
