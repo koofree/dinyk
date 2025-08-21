@@ -1,5 +1,5 @@
 {
-  "name": "@acme/db",
+  "name": "@dinsure/db",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -36,14 +36,14 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@acme/eslint-config": "workspace:*",
-    "@acme/prettier-config": "workspace:*",
-    "@acme/tsconfig": "workspace:*",
+    "@dinsure/eslint-config": "workspace:*",
+    "@dinsure/prettier-config": "workspace:*",
+    "@dinsure/tsconfig": "workspace:*",
     "dotenv-cli": "^8.0.0",
     "drizzle-kit": "^0.31.1",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@acme/prettier-config"
+  "prettier": "@dinsure/prettier-config"
 }

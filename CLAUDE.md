@@ -229,10 +229,10 @@ Each insurance product offers multiple risk tranches:
 ## Common Patterns
 
 - Use ESM modules (`"type": "module"`)
-- TypeScript configurations extend from `@acme/tsconfig`
-- Prettier configurations extend from `@acme/prettier-config`
+- TypeScript configurations extend from `@dinsure/tsconfig`
+- Prettier configurations extend from `@dinsure/prettier-config`
 - ESLint configurations use the new flat config format
-- Tailwind configurations extend from `@acme/tailwind-config`
+- Tailwind configurations extend from `@dinsure/tailwind-config`
 - Web3 hooks follow `use{ContractName}` pattern
 - All amounts handle BigNumber/BigInt properly
 

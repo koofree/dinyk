@@ -1,5 +1,5 @@
 {
-  "name": "@acme/nextjs",
+  "name": "@dinsure/nextjs",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@acme/ui": "workspace:*",
+    "@dinsure/ui": "workspace:*",
     "@kaiachain/ethers-ext": "1.1.1",
     "@t3-oss/env-nextjs": "^0.13.6",
     "@tanstack/react-query": "catalog:",
@@ -25,10 +25,10 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@acme/eslint-config": "workspace:*",
-    "@acme/prettier-config": "workspace:*",
-    "@acme/tailwind-config": "workspace:*",
-    "@acme/tsconfig": "workspace:*",
+    "@dinsure/eslint-config": "workspace:*",
+    "@dinsure/prettier-config": "workspace:*",
+    "@dinsure/tailwind-config": "workspace:*",
+    "@dinsure/tsconfig": "workspace:*",
     "@types/node": "^22.15.29",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
@@ -39,5 +39,5 @@
     "tailwindcss": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@acme/prettier-config"
+  "prettier": "@dinsure/prettier-config"
 }

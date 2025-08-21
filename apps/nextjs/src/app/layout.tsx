@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Mono } from "next/font/google";
 
-import { cn } from "@acme/ui";
-import { Toaster } from "@acme/ui/toast";
+import { cn } from "@dinsure/ui";
+import { Toaster } from "@dinsure/ui/toast";
 
 import { Web3Provider } from "@/context/Web3Provider";
 import { Navbar } from "@/components/common/Navbar";

@@ -1182,7 +1182,7 @@ const cacheManager = {
 #### Day 1-2: Remove Server Dependencies
 ```bash
 # Remove packages
-pnpm remove @acme/api @acme/auth @acme/db @acme/validators
+pnpm remove @dinsure/api @dinsure/auth @dinsure/db @dinsure/validators
 pnpm remove @trpc/client @trpc/server @trpc/next
 pnpm remove better-auth drizzle-orm
 
