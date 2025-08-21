@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { WalletButton } from "@/components/web3/WalletButton";
@@ -10,11 +10,23 @@ export const Navbar: React.FC = () => {
   const pathname = usePathname();
   const isTestnet = process.env.NEXT_PUBLIC_NETWORK_ENV === 'testnet';
   const { t } = useLanguage();
+  const [isScrolled, setIsScrolled] = useState(false);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      setIsScrolled(scrollTop > 0);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // 서버사이드 렌더링과 클라이언트 렌더링 간의 불일치를 방지하기 위해 기본값 사용
   const navigation = [
-    { name: t('nav.insurance'), href: '/insurance' },
-    { name: t('nav.liquidity'), href: '/liquidity' },
-    { name: t('nav.portfolio'), href: '/portfolio' },
+    { name: t('nav.insurance') || 'Insurance', href: '/insurance' },
+    { name: t('nav.liquidity') || 'Liquidity', href: '/liquidity' },
+    { name: t('nav.portfolio') || 'Portfolio', href: '/portfolio' },
   ];
 
   const isActive = (href: string) => {
@@ -23,7 +35,7 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+    <nav className={`${isScrolled ? 'fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100' : 'relative bg-transparent'} transition-all duration-300`}>
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center h-16 relative">
           {/* Logo */}

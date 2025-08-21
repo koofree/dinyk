@@ -117,9 +117,19 @@ const translations = {
 };
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  // 서버사이드 렌더링과 클라이언트 렌더링 간의 불일치를 방지하기 위해 useEffect로 초기화
   const [language, setLanguage] = useState<Language>('en');
+  const [isClient, setIsClient] = useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const t = (key: string): string => {
+    // 서버사이드 렌더링 시에는 기본값 반환
+    if (!isClient) {
+      return key;
+    }
     const translation = translations[language][key as keyof typeof translations[typeof language]];
     return translation || key;
   };

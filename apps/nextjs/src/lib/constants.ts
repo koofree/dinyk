@@ -108,7 +108,7 @@ export const MOCK_INSURANCE_PRODUCTS = [
     id: 1,
     asset: 'BTC',
     name: 'BTC Price Protection',
-    description: 'Protect against BTC price drops',
+    description: 'Secure coverage against sharp Bitcoin price declines.',
     tranches: [
       {
         id: 'btc-5',
@@ -146,7 +146,7 @@ export const MOCK_INSURANCE_PRODUCTS = [
     id: 2,
     asset: 'ETH',
     name: 'ETH Price Protection',
-    description: 'Protect against ETH price drops',
+    description: 'Hedge against sudden volatility in Ethereum markets.',
     tranches: [
       {
         id: 'eth-5',
@@ -184,7 +184,7 @@ export const MOCK_INSURANCE_PRODUCTS = [
     id: 3,
     asset: 'KAIA',
     name: 'KAIA Price Protection',
-    description: 'Protect against KAIA price drops',
+    description: 'Protect your Kaia holdings from unexpected downturns.',
     tranches: [
       {
         id: 'kaia-10',

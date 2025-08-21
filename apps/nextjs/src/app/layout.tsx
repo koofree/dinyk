@@ -6,7 +6,6 @@ import { Toaster } from "@dinsure/ui/toast";
 
 import { Web3Provider } from "@/context/Web3Provider";
 import { LanguageProvider } from "@/context/LanguageProvider";
-import { Navbar } from "@/components/common/Navbar";
 import { ConnectNotice } from "@/components/common/ConnectNotice";
 
 import "~/app/globals.css";
@@ -53,16 +52,16 @@ export default function RootLayout(props: { children: React.ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          "min-h-screen bg-gray-900 text-white antialiased",
+          "min-h-screen antialiased",
           inter.variable,
           spaceMono.variable,
         )}
+        suppressHydrationWarning
       >
         <Web3Provider>
           <LanguageProvider>
             <div className="min-h-screen flex flex-col">
                           <ConnectNotice />
-              <Navbar />
               <main className="flex-1">
                 {props.children}
               </main>

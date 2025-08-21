@@ -7,11 +7,11 @@
     <style>
         /* Google Fonts Import */
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
         
         /* 언어별 폰트 설정 */
         :root {
-            --font-sans: 'Outfit', 'Pretendard', system-ui, sans-serif;
+            --font-sans: 'Pretendard', 'Outfit', system-ui, sans-serif;
             --font-display: 'Outfit', 'Pretendard', system-ui, sans-serif;
             --font-header: 'Outfit', 'Pretendard', system-ui, sans-serif;
         }
@@ -37,8 +37,8 @@
             line-height: 1.6;
             margin: 0;
             padding: 20px;
-            background: #0f172a;
-            color: #f1f5f9;
+            background: linear-gradient(to bottom right, #eff6ff, #ffffff, #eff6ff);
+            color: #1f2937;
         }
         .container {
             max-width: 1200px;
@@ -46,7 +46,7 @@
         }
         h1 {
             font-family: var(--font-display);
-            color: #0ea5e9;
+            color: #1f2937;
             text-align: center;
             margin-bottom: 40px;
             font-weight: 600;
@@ -54,18 +54,20 @@
         }
         h2 {
             font-family: var(--font-header);
-            color: #0ea5e9;
-            border-bottom: 2px solid #1e293b;
+            color: #1f2937;
+            border-bottom: 2px solid #e5e7eb;
             padding-bottom: 10px;
             margin-top: 40px;
             font-weight: 500;
             letter-spacing: -0.01em;
         }
         .color-section {
-            background: #1e293b;
-            border-radius: 8px;
+            background: #ffffff;
+            border-radius: 16px;
             padding: 20px;
             margin: 20px 0;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         .color-grid {
             display: grid;
@@ -74,52 +76,53 @@
             margin: 20px 0;
         }
         .color-item {
-            background: #334155;
-            border-radius: 6px;
+            background: #f9fafb;
+            border-radius: 12px;
             padding: 15px;
-            border-left: 4px solid #0ea5e9;
+            border-left: 4px solid #86D99C;
         }
         .color-preview {
             width: 60px;
             height: 40px;
-            border-radius: 4px;
+            border-radius: 8px;
             margin-bottom: 10px;
-            border: 1px solid #475569;
+            border: 1px solid #d1d5db;
         }
         .color-name {
             font-weight: 600;
-            color: #f1f5f9;
+            color: #1f2937;
             margin-bottom: 5px;
         }
         .color-value {
             font-family: 'Space Mono', monospace;
-            color: #94a3b8;
+            color: #6b7280;
             font-size: 14px;
         }
         .color-description {
-            color: #cbd5e1;
+            color: #4b5563;
             font-size: 14px;
             margin-top: 5px;
         }
         .usage-example {
-            background: #475569;
+            background: #f3f4f6;
             padding: 10px;
-            border-radius: 4px;
+            border-radius: 8px;
             font-family: 'Space Mono', monospace;
             font-size: 12px;
-            color: #e2e8f0;
+            color: #374151;
             margin-top: 10px;
         }
         .category {
-            background: #0f172a;
-            border: 1px solid #1e293b;
-            border-radius: 8px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
             padding: 20px;
             margin: 20px 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         .category h3 {
             font-family: var(--font-header);
-            color: #0ea5e9;
+            color: #1f2937;
             margin-top: 0;
             font-weight: 500;
             letter-spacing: -0.01em;
@@ -128,294 +131,148 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎨 DIN 프로젝트 색상 토큰 가이드</h1>
+        <h1>🎨 DIN 프로젝트 색상 토큰 가이드 (Light Mode)</h1>
         
         <div class="color-section">
-            <h2>📋 CSS 변수 (Light Mode)</h2>
+            <h2>🎯 주요 브랜드 색상</h2>
             <div class="color-grid">
                 <div class="color-item">
-                    <div class="color-preview" style="background: hsl(0 0% 100%)"></div>
-                    <div class="color-name">--background</div>
-                    <div class="color-value">hsl(0 0% 100%)</div>
-                    <div class="color-description">메인 배경색</div>
-                    <div class="usage-example">bg-background</div>
+                    <div class="color-preview" style="background: #86D99C"></div>
+                    <div class="color-name">Primary Green</div>
+                    <div class="color-value">#86D99C</div>
+                    <div class="color-description">주요 브랜드 색상 (연한 그린)</div>
+                    <div class="usage-example">from-[#86D99C]</div>
                 </div>
                 <div class="color-item">
-                    <div class="color-preview" style="background: hsl(240 10% 3.9%)"></div>
-                    <div class="color-name">--foreground</div>
-                    <div class="color-value">hsl(240 10% 3.9%)</div>
-                    <div class="color-description">메인 텍스트 색상</div>
-                    <div class="usage-example">text-foreground</div>
+                    <div class="color-preview" style="background: #00B1B8"></div>
+                    <div class="color-name">Primary Teal</div>
+                    <div class="color-value">#00B1B8</div>
+                    <div class="color-description">주요 브랜드 색상 (틸)</div>
+                    <div class="usage-example">to-[#00B1B8]</div>
                 </div>
                 <div class="color-item">
-                    <div class="color-preview" style="background: hsl(327 66% 69%)"></div>
-                    <div class="color-name">--primary</div>
-                    <div class="color-value">hsl(327 66% 69%)</div>
-                    <div class="color-description">주요 브랜드 색상 (핑크)</div>
-                    <div class="usage-example">bg-primary</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: hsl(337 65.5% 17.1%)"></div>
-                    <div class="color-name">--primary-foreground</div>
-                    <div class="color-value">hsl(337 65.5% 17.1%)</div>
-                    <div class="color-description">주요 색상 위의 텍스트</div>
-                    <div class="usage-example">text-primary-foreground</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: hsl(240 4.8% 95.9%)"></div>
-                    <div class="color-name">--secondary</div>
-                    <div class="color-value">hsl(240 4.8% 95.9%)</div>
-                    <div class="color-description">보조 색상</div>
-                    <div class="usage-example">bg-secondary</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: hsl(240 5.9% 10%)"></div>
-                    <div class="color-name">--secondary-foreground</div>
-                    <div class="color-value">hsl(240 5.9% 10%)</div>
-                    <div class="color-description">보조 색상 위의 텍스트</div>
-                    <div class="usage-example">text-secondary-foreground</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: hsl(0 72.22% 50.59%)"></div>
-                    <div class="color-name">--destructive</div>
-                    <div class="color-value">hsl(0 72.22% 50.59%)</div>
-                    <div class="color-description">삭제/에러 색상</div>
-                    <div class="usage-example">bg-destructive</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: hsl(0 0% 98%)"></div>
-                    <div class="color-name">--destructive-foreground</div>
-                    <div class="color-value">hsl(0 0% 98%)</div>
-                    <div class="color-description">삭제 색상 위의 텍스트</div>
-                    <div class="usage-example">text-destructive-foreground</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: hsl(240 4.8% 95.9%)"></div>
-                    <div class="color-name">--muted</div>
-                    <div class="color-value">hsl(240 4.8% 95.9%)</div>
-                    <div class="color-description">음소거된 색상</div>
-                    <div class="usage-example">bg-muted</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: hsl(240 3.8% 46.1%)"></div>
-                    <div class="color-name">--muted-foreground</div>
-                    <div class="color-value">hsl(240 3.8% 46.1%)</div>
-                    <div class="color-description">음소거된 색상 위의 텍스트</div>
-                    <div class="usage-example">text-muted-foreground</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: hsl(240 5.9% 90%)"></div>
-                    <div class="color-name">--border</div>
-                    <div class="color-value">hsl(240 5.9% 90%)</div>
-                    <div class="color-description">테두리 색상</div>
-                    <div class="usage-example">border-border</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: hsl(240 5% 64.9%)"></div>
-                    <div class="color-name">--ring</div>
-                    <div class="color-value">hsl(240 5% 64.9%)</div>
-                    <div class="color-description">포커스 링 색상</div>
-                    <div class="usage-example">ring-ring</div>
+                    <div class="color-preview" style="background: linear-gradient(to bottom right, #86D99C, #00B1B8)"></div>
+                    <div class="color-name">Brand Gradient</div>
+                    <div class="color-value">#86D99C → #00B1B8</div>
+                    <div class="color-description">브랜드 그라데이션 (버튼, 강조)</div>
+                    <div class="usage-example">bg-gradient-to-br from-[#86D99C] to-[#00B1B8]</div>
                 </div>
             </div>
         </div>
 
         <div class="color-section">
-            <h2>🌙 CSS 변수 (Dark Mode)</h2>
+            <h2>🌙 그레이스케일 색상</h2>
             <div class="color-grid">
                 <div class="color-item">
-                    <div class="color-preview" style="background: hsl(240 10% 3.9%)"></div>
-                    <div class="color-name">--background (dark)</div>
-                    <div class="color-value">hsl(240 10% 3.9%)</div>
-                    <div class="color-description">다크 모드 배경색</div>
-                    <div class="usage-example">bg-background</div>
+                    <div class="color-preview" style="background: #ffffff"></div>
+                    <div class="color-name">white</div>
+                    <div class="color-value">#ffffff</div>
+                    <div class="color-description">순수 흰색</div>
+                    <div class="usage-example">bg-white, text-white</div>
                 </div>
                 <div class="color-item">
-                    <div class="color-preview" style="background: hsl(0 0% 98%)"></div>
-                    <div class="color-name">--foreground (dark)</div>
-                    <div class="color-value">hsl(0 0% 98%)</div>
-                    <div class="color-description">다크 모드 텍스트 색상</div>
-                    <div class="usage-example">text-foreground</div>
+                    <div class="color-preview" style="background: #f9fafb"></div>
+                    <div class="color-name">gray-50</div>
+                    <div class="color-value">#f9fafb</div>
+                    <div class="color-description">매우 밝은 그레이</div>
+                    <div class="usage-example">bg-gray-50</div>
                 </div>
                 <div class="color-item">
-                    <div class="color-preview" style="background: hsl(240 3.7% 15.9%)"></div>
-                    <div class="color-name">--secondary (dark)</div>
-                    <div class="color-value">hsl(240 3.7% 15.9%)</div>
-                    <div class="color-description">다크 모드 보조 색상</div>
-                    <div class="usage-example">bg-secondary</div>
+                    <div class="color-preview" style="background: #f3f4f6"></div>
+                    <div class="color-name">gray-100</div>
+                    <div class="color-value">#f3f4f6</div>
+                    <div class="color-description">밝은 그레이</div>
+                    <div class="usage-example">bg-gray-100</div>
                 </div>
                 <div class="color-item">
-                    <div class="color-preview" style="background: hsl(0 62.8% 30.6%)"></div>
-                    <div class="color-name">--destructive (dark)</div>
-                    <div class="color-value">hsl(0 62.8% 30.6%)</div>
-                    <div class="color-description">다크 모드 삭제 색상</div>
-                    <div class="usage-example">bg-destructive</div>
+                    <div class="color-preview" style="background: #e5e7eb"></div>
+                    <div class="color-name">gray-200</div>
+                    <div class="color-value">#e5e7eb</div>
+                    <div class="color-description">중간 밝은 그레이</div>
+                    <div class="usage-example">border-gray-200</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-preview" style="background: #d1d5db"></div>
+                    <div class="color-name">gray-300</div>
+                    <div class="color-value">#d1d5db</div>
+                    <div class="color-description">중간 그레이</div>
+                    <div class="usage-example">text-gray-300</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-preview" style="background: #9ca3af"></div>
+                    <div class="color-name">gray-400</div>
+                    <div class="color-value">#9ca3af</div>
+                    <div class="color-description">중간 어두운 그레이</div>
+                    <div class="usage-example">text-gray-400</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-preview" style="background: #6b7280"></div>
+                    <div class="color-name">gray-500</div>
+                    <div class="color-value">#6b7280</div>
+                    <div class="color-description">어두운 그레이</div>
+                    <div class="usage-example">text-gray-500</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-preview" style="background: #4b5563"></div>
+                    <div class="color-name">gray-600</div>
+                    <div class="color-value">#4b5563</div>
+                    <div class="color-description">더 어두운 그레이</div>
+                    <div class="usage-example">text-gray-600</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-preview" style="background: #374151"></div>
+                    <div class="color-name">gray-700</div>
+                    <div class="color-value">#374151</div>
+                    <div class="color-description">매우 어두운 그레이</div>
+                    <div class="usage-example">text-gray-700</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-preview" style="background: #1f2937"></div>
+                    <div class="color-name">gray-800</div>
+                    <div class="color-value">#1f2937</div>
+                    <div class="color-description">거의 검은색</div>
+                    <div class="usage-example">bg-gray-800</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-preview" style="background: #111827"></div>
+                    <div class="color-name">gray-900</div>
+                    <div class="color-value">#111827</div>
+                    <div class="color-description">거의 검은색 (텍스트)</div>
+                    <div class="usage-example">text-gray-900</div>
                 </div>
             </div>
         </div>
 
         <div class="color-section">
-            <h2>🎯 Tailwind CSS 클래스 색상</h2>
+            <h2>🎨 특수 색상</h2>
             <div class="color-grid">
                 <div class="color-item">
-                    <div class="color-preview" style="background: #0ea5e9"></div>
-                    <div class="color-name">blue-500</div>
-                    <div class="color-value">#0ea5e9</div>
-                    <div class="color-description">Kaia 블루 (주요 브랜드 색상)</div>
-                    <div class="usage-example">bg-blue-500, text-blue-500</div>
+                    <div class="color-preview" style="background: #F3FEF6"></div>
+                    <div class="color-name">Light Green Background</div>
+                    <div class="color-value">#F3FEF6</div>
+                    <div class="color-description">연한 그린 배경 (How It Works 카드)</div>
+                    <div class="usage-example">bg-[#F3FEF6]</div>
                 </div>
                 <div class="color-item">
-                    <div class="color-preview" style="background: #1d4ed8"></div>
-                    <div class="color-name">blue-700</div>
-                    <div class="color-value">#1d4ed8</div>
-                    <div class="color-description">진한 블루 (호버 상태)</div>
-                    <div class="usage-example">hover:bg-blue-700</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #3b82f6"></div>
-                    <div class="color-name">blue-600</div>
-                    <div class="color-value">#3b82f6</div>
-                    <div class="color-description">중간 블루 (버튼 배경)</div>
-                    <div class="usage-example">bg-blue-600</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #60a5fa"></div>
-                    <div class="color-name">blue-400</div>
-                    <div class="color-value">#60a5fa</div>
-                    <div class="color-description">밝은 블루 (강조 텍스트)</div>
-                    <div class="usage-example">text-blue-400</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #10b981"></div>
-                    <div class="color-name">green-500</div>
-                    <div class="color-value">#10b981</div>
-                    <div class="color-description">성공/긍정 색상</div>
-                    <div class="usage-example">text-green-500</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #4ade80"></div>
-                    <div class="color-name">green-400</div>
-                    <div class="color-value">#4ade80</div>
-                    <div class="color-description">밝은 그린 (수익 표시)</div>
-                    <div class="usage-example">text-green-400</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #f59e0b"></div>
-                    <div class="color-name">yellow-500</div>
-                    <div class="color-value">#f59e0b</div>
-                    <div class="color-description">경고 색상</div>
-                    <div class="usage-example">text-yellow-500</div>
+                    <div class="color-preview" style="background: #E4F4E8"></div>
+                    <div class="color-name">Lighter Green Background</div>
+                    <div class="color-value">#E4F4E8</div>
+                    <div class="color-description">더 연한 그린 배경</div>
+                    <div class="usage-example">bg-[#E4F4E8]</div>
                 </div>
                 <div class="color-item">
                     <div class="color-preview" style="background: #fbbf24"></div>
                     <div class="color-name">yellow-400</div>
                     <div class="color-value">#fbbf24</div>
-                    <div class="color-description">밝은 옐로우 (수익 표시)</div>
-                    <div class="usage-example">text-yellow-400</div>
+                    <div class="color-description">옐로우 (테스트넷 배지)</div>
+                    <div class="usage-example">bg-yellow-400</div>
                 </div>
                 <div class="color-item">
-                    <div class="color-preview" style="background: #ef4444"></div>
-                    <div class="color-name">red-500</div>
-                    <div class="color-value">#ef4444</div>
-                    <div class="color-description">에러/위험 색상</div>
-                    <div class="usage-example">text-red-500</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #dc2626"></div>
-                    <div class="color-name">red-600</div>
-                    <div class="color-value">#dc2626</div>
-                    <div class="color-description">진한 레드 (에러 배경)</div>
-                    <div class="usage-example">bg-red-600</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #ca8a04"></div>
-                    <div class="color-name">yellow-600</div>
-                    <div class="color-value">#ca8a04</div>
-                    <div class="color-description">진한 옐로우 (테스트넷 배지)</div>
-                    <div class="usage-example">bg-yellow-600</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #a16207"></div>
-                    <div class="color-name">yellow-700</div>
-                    <div class="color-value">#a16207</div>
-                    <div class="color-description">더 진한 옐로우 (호버)</div>
-                    <div class="usage-example">hover:bg-yellow-700</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="color-section">
-            <h2>🌑 그레이스케일 색상</h2>
-            <div class="color-grid">
-                <div class="color-item">
-                    <div class="color-preview" style="background: #0f172a"></div>
-                    <div class="color-name">gray-900</div>
-                    <div class="color-value">#0f172a</div>
-                    <div class="color-description">메인 배경색</div>
-                    <div class="usage-example">bg-gray-900</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #1e293b"></div>
-                    <div class="color-name">gray-800</div>
-                    <div class="color-value">#1e293b</div>
-                    <div class="color-description">카드 배경색</div>
-                    <div class="usage-example">bg-gray-800</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #334155"></div>
-                    <div class="color-name">gray-700</div>
-                    <div class="color-value">#334155</div>
-                    <div class="color-description">모바일 메뉴 배경</div>
-                    <div class="usage-example">bg-gray-700</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #475569"></div>
-                    <div class="color-name">gray-600</div>
-                    <div class="color-value">#475569</div>
-                    <div class="color-description">프로그레스 바 배경</div>
-                    <div class="usage-example">bg-gray-600</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #64748b"></div>
-                    <div class="color-name">gray-500</div>
-                    <div class="color-value">#64748b</div>
-                    <div class="color-description">중간 그레이</div>
-                    <div class="usage-example">text-gray-500</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #94a3b8"></div>
-                    <div class="color-name">gray-400</div>
-                    <div class="color-value">#94a3b8</div>
-                    <div class="color-description">보조 텍스트</div>
-                    <div class="usage-example">text-gray-400</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #cbd5e1"></div>
-                    <div class="color-name">gray-300</div>
-                    <div class="color-value">#cbd5e1</div>
-                    <div class="color-description">네비게이션 텍스트</div>
-                    <div class="usage-example">text-gray-300</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #e2e8f0"></div>
-                    <div class="color-name">gray-200</div>
-                    <div class="color-value">#e2e8f0</div>
-                    <div class="color-description">밝은 그레이</div>
-                    <div class="usage-example">text-gray-200</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #f1f5f9"></div>
-                    <div class="color-name">gray-100</div>
-                    <div class="color-value">#f1f5f9</div>
-                    <div class="color-description">매우 밝은 그레이</div>
-                    <div class="usage-example">text-gray-100</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #ffffff"></div>
-                    <div class="color-name">white</div>
-                    <div class="color-value">#ffffff</div>
-                    <div class="color-description">흰색 텍스트</div>
-                    <div class="usage-example">text-white</div>
+                    <div class="color-preview" style="background: #f59e0b"></div>
+                    <div class="color-name">yellow-500</div>
+                    <div class="color-value">#f59e0b</div>
+                    <div class="color-description">진한 옐로우</div>
+                    <div class="usage-example">text-yellow-500</div>
                 </div>
             </div>
         </div>
@@ -424,92 +281,48 @@
             <h2>🎨 그라데이션 색상</h2>
             <div class="color-grid">
                 <div class="color-item">
-                    <div class="color-preview" style="background: linear-gradient(to bottom right, #111827, #1e40af, #111827)"></div>
-                    <div class="color-name">Hero Background</div>
-                    <div class="color-value">from-gray-900 via-blue-900 to-gray-900</div>
-                    <div class="color-description">메인 페이지 히어로 섹션</div>
-                    <div class="usage-example">bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900</div>
+                    <div class="color-preview" style="background: linear-gradient(to bottom right, #eff6ff, #ffffff, #eff6ff)"></div>
+                    <div class="color-name">Page Background</div>
+                    <div class="color-value">from-blue-50 via-white to-blue-50</div>
+                    <div class="color-description">메인 페이지 배경</div>
+                    <div class="usage-example">bg-gradient-to-br from-blue-50 via-white to-blue-50</div>
                 </div>
                 <div class="color-item">
-                    <div class="color-preview" style="background: linear-gradient(to right, #2563eb, #10b981)"></div>
-                    <div class="color-name">Progress Bar</div>
-                    <div class="color-value">from-blue-600 to-green-500</div>
-                    <div class="color-description">프로그레스 바 그라데이션</div>
-                    <div class="usage-example">bg-gradient-to-r from-blue-600 to-green-500</div>
+                    <div class="color-preview" style="background: linear-gradient(to bottom right, #86D99C, #00B1B8)"></div>
+                    <div class="color-name">Button Gradient</div>
+                    <div class="color-value">from-[#86D99C] to-[#00B1B8]</div>
+                    <div class="color-description">버튼 그라데이션</div>
+                    <div class="usage-example">bg-gradient-to-br from-[#86D99C] to-[#00B1B8]</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-preview" style="background: linear-gradient(to right, #86D99C, #00B1B8)"></div>
+                    <div class="color-name">Text Gradient</div>
+                    <div class="color-value">from-[#86D99C] to-[#00B1B8]</div>
+                    <div class="color-description">텍스트 그라데이션</div>
+                    <div class="usage-example">bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent</div>
                 </div>
             </div>
-        </div>
-
-        <div class="color-section">
-            <h2>🔧 특수 색상</h2>
-            <div class="color-grid">
-                <div class="color-item">
-                    <div class="color-preview" style="background: rgba(0, 0, 0, 0.5)"></div>
-                    <div class="color-name">Modal Overlay</div>
-                    <div class="color-value">rgba(0, 0, 0, 0.5)</div>
-                    <div class="color-description">모달 오버레이</div>
-                    <div class="usage-example">bg-black bg-opacity-50</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #dc2626; opacity: 0.2"></div>
-                    <div class="color-name">Error Background</div>
-                    <div class="color-value">#dc2626 with 20% opacity</div>
-                    <div class="color-description">에러 메시지 배경</div>
-                    <div class="usage-example">bg-red-900</div>
-                </div>
-                <div class="color-item">
-                    <div class="color-preview" style="background: #ca8a04; opacity: 0.2"></div>
-                    <div class="color-name">Warning Background</div>
-                    <div class="color-value">#ca8a04 with 20% opacity</div>
-                    <div class="color-description">경고 메시지 배경</div>
-                    <div class="usage-example">bg-yellow-600/20</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="category">
-            <h3>📝 사용 가이드</h3>
-            <p>이 색상 토큰들을 사용하여 일관된 디자인 시스템을 유지하세요:</p>
-            <ul>
-                <li><strong>Primary:</strong> 주요 액션 버튼, 브랜드 요소</li>
-                <li><strong>Secondary:</strong> 보조 액션, 카드 배경</li>
-                <li><strong>Success:</strong> 성공 메시지, 긍정적 수치</li>
-                <li><strong>Warning:</strong> 경고 메시지, 주의사항</li>
-                <li><strong>Error:</strong> 에러 메시지, 삭제 액션</li>
-                <li><strong>Gray Scale:</strong> 텍스트, 배경, 테두리</li>
-            </ul>
-        </div>
-
-        <div class="category">
-            <h3>🎯 주요 변경 포인트</h3>
-            <p>색상 테마를 변경하려면 다음 파일들을 수정하세요:</p>
-            <ul>
-                <li><code>apps/nextjs/src/app/globals.css</code> - CSS 변수 정의</li>
-                <li><code>apps/expo/src/styles.css</code> - Expo 앱 CSS 변수</li>
-                <li><code>tooling/tailwind/base.ts</code> - Tailwind 기본 설정</li>
-                <li><code>apps/nextjs/src/lib/constants.ts</code> - 리스크 레벨 색상</li>
-            </ul>
         </div>
 
         <div class="color-section">
             <h2>🔤 폰트 시스템</h2>
             <div class="color-grid">
                 <div class="color-item">
-                    <div class="color-preview" style="background: #0ea5e9; display: flex; align-items: center; justify-content: center; color: white; font-family: 'Marlin Soft SQ', serif; font-size: 18px; font-weight: 600;">Aa</div>
-                    <div class="color-name">Display Font</div>
-                    <div class="color-value">Marlin Soft SQ</div>
-                    <div class="color-description">메인 제목, 브랜드 로고</div>
+                    <div class="color-preview" style="background: #86D99C; display: flex; align-items: center; justify-content: center; color: white; font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 600;">Aa</div>
+                    <div class="color-name">Display Font (English)</div>
+                    <div class="color-value">Outfit</div>
+                    <div class="color-description">영어 제목, 강조 텍스트</div>
                     <div class="usage-example">font-display, font-header</div>
                 </div>
                 <div class="color-item">
-                    <div class="color-preview" style="background: #1e293b; display: flex; align-items: center; justify-content: center; color: white; font-family: 'Pretendard', sans-serif; font-size: 18px; font-weight: 400;">Aa</div>
-                    <div class="color-name">Body Font</div>
+                    <div class="color-preview" style="background: #00B1B8; display: flex; align-items: center; justify-content: center; color: white; font-family: 'Pretendard', sans-serif; font-size: 18px; font-weight: 400;">가나</div>
+                    <div class="color-name">Body Font (Korean)</div>
                     <div class="color-value">Pretendard</div>
-                    <div class="color-description">본문 텍스트, UI 요소 (Neo-grotesque)</div>
+                    <div class="color-description">한국어 본문, UI 요소</div>
                     <div class="usage-example">font-sans</div>
                 </div>
                 <div class="color-item">
-                    <div class="color-preview" style="background: #334155; display: flex; align-items: center; justify-content: center; color: white; font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 400;">Aa</div>
+                    <div class="color-preview" style="background: #6b7280; display: flex; align-items: center; justify-content: center; color: white; font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 400;">123</div>
                     <div class="color-name">Mono Font</div>
                     <div class="color-value">Space Mono</div>
                     <div class="color-description">숫자, 코드, 주소</div>
@@ -519,27 +332,53 @@
         </div>
 
         <div class="color-section">
-            <h2>📝 폰트 사용 가이드</h2>
+            <h2>📐 Border Radius</h2>
             <div class="color-grid">
                 <div class="color-item">
-                    <div class="color-name">Display/Header 폰트</div>
-                    <div class="color-value">Marlin Soft SQ</div>
-                    <div class="color-description">강조가 필요한 제목과 헤더에 사용</div>
-                    <div class="usage-example">h1, h2, h3, .font-display, .font-header</div>
+                    <div class="color-preview" style="background: #86D99C; border-radius: 8px;"></div>
+                    <div class="color-name">rounded-lg</div>
+                    <div class="color-value">16px</div>
+                    <div class="color-description">기본 버튼, 카드 모서리</div>
+                    <div class="usage-example">rounded-lg</div>
                 </div>
                 <div class="color-item">
-                    <div class="color-name">Body 폰트</div>
-                    <div class="color-value">Inter</div>
-                    <div class="color-description">본문 텍스트와 UI 요소에 사용</div>
-                    <div class="usage-example">p, span, .font-sans</div>
+                    <div class="color-preview" style="background: #00B1B8; border-radius: 12px;"></div>
+                    <div class="color-name">rounded-xl</div>
+                    <div class="color-value">16px</div>
+                    <div class="color-description">큰 카드 모서리</div>
+                    <div class="usage-example">rounded-xl</div>
                 </div>
                 <div class="color-item">
-                    <div class="color-name">Mono 폰트</div>
-                    <div class="color-value">Space Mono</div>
-                    <div class="color-description">숫자와 코드에 사용</div>
-                    <div class="usage-example">.font-mono, 숫자 표시</div>
+                    <div class="color-preview" style="background: #6b7280; border-radius: 16px;"></div>
+                    <div class="color-name">rounded-2xl</div>
+                    <div class="color-value">16px</div>
+                    <div class="color-description">매우 큰 카드 모서리</div>
+                    <div class="usage-example">rounded-2xl</div>
                 </div>
             </div>
+        </div>
+
+        <div class="category">
+            <h3>📝 사용 가이드</h3>
+            <p>이 색상 토큰들을 사용하여 일관된 디자인 시스템을 유지하세요:</p>
+            <ul>
+                <li><strong>Primary Gradient:</strong> 주요 액션 버튼, 브랜드 요소</li>
+                <li><strong>Gray Scale:</strong> 텍스트, 배경, 테두리</li>
+                <li><strong>Light Green:</strong> 정보 카드, 설명 섹션</li>
+                <li><strong>Yellow:</strong> 경고, 테스트넷 배지</li>
+                <li><strong>Fonts:</strong> 언어별 적절한 폰트 사용</li>
+            </ul>
+        </div>
+
+        <div class="category">
+            <h3>🎯 주요 변경 포인트</h3>
+            <p>색상 테마를 변경하려면 다음 파일들을 수정하세요:</p>
+            <ul>
+                <li><code>apps/nextjs/src/app/globals.css</code> - CSS 변수 정의</li>
+                <li><code>apps/nextjs/tailwind.config.ts</code> - Tailwind 설정</li>
+                <li><code>tooling/tailwind/base.ts</code> - 기본 Tailwind 설정</li>
+                <li><code>apps/nextjs/src/context/LanguageProvider.tsx</code> - 언어별 폰트 설정</li>
+            </ul>
         </div>
 
         <div class="category">
@@ -548,8 +387,7 @@
             <ul>
                 <li><code>apps/nextjs/src/app/globals.css</code> - Google Fonts import 및 CSS 변수</li>
                 <li><code>apps/nextjs/tailwind.config.ts</code> - Tailwind 폰트 설정</li>
-                <li><code>apps/expo/src/styles.css</code> - Expo 앱 폰트 설정</li>
-                <li><code>tooling/tailwind/base.ts</code> - 기본 Tailwind 폰트 설정</li>
+                <li><code>apps/nextjs/src/context/LanguageProvider.tsx</code> - 언어별 폰트 설정</li>
             </ul>
         </div>
     </div>

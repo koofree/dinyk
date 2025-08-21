@@ -21,6 +21,19 @@ export const WalletButton: React.FC = () => {
   
   const [showConnectModal, setShowConnectModal] = useState(false);
 
+  // 모달이 열릴 때 body scroll 방지
+  React.useEffect(() => {
+    if (showConnectModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showConnectModal]);
+
   const handleConnect = async (type: ProviderType) => {
     try {
       await connectWallet(type);
@@ -146,48 +159,56 @@ export const WalletButton: React.FC = () => {
 
       {/* Connect Modal */}
       {showConnectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-6 rounded-2xl max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-white mb-4">Connect Your Wallet</h3>
+        <div 
+          className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4"
+          style={{ width: '100vw', height: '100vh' }}
+          onClick={() => setShowConnectModal(false)}
+        >
+          <div 
+            className="bg-white p-6 rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-lg border border-gray-200"
+            style={{ maxWidth: '400px', margin: '0 auto' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Connect Your Wallet</h3>
             
             <div className="space-y-3">
               <button
                 onClick={() => handleConnect(ProviderType.METAMASK)}
-                className="w-full flex items-center gap-3 p-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                className="w-full flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
               >
-                <div className="text-2xl">🦊</div>
+                <img src="/images/metamask.svg" alt="MetaMask" className="w-8 h-8" />
                 <div className="text-left">
-                  <div className="text-white font-medium">MetaMask</div>
-                  <div className="text-gray-400 text-sm">Recommended</div>
+                  <div className="text-gray-900 font-medium">MetaMask</div>
+                  <div className="text-gray-600 text-sm">Recommended</div>
                 </div>
               </button>
 
               <button
                 onClick={() => handleConnect(ProviderType.KAIA)}
-                className="w-full flex items-center gap-3 p-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                className="w-full flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
               >
-                <div className="text-2xl">🔷</div>
+                <img src="/images/kaiawallet.svg" alt="Kaia Wallet" className="w-8 h-8" />
                 <div className="text-left">
-                  <div className="text-white font-medium">Kaia Wallet</div>
-                  <div className="text-gray-400 text-sm">Official Kaia Wallet</div>
+                  <div className="text-gray-900 font-medium">Kaia Wallet</div>
+                  <div className="text-gray-600 text-sm">Official Kaia Wallet</div>
                 </div>
               </button>
 
               <button
                 onClick={() => handleConnect(ProviderType.WALLET_CONNECT)}
-                className="w-full flex items-center gap-3 p-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                className="w-full flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 opacity-50 cursor-not-allowed"
                 disabled
               >
-                <div className="text-2xl">🔗</div>
+                <img src="/images/link.svg" alt="WalletConnect" className="w-8 h-8" />
                 <div className="text-left">
-                  <div className="text-white font-medium">WalletConnect</div>
-                  <div className="text-gray-400 text-sm">Coming Soon</div>
+                  <div className="text-gray-900 font-medium">WalletConnect</div>
+                  <div className="text-gray-600 text-sm">Coming Soon</div>
                 </div>
               </button>
             </div>
 
             {error && (
-              <div className="mt-4 p-3 bg-red-900 text-red-300 rounded-lg text-sm">
+              <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm border border-red-200">
                 {error.message}
                 {error.message.includes("Kaia Wallet") && (
                   <div className="mt-2">
@@ -195,7 +216,7 @@ export const WalletButton: React.FC = () => {
                       href="https://chromewebstore.google.com/detail/kaia-wallet/jblndlipeogpafnldhgmapagcccfchpi"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-400 hover:text-blue-300 underline"
+                      className="text-blue-600 hover:text-blue-500 underline"
                     >
                       Install Kaia Wallet from Chrome Store
                     </a>
@@ -207,7 +228,7 @@ export const WalletButton: React.FC = () => {
                       href="https://metamask.io/download/"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-400 hover:text-blue-300 underline"
+                      className="text-blue-600 hover:text-blue-500 underline"
                     >
                       Install MetaMask
                     </a>
@@ -219,13 +240,13 @@ export const WalletButton: React.FC = () => {
             <div className="mt-4 text-center">
               <button
                 onClick={() => setShowConnectModal(false)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
               >
                 Cancel
               </button>
             </div>
 
-            <div className="mt-4 text-xs text-gray-400 text-center">
+            <div className="mt-4 text-xs text-gray-500 text-center">
               By connecting, you agree to our Terms of Service
             </div>
           </div>
