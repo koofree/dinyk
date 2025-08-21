@@ -66,7 +66,7 @@ export class ProductCatalogService {
         createdAt: Number(productData.createdAt),
         updatedAt: Number(productData.updatedAt),
         tranches: tranches.filter(t => t !== null) as Tranche[],
-        metadata: this.parseMetadata(productData.metadataHash)
+        metadata: this.parseMetadata(productData.metadataHash, Number(productData.productId))
       };
     } catch (error) {
       console.error(`Failed to get product ${productId}:`, error);
@@ -260,7 +260,7 @@ export class ProductCatalogService {
   }
 
   // Parse metadata hash to readable format
-  private parseMetadata(metadataHash: string): any {
+  private parseMetadata(metadataHash: string, productId?: number): any {
     try {
       // Remove 0x prefix and trailing zeros
       const cleanHash = metadataHash.replace(/^0x/, '').replace(/0+$/, '');
@@ -277,8 +277,8 @@ export class ProductCatalogService {
       
       console.log('Parsed metadata string:', metadataString);
       
-      // Check for known metadata patterns
-      if (metadataString.includes('BTC') || metadataString.includes('Bitcoin')) {
+      // Check for known metadata patterns or use productId-based defaults
+      if (metadataString.includes('BTC') || metadataString.includes('Bitcoin') || productId === 1) {
         return {
           name: 'Bitcoin Price Protection',
           description: 'Parametric insurance for BTC price movements',
@@ -289,7 +289,7 @@ export class ProductCatalogService {
         };
       }
       
-      if (metadataString.includes('ETH') || metadataString.includes('Ethereum')) {
+      if (metadataString.includes('ETH') || metadataString.includes('Ethereum') || productId === 2) {
         return {
           name: 'Ethereum Price Protection',
           description: 'Parametric insurance for ETH price movements',
@@ -300,9 +300,53 @@ export class ProductCatalogService {
         };
       }
       
+      // Product ID based defaults for common insurance types
+      const productDefaults: Record<number, any> = {
+        3: {
+          name: 'Solana Price Protection',
+          description: 'Parametric insurance for SOL price movements',
+          category: 'Crypto',
+          underlyingAsset: 'SOL',
+          riskLevel: 'HIGH' as const,
+          tags: ['crypto', 'sol', 'price-protection']
+        },
+        4: {
+          name: 'KAIA Price Protection',
+          description: 'Parametric insurance for KAIA price movements',
+          category: 'Crypto',
+          underlyingAsset: 'KAIA',
+          riskLevel: 'MEDIUM' as const,
+          tags: ['crypto', 'kaia', 'price-protection']
+        },
+        5: {
+          name: 'DeFi Protocol Coverage',
+          description: 'Smart contract risk insurance for DeFi protocols',
+          category: 'DeFi',
+          underlyingAsset: 'DEFI',
+          riskLevel: 'HIGH' as const,
+          tags: ['defi', 'smart-contract', 'protocol-coverage']
+        }
+      };
+      
+      if (productId && productDefaults[productId]) {
+        return productDefaults[productId];
+      }
+      
+      // If metadata string is gibberish but we have a productId, generate a clean name
+      if (productId && (!metadataString || metadataString.match(/[^a-zA-Z0-9\s-]/g))) {
+        return {
+          name: `Crypto Insurance #${productId}`,
+          description: 'Parametric insurance for cryptocurrency price protection',
+          category: 'Crypto',
+          underlyingAsset: 'CRYPTO',
+          riskLevel: 'MEDIUM' as const,
+          tags: ['insurance', 'parametric', 'crypto']
+        };
+      }
+      
       // Default metadata
       return {
-        name: metadataString || 'Insurance Product',
+        name: metadataString && !metadataString.match(/[^a-zA-Z0-9\s-]/g) ? metadataString : 'Crypto Price Insurance',
         description: 'Parametric insurance product on Kaia',
         category: 'General',
         underlyingAsset: 'CRYPTO',
@@ -312,7 +356,7 @@ export class ProductCatalogService {
     } catch (error) {
       console.error('Error parsing metadata:', error);
       return {
-        name: 'Insurance Product',
+        name: productId ? `Crypto Insurance #${productId}` : 'Crypto Price Insurance',
         description: 'Parametric insurance product',
         category: 'General',
         underlyingAsset: 'UNKNOWN',

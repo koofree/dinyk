@@ -6,6 +6,7 @@ import { InsuranceSummaryCard } from "@/components/insurance/InsuranceSummaryCar
 import { useWeb3 } from "@/context/Web3Provider";
 import { useContracts, useContractFactory, useProducts } from "@dinsure/contracts";
 import { KAIA_TESTNET } from "@/lib/constants";
+import { getProductName, getUnderlyingAsset } from "@/utils/productHelpers";
 import type { Product } from "@dinsure/contracts";
 
 export default function InsurancePage() {
@@ -18,10 +19,15 @@ export default function InsurancePage() {
   const handleViewTranches = (productId: number) => {
     // Navigate to tranche tab with product filter
     const product = products.find(p => p.productId === productId);
-    if (product && product.name) {
-      // Get product name for URL parameter
-      const productName = product.name.toLowerCase().replace(/\s+/g, '-');
-      router.push(`/tranche?insurance=${productName}&productId=${productId}`);
+    if (product) {
+      // Get product name for URL parameter using helper
+      const productName = getProductName(product);
+      if (productName && productName !== `Product ${productId}`) {
+        const urlName = productName.toLowerCase().replace(/\s+/g, '-');
+        router.push(`/tranche?insurance=${urlName}&productId=${productId}`);
+      } else {
+        router.push(`/tranche?productId=${productId}`);
+      }
     } else {
       router.push('/tranche');
     }

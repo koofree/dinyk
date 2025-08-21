@@ -2,41 +2,44 @@
 
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import { Product, Tranche, formatCurrency, formatPercentage, formatTimeRemaining, TriggerType } from "@dinsure/contracts";
 import { useWeb3 } from "@/context/Web3Provider";
-import { useProvideLiquidity } from "@/hooks/useProvideLiquidity";
+import { useBuyInsurance } from "@/hooks/useBuyInsurance";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import type { TrancheDetails, RoundDetails } from "@/hooks/useTrancheData";
 
-interface LiquidityModalProps {
-  product: Product | null;
-  tranche: Tranche | null;
+interface EnhancedPurchaseModalProps {
+  trancheData: TrancheDetails | null;
+  roundId: number | null;
   isOpen: boolean;
   onClose: () => void;
-  onConfirm?: (amount: string) => void;
+  onSuccess?: () => void;
 }
 
-export const LiquidityModal: React.FC<LiquidityModalProps> = ({
-  product,
-  tranche,
+export const EnhancedPurchaseModal: React.FC<EnhancedPurchaseModalProps> = ({
+  trancheData,
+  roundId,
   isOpen,
   onClose,
-  onConfirm
+  onSuccess
 }) => {
   const { isConnected, account } = useWeb3();
   const { 
-    provideLiquidity,
-    calculateYield,
+    buyInsurance, 
+    calculatePremium, 
     checkBalance,
     loading,
     approving,
     error 
-  } = useProvideLiquidity();
+  } = useBuyInsurance();
 
   const [amount, setAmount] = useState("");
   const [usdtBalance, setUsdtBalance] = useState<string>("0");
   const [step, setStep] = useState<'input' | 'review' | 'approving' | 'processing' | 'success'>('input');
   const [txHash, setTxHash] = useState<string>("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+
+  // Find the selected round
+  const selectedRound = trancheData?.rounds.find(r => r.roundId === roundId);
 
   // Load USDT balance
   useEffect(() => {
@@ -59,19 +62,20 @@ export const LiquidityModal: React.FC<LiquidityModalProps> = ({
     }
   }, [isOpen]);
 
-  if (!isOpen || !product || !tranche) return null;
+  if (!isOpen || !trancheData || !selectedRound) return null;
 
-  // For the modal, we need to get the active round
-  const activeRound = tranche.rounds?.find(r => 
-    r.stateName === 'OPEN' || r.stateName === 'ANNOUNCED' || r.stateName === 'ACTIVE'
-  );
-
-  if (!activeRound) return null;
-
-  // Calculate yield info
-  const yieldInfo = amount && !isNaN(parseFloat(amount)) 
-    ? calculateYield(amount, tranche.premiumRateBps, tranche.maturityTimestamp)
+  // Calculate premium and total
+  const premium = amount && !isNaN(parseFloat(amount)) 
+    ? calculatePremium(amount, trancheData.premiumRateBps)
     : null;
+
+  const premiumDisplay = premium 
+    ? ethers.formatUnits(premium.premiumAmount, 6)
+    : "0";
+  
+  const totalDisplay = premium 
+    ? ethers.formatUnits(premium.totalCost, 6)
+    : "0";
 
   const handleContinue = () => {
     if (!amount || parseFloat(amount) <= 0) return;
@@ -83,22 +87,14 @@ export const LiquidityModal: React.FC<LiquidityModalProps> = ({
   };
 
   const handleConfirm = async () => {
-    if (!amount || !activeRound || !termsAccepted) return;
+    if (!amount || !selectedRound || !termsAccepted) return;
     
     setStep('processing');
     
     try {
-      const result = await provideLiquidity({
-        tranche: {
-          trancheId: tranche.trancheId,
-          poolAddress: tranche.poolAddress || ethers.ZeroAddress,
-          premiumRateBps: tranche.premiumRateBps,
-          threshold: tranche.threshold,
-          triggerType: tranche.triggerType,
-          maturityTimestamp: tranche.maturityTimestamp,
-          rounds: tranche.rounds || []
-        },
-        round: activeRound,
+      const result = await buyInsurance({
+        tranche: trancheData,
+        round: selectedRound,
         amount
       });
       
@@ -107,20 +103,20 @@ export const LiquidityModal: React.FC<LiquidityModalProps> = ({
       
       // Call success callback after a delay
       setTimeout(() => {
-        onConfirm?.(amount);
+        onSuccess?.();
         onClose();
       }, 3000);
     } catch (err) {
-      console.error("Liquidity provision failed:", err);
+      console.error("Purchase failed:", err);
       setStep('review');
-      alert(`Liquidity provision failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      alert(`Purchase failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
   // Format trigger price for display
-  const triggerPrice = Number(ethers.formatEther(tranche.threshold));
-  const triggerType = tranche.triggerType === TriggerType.PRICE_BELOW ? "Price Below" : 
-                     tranche.triggerType === TriggerType.PRICE_ABOVE ? "Price Above" : "Custom";
+  const triggerPrice = Number(ethers.formatEther(trancheData.threshold));
+  const triggerType = trancheData.triggerType === 0 ? "Price Below" : 
+                     trancheData.triggerType === 1 ? "Price Above" : "Custom";
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -128,8 +124,8 @@ export const LiquidityModal: React.FC<LiquidityModalProps> = ({
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-white">
-              {step === 'input' ? 'Provide Liquidity' : 
-               step === 'review' ? 'Review Liquidity' : 
+              {step === 'input' ? 'Buy Insurance' : 
+               step === 'review' ? 'Review Purchase' : 
                step === 'approving' ? 'Approving USDT...' :
                step === 'processing' ? 'Processing...' : 
                'Success!'}
@@ -147,12 +143,12 @@ export const LiquidityModal: React.FC<LiquidityModalProps> = ({
             <>
               <div className="bg-gray-700 rounded-lg p-4 mb-6">
                 <h3 className="text-white font-medium mb-2">
-                  {product.metadata?.name || `Product #${product.productId}`} - Round #{activeRound.roundId}
+                  Tranche {trancheData.trancheId} - Round #{selectedRound.roundId}
                 </h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Status:</span>
-                    <span className="text-white">{activeRound.stateName}</span>
+                    <span className="text-white">{selectedRound.stateName}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Trigger:</span>
@@ -162,19 +158,19 @@ export const LiquidityModal: React.FC<LiquidityModalProps> = ({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Premium Rate:</span>
-                    <span className="text-white">{tranche.premiumRateBps / 100}%</span>
+                    <span className="text-white">{trancheData.premiumRateBps / 100}%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Maturity:</span>
                     <span className="text-white">
-                      {new Date(tranche.maturityTimestamp * 1000).toLocaleDateString()}
+                      {new Date(trancheData.maturityTimestamp * 1000).toLocaleDateString()}
                     </span>
                   </div>
-                  {activeRound.economics && (
+                  {selectedRound.economics && (
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Total Demand:</span>
+                      <span className="text-gray-400">Pool Size:</span>
                       <span className="text-white">
-                        ${Number(ethers.formatUnits(activeRound.economics.totalBuyerPurchases, 6)).toLocaleString()}
+                        ${Number(ethers.formatUnits(selectedRound.economics.totalSellerCollateral, 6)).toLocaleString()}
                       </span>
                     </div>
                   )}
@@ -183,7 +179,7 @@ export const LiquidityModal: React.FC<LiquidityModalProps> = ({
 
               <div className="mb-6">
                 <label className="block text-white font-medium mb-2">
-                  Collateral Amount (USDT)
+                  Coverage Amount (USDT)
                 </label>
                 <div className="relative">
                   <input
@@ -208,32 +204,21 @@ export const LiquidityModal: React.FC<LiquidityModalProps> = ({
                 </div>
               </div>
 
-              {yieldInfo && parseFloat(amount) > 0 && (
+              {amount && parseFloat(amount) > 0 && (
                 <div className="bg-gray-700 rounded-lg p-4 mb-6">
-                  <h4 className="text-white font-medium mb-3">Yield Analysis</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Collateral:</span>
+                      <span className="text-gray-400">Coverage:</span>
                       <span className="text-white">{parseFloat(amount).toFixed(2)} USDT</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Premium Rate:</span>
-                      <span className="text-white">{yieldInfo.premiumRate}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Days to Maturity:</span>
-                      <span className="text-white">{yieldInfo.daysToMaturity.toFixed(0)} days</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Annualized Yield:</span>
-                      <span className="text-green-400">{yieldInfo.annualizedYield.toFixed(2)}% APR</span>
+                      <span className="text-gray-400">Premium ({trancheData.premiumRateBps / 100}%):</span>
+                      <span className="text-white">{parseFloat(premiumDisplay).toFixed(2)} USDT</span>
                     </div>
                     <div className="border-t border-gray-600 pt-2 mt-2">
                       <div className="flex justify-between font-medium">
-                        <span className="text-white">Potential Earnings:</span>
-                        <span className="text-green-400">
-                          +{ethers.formatUnits(yieldInfo.potentialEarnings, 6)} USDT
-                        </span>
+                        <span className="text-white">Total Payment:</span>
+                        <span className="text-white">{parseFloat(totalDisplay).toFixed(2)} USDT</span>
                       </div>
                     </div>
                   </div>
@@ -258,43 +243,41 @@ export const LiquidityModal: React.FC<LiquidityModalProps> = ({
             </>
           )}
 
-          {step === 'review' && yieldInfo && (
+          {step === 'review' && (
             <>
               <div className="bg-gray-700 rounded-lg p-4 mb-6">
-                <h3 className="text-white font-medium mb-4">Review Your Liquidity Provision</h3>
+                <h3 className="text-white font-medium mb-4">Review Your Insurance Purchase</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Tranche:</span>
-                    <span className="text-white">#{tranche.trancheId}</span>
+                    <span className="text-white">#{trancheData.trancheId}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Round:</span>
-                    <span className="text-white">#{activeRound.roundId}</span>
+                    <span className="text-white">#{selectedRound.roundId}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Collateral Amount:</span>
+                    <span className="text-gray-400">Coverage Amount:</span>
                     <span className="text-white">{parseFloat(amount).toFixed(2)} USDT</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Expected Premium:</span>
-                    <span className="text-green-400">
-                      +{ethers.formatUnits(yieldInfo.potentialEarnings, 6)} USDT
-                    </span>
+                    <span className="text-gray-400">Premium:</span>
+                    <span className="text-white">{parseFloat(premiumDisplay).toFixed(2)} USDT</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Annualized Yield:</span>
-                    <span className="text-green-400">{yieldInfo.annualizedYield.toFixed(2)}% APR</span>
+                    <span className="text-gray-400">Total Payment:</span>
+                    <span className="text-white font-medium">{parseFloat(totalDisplay).toFixed(2)} USDT</span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-yellow-900/20 border border-yellow-600 rounded-lg p-4 mb-6">
-                <h4 className="text-yellow-400 font-medium mb-2">⚠️ Risk Disclosure</h4>
+                <h4 className="text-yellow-400 font-medium mb-2">⚠️ Important</h4>
                 <ul className="text-yellow-300 text-sm space-y-1">
-                  <li>• Your collateral is at risk if the trigger condition is met</li>
-                  <li>• You will pay out insurance claims from your collateral</li>
-                  <li>• Funds are locked until round settlement</li>
-                  <li>• You will receive pool shares representing your position</li>
+                  <li>• Insurance coverage begins when round becomes ACTIVE</li>
+                  <li>• Payout is automatic if trigger condition is met</li>
+                  <li>• Premium is non-refundable once paid</li>
+                  <li>• You will receive an NFT token as proof of insurance</li>
                 </ul>
               </div>
 
@@ -307,7 +290,7 @@ export const LiquidityModal: React.FC<LiquidityModalProps> = ({
                   className="rounded"
                 />
                 <label htmlFor="terms" className="text-white text-sm">
-                  I understand the risks and accept the terms
+                  I understand and accept the terms and conditions
                 </label>
               </div>
 
@@ -324,7 +307,7 @@ export const LiquidityModal: React.FC<LiquidityModalProps> = ({
                   disabled={loading || !termsAccepted}
                   className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:bg-gray-600"
                 >
-                  Confirm Liquidity
+                  Confirm Purchase
                 </button>
               </div>
             </>
@@ -350,9 +333,9 @@ export const LiquidityModal: React.FC<LiquidityModalProps> = ({
           {step === 'success' && (
             <div className="text-center py-8">
               <div className="text-green-400 text-6xl mb-4">✓</div>
-              <h3 className="text-white font-medium text-xl mb-2">Liquidity Provided!</h3>
+              <h3 className="text-white font-medium text-xl mb-2">Purchase Successful!</h3>
               <p className="text-gray-400 mb-4">
-                Your liquidity has been successfully added to the pool.
+                Your insurance coverage has been purchased successfully.
               </p>
               {txHash && (
                 <div className="bg-gray-700 rounded-lg p-3 mb-4">
@@ -368,7 +351,7 @@ export const LiquidityModal: React.FC<LiquidityModalProps> = ({
                 </div>
               )}
               <p className="text-gray-400 text-sm">
-                You will receive pool shares representing your position.
+                You will receive an insurance NFT token shortly.
               </p>
             </div>
           )}

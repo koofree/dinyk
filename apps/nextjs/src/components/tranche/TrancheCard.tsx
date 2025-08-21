@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { Product, Tranche } from "@dinsure/contracts";
+import { getTrancheName, getTrancheShortName, getProductName } from "@/utils/productHelpers";
 
 interface TrancheCardProps {
   product: Product;
@@ -16,11 +17,13 @@ export const TrancheCard: React.FC<TrancheCardProps> = ({
   onBuyInsurance,
   onProvideLiquidity 
 }) => {
+  // Get names using helpers
+  const trancheName = getTrancheName(tranche, product);
+  const shortName = getTrancheShortName(tranche, product);
+  
   // Mock data - in real implementation, this would come from contract calls
-  const trancheName = tranche.name || tranche.trancheId?.toString() || 'Unknown';
-  const triggerMatch = trancheName.match(/-(\d+)%/);
   const mockData = {
-    premiumRate: (triggerMatch ? parseInt(triggerMatch[1]) : 10) / 2, // Simplified calculation
+    premiumRate: tranche.premiumRateBps / 100, // Use actual premium rate from tranche
     poolTVL: 650000 + Math.random() * 400000, // Mock TVL between 650K-1M
     capacity: 100000 - Math.random() * 50000, // Mock capacity
     utilization: Math.random() * 80 + 20, // Mock utilization 20-100%
@@ -60,7 +63,7 @@ export const TrancheCard: React.FC<TrancheCardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-semibold text-white">
-          {(product.name || 'Unknown Product').replace('Protection', `${trancheName} Protection`)}
+          {shortName}
         </h3>
         <div className="text-sm text-gray-400">
           ID: {tranche.trancheId}

@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { Product } from "@dinsure/contracts";
+import { getProductName } from "@/utils/productHelpers";
 
 interface TrancheFilters {
   insuranceProduct: number | null;
@@ -49,7 +50,7 @@ export const TrancheFilters: React.FC<TrancheFiltersProps> = ({
             <option value="all">All Products</option>
             {products.map(product => (
               <option key={product.productId} value={product.productId}>
-                {product.name}
+                {getProductName(product)}
               </option>
             ))}
           </select>
@@ -87,7 +88,10 @@ export const TrancheFilters: React.FC<TrancheFiltersProps> = ({
           <span className="text-gray-400">Active filters:</span>
           {filters.insuranceProduct && (
             <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs">
-              {products.find(p => p.productId === filters.insuranceProduct)?.name || 'Unknown Product'}
+              {(() => {
+                const product = products.find(p => p.productId === filters.insuranceProduct);
+                return product ? getProductName(product) : 'Unknown Product';
+              })()}
             </span>
           )}
           {filters.status !== 'all' && (

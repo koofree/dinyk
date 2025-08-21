@@ -25,7 +25,17 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [step, setStep] = useState<'input' | 'review' | 'processing'>('input');
 
-  if (!isOpen || !product || !tranche) return null;
+  console.log('PurchaseModal render:', { isOpen, product, tranche });
+  
+  if (!isOpen) return null;
+  if (!product) {
+    console.warn('PurchaseModal: No product provided');
+    return null;
+  }
+  if (!tranche) {
+    console.warn('PurchaseModal: No tranche provided');
+    return null;
+  }
 
   const calculatePremium = (coverageAmount: string) => {
     if (!coverageAmount || isNaN(parseFloat(coverageAmount))) return "0";

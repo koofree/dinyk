@@ -2,7 +2,13 @@
 
 import React from "react";
 import type { Product, Tranche } from "@dinsure/contracts";
-import { ethers } from "ethers";
+import { 
+  getProductName, 
+  getProductDescription, 
+  getProductIcon, 
+  isBTCProduct,
+  isETHProduct 
+} from "@/utils/productHelpers";
 
 interface InsuranceSummaryCardProps {
   product: Product;
@@ -15,6 +21,11 @@ export const InsuranceSummaryCard: React.FC<InsuranceSummaryCardProps> = ({
   tranches,
   onViewTranches 
 }) => {
+  // Get product info using helpers
+  const productName = getProductName(product);
+  const productDescription = getProductDescription(product);
+  const productIcon = getProductIcon(product);
+  
   // Calculate aggregated statistics
   const activeTranches = tranches.length;
   const totalTVL = tranches.reduce((sum, tranche) => {
@@ -22,40 +33,26 @@ export const InsuranceSummaryCard: React.FC<InsuranceSummaryCardProps> = ({
     return sum + 850000; // Mock TVL per tranche
   }, 0);
   
-  // Calculate premium range
+  // Calculate premium range from actual tranche data
   const premiumRates = tranches.map(tranche => {
-    // Extract premium rate from tranche data - this is a simplified calculation
-    // In real implementation, this would come from the tranche specification
-    const trancheName = tranche.name || tranche.trancheId?.toString() || 'Unknown';
-    const triggerMatch = trancheName.match(/-(\d+)%/);
-    const triggerPercent = triggerMatch ? parseInt(triggerMatch[1]) : 10;
-    return triggerPercent / 2; // Simplified premium calculation
+    return tranche.premiumRateBps / 100; // Convert basis points to percentage
   });
   
   const minPremium = premiumRates.length > 0 ? Math.min(...premiumRates) : 2;
   const maxPremium = premiumRates.length > 0 ? Math.max(...premiumRates) : 10;
   
-  // Get asset icon
-  const getAssetIcon = (name: string) => {
-    if (!name) return '💰';
-    if (name.includes('BTC') || name.includes('Bitcoin')) return '🪙';
-    if (name.includes('ETH') || name.includes('Ethereum')) return '⚡';
-    return '💰';
-  };
-  
   // Mock current price and change - in real app this would come from oracle
-  const productName = product.name || '';
-  const currentPrice = productName.includes('BTC') ? 45234 : 2456;
-  const priceChange = productName.includes('BTC') ? 2.3 : -1.2;
+  const currentPrice = isBTCProduct(product) ? 45234 : isETHProduct(product) ? 2456 : 1000;
+  const priceChange = isBTCProduct(product) ? 2.3 : isETHProduct(product) ? -1.2 : 0;
   
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 hover:border-gray-600 transition-colors">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="text-3xl">{getAssetIcon(productName)}</div>
+        <div className="text-3xl">{productIcon}</div>
         <div>
-          <h3 className="text-xl font-semibold text-white">{productName || 'Unknown Product'}</h3>
-          <p className="text-gray-400 text-sm">{product.description || 'No description available'}</p>
+          <h3 className="text-xl font-semibold text-white">{productName}</h3>
+          <p className="text-gray-400 text-sm">{productDescription}</p>
         </div>
       </div>
       
