@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useWeb3 } from "@/context/Web3Provider";
-import { ProviderType, KAIA_MAINNET } from "@/lib/constants";
+import { ProviderType, ACTIVE_NETWORK } from "@/lib/constants";
 
 export const WalletButton: React.FC = () => {
   const { 
@@ -53,7 +53,7 @@ export const WalletButton: React.FC = () => {
   }
 
   if (isConnected && account) {
-    const isWrongNetwork = chainId !== KAIA_MAINNET.chainId;
+    const isWrongNetwork = chainId !== ACTIVE_NETWORK.chainId;
     
     if (isWrongNetwork) {
       return (
@@ -62,7 +62,7 @@ export const WalletButton: React.FC = () => {
             onClick={handleNetworkSwitch}
             className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition-colors"
           >
-            Switch to Kaia
+            Switch to {ACTIVE_NETWORK.name}
           </button>
           <button
             onClick={disconnectWallet}

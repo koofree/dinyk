@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import { Web3Provider as KaiaWeb3Provider } from "@kaiachain/ethers-ext/v6";
 import { ethers } from "ethers";
-import { KAIA_MAINNET, switchToKaiaNetwork, STORAGE_KEYS, ProviderType } from "@/lib/constants";
+import { ACTIVE_NETWORK, switchToKaiaNetwork, STORAGE_KEYS, ProviderType } from "@/lib/constants";
 
 // Context type
 interface Web3ContextType {
@@ -70,7 +70,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setChainId(newChainId);
       
       // Update provider if we're on the correct network
-      if (newChainId === KAIA_MAINNET.chainId && provider && account) {
+      if (newChainId === ACTIVE_NETWORK.chainId && provider && account) {
         const storedProviderType = sessionStorage.getItem(STORAGE_KEYS.PROVIDER_TYPE) as ProviderType;
         const detectedProvider = detectProvider(storedProviderType);
         if (detectedProvider) {
@@ -78,8 +78,8 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setProvider(newProvider);
           updateBalance(newProvider, account);
         }
-      } else if (newChainId !== KAIA_MAINNET.chainId) {
-        setError(new Error(`Please switch to ${KAIA_MAINNET.name} network`));
+      } else if (newChainId !== ACTIVE_NETWORK.chainId) {
+        setError(new Error(`Please switch to ${ACTIVE_NETWORK.name} network`));
       }
     };
 
@@ -181,7 +181,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const currentChainIdHex = await detectedProvider.request({ method: 'eth_chainId' });
       const currentChainId = parseInt(currentChainIdHex, 16);
       
-      if (currentChainId !== KAIA_MAINNET.chainId) {
+      if (currentChainId !== ACTIVE_NETWORK.chainId) {
         await switchToKaiaNetwork();
         // Wait for network switch to complete
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -201,8 +201,8 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const network = await web3Provider.getNetwork();
       const finalChainId = Number(network.chainId);
       
-      if (finalChainId !== KAIA_MAINNET.chainId) {
-        throw new Error(`Please switch to ${KAIA_MAINNET.name} network (Chain ID: ${KAIA_MAINNET.chainId})`);
+      if (finalChainId !== ACTIVE_NETWORK.chainId) {
+        throw new Error(`Please switch to ${ACTIVE_NETWORK.name} network (Chain ID: ${ACTIVE_NETWORK.chainId})`);
       }
 
       // Set state

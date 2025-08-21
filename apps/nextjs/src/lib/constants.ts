@@ -1,3 +1,6 @@
+// Get the current network environment
+const isTestnet = process.env.NEXT_PUBLIC_NETWORK_ENV === 'testnet';
+
 // Kaia Mainnet configuration (Official specifications)
 export const KAIA_MAINNET = {
   chainId: 8217,
@@ -12,18 +15,46 @@ export const KAIA_MAINNET = {
   wsUrl: 'wss://public-en.node.kaia.io/ws',
   blockExplorer: 'https://kaiascan.io',
   contracts: {
-    insurance: process.env.NEXT_PUBLIC_INSURANCE_CONTRACT || '0x742d35Cc64C9b16b2E4517b44b6BBAe6C4e3b5C5',
-    treasury: process.env.NEXT_PUBLIC_TREASURY_CONTRACT || '0x9f1B8F0A8aA8A8aA8A8aA8A8aA8A8aA8A8aA8A8a',
-    tranchePool: process.env.NEXT_PUBLIC_TRANCHE_POOL_CONTRACT || '0x1234567890abcdef1234567890abcdef12345678',
+    insurance: process.env.NEXT_PUBLIC_MAINNET_INSURANCE_CONTRACT || '0x742d35Cc64C9b16b2E4517b44b6BBAe6C4e3b5C5',
+    treasury: process.env.NEXT_PUBLIC_MAINNET_TREASURY_CONTRACT || '0x9f1B8F0A8aA8A8aA8A8aA8A8aA8A8aA8A8aA8A8a',
+    tranchePool: process.env.NEXT_PUBLIC_MAINNET_TRANCHE_POOL_CONTRACT || '0x1234567890abcdef1234567890abcdef12345678',
   }
 } as const;
 
+// Kaia Testnet (Kairos) configuration
+export const KAIA_TESTNET = {
+  chainId: 1001,
+  chainIdHex: '0x3e9',
+  name: 'Kaia Kairos',
+  currency: {
+    name: 'Kaia',
+    symbol: 'KAIA',
+    decimals: 18,
+  },
+  rpcUrl: 'https://public-en-kairos.node.kaia.io',
+  wsUrl: 'wss://public-en-kairos.node.kaia.io/ws',
+  blockExplorer: 'https://kairos.kaiascan.io',
+  contracts: {
+    insurance: process.env.NEXT_PUBLIC_TESTNET_INSURANCE_CONTRACT || '0xTestInsuranceContract123456789012345678',
+    treasury: process.env.NEXT_PUBLIC_TESTNET_TREASURY_CONTRACT || '0xTestTreasuryContract1234567890123456789',
+    tranchePool: process.env.NEXT_PUBLIC_TESTNET_TRANCHE_POOL_CONTRACT || '0xTestTranchePool12345678901234567890123',
+  }
+} as const;
+
+// Active network configuration based on environment
+export const ACTIVE_NETWORK = isTestnet ? KAIA_TESTNET : KAIA_MAINNET;
+
 // Alternative RPC endpoints for failover
-export const KAIA_RPC_ENDPOINTS = [
-  'https://public-en.node.kaia.io',
-  'https://archive-en.node.kaia.io',
-  'https://rpc.ankr.com/klaytn',
-] as const;
+export const KAIA_RPC_ENDPOINTS = isTestnet 
+  ? [
+      'https://public-en-kairos.node.kaia.io',
+      'https://rpc.ankr.com/klaytn_testnet',
+    ] as const
+  : [
+      'https://public-en.node.kaia.io',
+      'https://archive-en.node.kaia.io',
+      'https://rpc.ankr.com/klaytn',
+    ] as const;
 
 // Provider types
 export enum ProviderType {
@@ -45,10 +76,12 @@ export const switchToKaiaNetwork = async () => {
     throw new Error("No wallet detected");
   }
 
+  const targetNetwork = ACTIVE_NETWORK;
+
   try {
     await window.ethereum.request({
       method: 'wallet_switchEthereumChain',
-      params: [{ chainId: KAIA_MAINNET.chainIdHex }],
+      params: [{ chainId: targetNetwork.chainIdHex }],
     });
   } catch (switchError: any) {
     // Network not added, add it
@@ -56,11 +89,11 @@ export const switchToKaiaNetwork = async () => {
       await window.ethereum.request({
         method: 'wallet_addEthereumChain',
         params: [{
-          chainId: KAIA_MAINNET.chainIdHex,
-          chainName: KAIA_MAINNET.name,
-          nativeCurrency: KAIA_MAINNET.currency,
-          rpcUrls: [KAIA_MAINNET.rpcUrl, ...KAIA_RPC_ENDPOINTS.slice(1)],
-          blockExplorerUrls: [KAIA_MAINNET.blockExplorer],
+          chainId: targetNetwork.chainIdHex,
+          chainName: targetNetwork.name,
+          nativeCurrency: targetNetwork.currency,
+          rpcUrls: [targetNetwork.rpcUrl],
+          blockExplorerUrls: [targetNetwork.blockExplorer],
         }],
       });
     } else {

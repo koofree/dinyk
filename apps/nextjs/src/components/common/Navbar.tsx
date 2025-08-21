@@ -7,6 +7,7 @@ import { WalletButton } from "@/components/web3/WalletButton";
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
+  const isTestnet = process.env.NEXT_PUBLIC_NETWORK_ENV === 'testnet';
 
   const navigation = [
     { name: 'Insurance', href: '/insurance', icon: '🛡️' },
@@ -54,6 +55,11 @@ export const Navbar: React.FC = () => {
 
           {/* Right side */}
           <div className="flex items-center gap-4">
+            {isTestnet && (
+              <div className="px-3 py-1 bg-yellow-600/20 text-yellow-400 rounded-lg text-sm font-medium">
+                Testnet
+              </div>
+            )}
             <WalletButton />
           </div>
 
