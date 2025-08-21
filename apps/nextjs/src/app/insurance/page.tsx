@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { ProductCard } from "@/components/insurance/ProductCard";
 import { PurchaseModal } from "@/components/insurance/PurchaseModal";
 import { useWeb3 } from "@/context/Web3Provider";
-import { MOCK_INSURANCE_PRODUCTS } from "@/lib/constants";
+import { INSURANCE_PRODUCTS, KAIA_TESTNET } from "@/lib/constants";
 import type { InsuranceProduct, InsuranceTranche } from "@/lib/types";
 
 export default function InsurancePage() {
@@ -40,22 +40,27 @@ export default function InsurancePage() {
     alert(`Successfully purchased ${amount} USDT coverage!`);
   };
 
-  const assets = ['All', ...new Set(MOCK_INSURANCE_PRODUCTS.map(p => p.asset))];
-  const triggers = ['All', '-5%', '-10%', '-15%', '-20%'];
-  const durations = ['All', '7 days', '14 days', '30 days'];
+  const assets = ['All', ...new Set(INSURANCE_PRODUCTS.map(p => p.asset))];
+  const triggers = ['All', 'Below $110K', 'Below $100K', 'Below $90K', 'Above $130K'];
+  const durations = ['All', '30 days'];
 
-  const filteredProducts = MOCK_INSURANCE_PRODUCTS.filter(product => {
+  const filteredProducts = INSURANCE_PRODUCTS.filter(product => {
     if (filter.asset !== 'All' && product.asset !== filter.asset) return false;
     
     if (filter.trigger !== 'All') {
-      const triggerValue = parseInt(filter.trigger.replace('%', ''));
-      const hasTrigger = product.tranches.some(t => t.triggerLevel === triggerValue);
+      const hasTrigger = product.tranches.some(t => {
+        if (filter.trigger.includes('Below $110K')) return t.triggerPrice === 110000;
+        if (filter.trigger.includes('Below $100K')) return t.triggerPrice === 100000;
+        if (filter.trigger.includes('Below $90K')) return t.triggerPrice === 90000;
+        if (filter.trigger.includes('Above $130K')) return t.triggerPrice === 130000;
+        return false;
+      });
       if (!hasTrigger) return false;
     }
     
     if (filter.duration !== 'All') {
       const durationDays = parseInt(filter.duration.split(' ')[0]);
-      const hasDuration = product.tranches.some(t => t.expiry === durationDays);
+      const hasDuration = product.tranches.some(t => t.maturityDays === durationDays);
       if (!hasDuration) return false;
     }
     
@@ -67,10 +72,21 @@ export default function InsurancePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-4">Insurance Catalog</h1>
+          <h1 className="text-3xl font-bold text-white mb-4">DIN Insurance Catalog</h1>
           <p className="text-gray-400">
-            Choose from our parametric insurance products to protect your crypto assets
+            Live on Kaia Testnet - Choose parametric insurance to protect against price movements
           </p>
+          <div className="mt-2 flex items-center gap-4 text-sm">
+            <span className="text-green-400">● Connected to {KAIA_TESTNET.name}</span>
+            <a 
+              href={`${KAIA_TESTNET.blockExplorer}/address/${KAIA_TESTNET.contracts.productCatalog}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300"
+            >
+              View Contracts ↗
+            </a>
+          </div>
         </div>
 
         {/* Filters */}

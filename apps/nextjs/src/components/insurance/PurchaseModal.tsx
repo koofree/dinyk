@@ -200,8 +200,8 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                     <span className="text-white">${premium} USDT</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Expiry:</span>
-                    <span className="text-white">{tranche.expiry} days</span>
+                    <span className="text-gray-400">Maturity:</span>
+                    <span className="text-white">{tranche.maturityDays} days</span>
                   </div>
                 </div>
               </div>

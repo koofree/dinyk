@@ -3,7 +3,68 @@
 import React, { useState } from "react";
 import { PositionCard } from "@/components/insurance/PositionCard";
 import { useWeb3 } from "@/context/Web3Provider";
-import { MOCK_USER_POSITIONS, MOCK_LP_POSITIONS } from "@/lib/constants";
+import { KAIA_TESTNET } from "@/lib/constants";
+import type { UserPosition } from "@/lib/types";
+
+// Mock NFT positions - would be fetched from InsuranceToken contract
+const MOCK_NFT_POSITIONS: UserPosition[] = [
+  {
+    id: 'nft-1',
+    tokenId: 1,
+    asset: 'BTC',
+    type: 'insurance',
+    tranche: 'Conservative Downside',
+    trancheId: 1,
+    roundId: 1,
+    coverage: '5000',
+    premiumPaid: '150',
+    status: 'active',
+    expiresIn: 25,
+    currentPrice: 115000,
+    triggerPrice: 110000,
+    baseline: 120000,
+    roundState: 'ACTIVE',
+    maturityTimestamp: Date.now() + 25 * 24 * 60 * 60 * 1000
+  },
+  {
+    id: 'nft-2',
+    tokenId: 2,
+    asset: 'BTC',
+    type: 'insurance',
+    tranche: 'Moderate Downside',
+    trancheId: 2,
+    roundId: 1,
+    coverage: '10000',
+    premiumPaid: '500',
+    status: 'active',
+    expiresIn: 25,
+    currentPrice: 115000,
+    triggerPrice: 100000,
+    baseline: 120000,
+    roundState: 'ACTIVE'
+  }
+];
+
+// Mock liquidity positions - would be fetched from TranchePoolCore
+const MOCK_LP_POSITIONS: UserPosition[] = [
+  {
+    id: 'lp-1',
+    asset: 'BTC',
+    type: 'liquidity',
+    tranche: 'Conservative Downside',
+    trancheId: 1,
+    roundId: 1,
+    deposited: '20000',
+    shares: '20000',
+    currentValue: '20400',
+    earnedPremium: '300',
+    stakingRewards: '100',
+    lockedAmount: '15000',
+    roundStatus: 'active',
+    roundState: 'ACTIVE',
+    daysLeft: 25
+  }
+];
 
 export default function PortfolioPage() {
   const { isConnected, account } = useWeb3();
@@ -39,7 +100,7 @@ export default function PortfolioPage() {
     );
   }
 
-  const insurancePositions = MOCK_USER_POSITIONS.filter(p => p.type === 'insurance');
+  const insurancePositions = MOCK_NFT_POSITIONS.filter(p => p.type === 'insurance');
   const liquidityPositions = MOCK_LP_POSITIONS.filter(p => p.type === 'liquidity');
 
   const totalInsuranceCoverage = insurancePositions.reduce((sum, pos) => {
@@ -59,21 +120,43 @@ export default function PortfolioPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-4">My Portfolio</h1>
+          <h1 className="text-3xl font-bold text-white mb-4">My DIN Portfolio</h1>
           <p className="text-gray-400">
-            Manage your insurance policies and liquidity positions
+            Manage your insurance NFTs and liquidity positions
           </p>
+          <div className="mt-2 flex items-center gap-4 text-sm">
+            <span className="text-green-400">● Connected: {account?.slice(0, 6)}...{account?.slice(-4)}</span>
+            <a 
+              href={`${KAIA_TESTNET.blockExplorer}/address/${account}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300"
+            >
+              View on Explorer ↗
+            </a>
+            <a 
+              href={`${KAIA_TESTNET.blockExplorer}/token/${KAIA_TESTNET.contracts.insuranceToken}?a=${account}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300"
+            >
+              View NFTs ↗
+            </a>
+          </div>
         </div>
 
         {/* Portfolio Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-            <div className="text-gray-400 text-sm mb-2">Total Coverage</div>
+            <div className="text-gray-400 text-sm mb-2">Insurance Coverage</div>
             <div className="text-2xl font-bold text-white">
               ${totalInsuranceCoverage.toLocaleString()} USDT
             </div>
             <div className="text-green-400 text-sm">
-              {insurancePositions.length} active policies
+              {insurancePositions.length} NFT{insurancePositions.length !== 1 ? 's' : ''} held
+            </div>
+            <div className="text-gray-500 text-xs mt-1">
+              InsuranceToken Contract
             </div>
           </div>
 
@@ -83,7 +166,10 @@ export default function PortfolioPage() {
               ${totalLiquidityValue.toLocaleString()} USDT
             </div>
             <div className="text-blue-400 text-sm">
-              {liquidityPositions.length} pool positions
+              {liquidityPositions.length} tranche pool{liquidityPositions.length !== 1 ? 's' : ''}
+            </div>
+            <div className="text-gray-500 text-xs mt-1">
+              TranchePoolCore Shares
             </div>
           </div>
 

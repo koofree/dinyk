@@ -4,22 +4,53 @@ import React, { useState } from "react";
 import { LiquidityPoolCard } from "@/components/insurance/LiquidityPoolCard";
 import { DepositModal } from "@/components/insurance/DepositModal";
 import { useWeb3 } from "@/context/Web3Provider";
+import { INSURANCE_PRODUCTS, KAIA_TESTNET } from "@/lib/constants";
 
 interface LiquidityPool {
-  id: string;
+  id: number; // Tranche ID
+  productId: number;
   asset: string;
-  tranche: string;
-  triggerLevel: number;
+  trancheName: string;
+  triggerPrice: number;
+  triggerType: string;
   expectedPremium: number;
+  premiumRateBps: number;
   stakingAPY: number;
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
-  poolSize: string;
+  poolSize: string; // Total tranche capacity
+  totalLiquidity: string; // Total seller collateral
   userShare: string;
-  utilization: number;
+  utilization: number; // Percentage of matched liquidity
+  roundState: string;
   roundEndsIn: number;
+  navPerShare?: string; // Net Asset Value per share
 }
 
-const MOCK_LIQUIDITY_POOLS: LiquidityPool[] = [
+// Convert insurance products to liquidity pools
+const LIQUIDITY_POOLS: LiquidityPool[] = INSURANCE_PRODUCTS.flatMap(product => 
+  product.tranches.map(tranche => ({
+    id: tranche.id,
+    productId: product.productId,
+    asset: product.asset,
+    trancheName: tranche.name,
+    triggerPrice: tranche.triggerPrice,
+    triggerType: tranche.triggerType,
+    expectedPremium: tranche.premium,
+    premiumRateBps: tranche.premiumRateBps,
+    stakingAPY: 3.5, // Placeholder - would come from yield router
+    riskLevel: tranche.riskLevel,
+    poolSize: tranche.capacity,
+    totalLiquidity: '0', // Would be fetched from contract
+    userShare: '0', // Would be fetched from contract
+    utilization: 0, // Would be calculated from matched/total
+    roundState: tranche.roundState || 'ANNOUNCED',
+    roundEndsIn: 7, // Would be calculated from round end time
+    navPerShare: '1.0' // Would be fetched from pool accounting
+  }))
+);
+
+// Legacy mock data (kept for reference)
+const MOCK_LIQUIDITY_POOLS_OLD: LiquidityPool[] = [
   {
     id: 'btc-5',
     asset: 'BTC',
@@ -120,21 +151,25 @@ export default function LiquidityPage() {
   };
 
   const handleDepositConfirm = async (amount: string) => {
-    console.log(`Depositing ${amount} USDT to ${selectedPool?.asset} ${selectedPool?.tranche}`);
+    console.log(`Depositing ${amount} USDT to ${selectedPool?.asset} ${selectedPool?.trancheName}`);
+    console.log(`Tranche ID: ${selectedPool?.id}, Round State: ${selectedPool?.roundState}`);
     
+    // TODO: Actual contract call to TranchePoolCore.provideLiquidity()
     // Simulate transaction delay
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    alert(`Successfully deposited ${amount} USDT!`);
+    alert(`Successfully deposited ${amount} USDT to tranche #${selectedPool?.id}!`);
   };
 
   const handleWithdraw = async (pool: LiquidityPool) => {
-    console.log(`Withdrawing from ${pool.asset} ${pool.tranche}`);
+    console.log(`Withdrawing from ${pool.asset} ${pool.trancheName}`);
+    console.log(`Tranche ID: ${pool.id}, NAV per share: ${pool.navPerShare}`);
     
+    // TODO: Actual contract call to TranchePoolCore.withdrawLiquidity()
     // Simulate transaction delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    alert(`Successfully withdrew from ${pool.asset} ${pool.tranche}!`);
+    alert(`Successfully withdrew from ${pool.asset} tranche #${pool.id}!`);
   };
 
   const handleAddMore = (pool: LiquidityPool) => {
@@ -142,10 +177,10 @@ export default function LiquidityPage() {
     setIsDepositModalOpen(true);
   };
 
-  const assets = ['All', ...new Set(MOCK_LIQUIDITY_POOLS.map(p => p.asset))];
+  const assets = ['All', ...new Set(LIQUIDITY_POOLS.map(p => p.asset))];
   const riskLevels = ['All', 'LOW', 'MEDIUM', 'HIGH'];
 
-  const filteredPools = MOCK_LIQUIDITY_POOLS.filter(pool => {
+  const filteredPools = LIQUIDITY_POOLS.filter(pool => {
     if (filter.asset !== 'All' && pool.asset !== filter.asset) return false;
     if (filter.riskLevel !== 'All' && pool.riskLevel !== filter.riskLevel) return false;
     return true;
@@ -165,7 +200,21 @@ export default function LiquidityPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-4">Liquidity Provider Dashboard</h1>
+          <h1 className="text-3xl font-bold text-white mb-4">DIN Liquidity Provider Dashboard</h1>
+          <p className="text-gray-400">
+            Provide collateral to insurance pools and earn premiums + staking rewards
+          </p>
+          <div className="mt-2 flex items-center gap-4 text-sm">
+            <span className="text-green-400">● Connected to {KAIA_TESTNET.name}</span>
+            <a 
+              href={`${KAIA_TESTNET.blockExplorer}/address/${KAIA_TESTNET.contracts.poolFactory}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300"
+            >
+              View Pool Factory →
+            </a>
+          </div>
           <p className="text-gray-400">
             Provide liquidity to insurance pools and earn premiums + staking rewards
           </p>
