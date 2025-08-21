@@ -239,5 +239,6 @@ Each insurance product offers multiple risk tranches:
 ## References
 
 - **Whitepaper**: `@docs/whitepaper.md` - Full protocol specification
-- **UI Wireframes**: `@docs/ui-flow-wireframe.md` - Detailed UI flows
-- **Architecture**: `@docs/din-architecture.md` - Complete Web3 technical architecture and implementation guide
+- **UI Architecture**: `@docs/ui-architecture.md` - Complete UI/UX flows with contract integration
+- **Technical Architecture**: `@docs/din-architecture.md` - Web3 technical architecture and implementation guide
+- **Contract Integration**: `@docs/din-contracts-integration.md` - Smart contract integration and package design
