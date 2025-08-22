@@ -68,8 +68,16 @@ export default function InsurancePage() {
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-15 pb-15 mt-16">
         {/* Header */}
+        <div className="mb-16">
+          <h1 className="text-[56px] font-bold text-gray-900 mb-4 font-display">Protect Your Assets,<br />Secure Your Future</h1>
+          <p className="text-gray-600 text-2xl mb-8">
+            <span className="font-bold bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent">As an insurance buyer</span>, you can protect yourself against the risks of asset price fluctuations.
+          </p>
+        </div>
+
+        {/* Section Title */}
         <div className="mb-8">
-          <h1 className="text-[30px] font-bold text-gray-900 mb-4 font-display">Insurance Catalog</h1>
+          <h2 className="text-[30px] font-bold text-gray-900 mb-4 font-display">Insurance Catalog</h2>
           <p className="text-gray-600">
             Choose from our parametric insurance products to protect your crypto assets
           </p>

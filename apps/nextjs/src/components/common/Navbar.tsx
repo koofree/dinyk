@@ -24,9 +24,9 @@ export const Navbar: React.FC = () => {
 
   // 서버사이드 렌더링과 클라이언트 렌더링 간의 불일치를 방지하기 위해 기본값 사용
   const navigation = [
-    { name: t('nav.insurance') || 'Insurance', href: '/insurance' },
-    { name: t('nav.liquidity') || 'Liquidity', href: '/liquidity' },
-    { name: t('nav.portfolio') || 'Portfolio', href: '/portfolio' },
+    { name: 'For Buyer (Insurance)', href: '/insurance' },
+    { name: 'For Seller (Liquidity)', href: '/liquidity' },
+    { name: 'Portfolio', href: '/portfolio' },
   ];
 
   const isActive = (href: string) => {
@@ -35,7 +35,7 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className={`${isScrolled ? 'fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100' : 'relative bg-transparent'} transition-all duration-300`}>
+    <nav className={`${isScrolled ? 'fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm' : 'relative bg-transparent'} transition-all duration-200`}>
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center h-16 relative">
           {/* Logo */}
@@ -47,21 +47,28 @@ export const Navbar: React.FC = () => {
           </Link>
 
           {/* Navigation Links - Centered */}
-          <div className="hidden md:flex items-center space-x-8 absolute left-1/2 transform -translate-x-1/2">
+          <div className="hidden md:flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`text-base font-medium transition-all duration-200 relative group ${
+                className={`px-4 py-2 rounded-lg text-base font-medium transition-all duration-200 ${
                   isActive(item.href)
-                    ? 'text-gray-900'
-                    : 'text-gray-500 hover:text-gray-900'
+                    ? 'text-gray-900 bg-white'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-white'
                 }`}
               >
-                {item.name}
-                <span className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-gray-900 transition-all duration-200 ${
-                  isActive(item.href) ? 'w-full' : 'group-hover:w-full'
-                }`}></span>
+                {item.name === 'For Buyer (Insurance)' ? (
+                  <>
+                    For Buyer <span className="ml-1 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded font-medium">Insurance</span>
+                  </>
+                ) : item.name === 'For Seller (Liquidity)' ? (
+                  <>
+                    For Seller <span className="ml-1 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded font-medium">Liquidity</span>
+                  </>
+                ) : (
+                  item.name
+                )}
               </Link>
             ))}
           </div>

@@ -29,10 +29,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onTrancheSele
         const filledPercentage = Math.round((parseInt(tranche.filled) / parseInt(tranche.capacity)) * 100);
         
         setTimeout(() => {
-          // 0부터 시작해서 목표값까지 순차적으로 증가
+          // 프로그레스바와 수치값 애니메이션을 동시에 시작
           let currentValue = 0;
-          const steps = 30; // 30단계로 나누어 애니메이션
+          const duration = 1500; // 1.5초 (프로그레스바 transition과 동일)
+          const steps = 60; // 60단계로 나누어 애니메이션
           const increment = filledPercentage / steps;
+          const stepDuration = duration / steps; // 각 단계별 시간
+          
           const interval = setInterval(() => {
             currentValue += increment;
             if (currentValue >= filledPercentage) {
@@ -43,7 +46,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onTrancheSele
               ...prev,
               [tranche.id]: Math.round(currentValue)
             }));
-          }, 30); // 30ms마다 업데이트 (더 빠른 애니메이션)
+          }, stepDuration); // 프로그레스바 transition과 동일한 타이밍
         }, index * 300); // 각 tranche마다 300ms씩 지연
       });
     }
