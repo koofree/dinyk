@@ -5,17 +5,13 @@ import { Web3Provider as KaiaWeb3Provider } from "@kaiachain/ethers-ext/v6";
 import { ethers } from "ethers";
 import { ACTIVE_NETWORK, switchToKaiaNetwork, STORAGE_KEYS, ProviderType, KAIA_RPC_ENDPOINTS } from "@/lib/constants";
 import { KAIA_TESTNET_ADDRESSES } from "@dinsure/contracts";
-
-// USDT contract ABI
-const USDT_ABI = [
-  "function balanceOf(address account) view returns (uint256)",
-  "function decimals() view returns (uint8)"
-];
+import { USDT_ABI } from "@/utils/contractABIs";
 
 // Context type
 interface Web3ContextType {
   // State
   provider: KaiaWeb3Provider | undefined;
+  signer: ethers.JsonRpcSigner | null;
   account: string | null;
   chainId: number | null;
   isConnected: boolean;
@@ -41,6 +37,7 @@ const Web3Context = createContext<Web3ContextType | undefined>(undefined);
 
 export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [provider, setProvider] = useState<KaiaWeb3Provider>();
+  const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
   const [account, setAccount] = useState<string | null>(null);
   const [chainId, setChainId] = useState<number | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -192,27 +189,24 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return jsonRpcProvider;
       } catch (error) {
         console.warn(`RPC endpoint ${rpcUrl} failed, trying next...`, error);
-        continue;
       }
     }
     
     throw new Error("All RPC endpoints failed");
   };
 
-  const updateBalance = async (providerInstance: KaiaWeb3Provider, account: string) => {
-    // Always use our reliable RPC endpoints for balance queries instead of wallet provider
+  const updateBalance = async (_providerInstance: KaiaWeb3Provider, accountAddress: string) => {
     try {
       const reliableProvider = await createJsonRpcProviderWithFallback();
-      const balance = await reliableProvider.getBalance(account);
+      const balance = await reliableProvider.getBalance(accountAddress);
       setBalance(ethers.formatEther(balance));
-      console.log(`Balance fetched successfully: ${ethers.formatEther(balance)} KAIA`);
     } catch (err) {
-      console.error("Failed to fetch balance from reliable RPC endpoints:", err);
+      console.error("Failed to fetch balance:", err);
       setBalance("0");
     }
   };
 
-  const updateUSDTBalance = async (providerInstance: KaiaWeb3Provider, accountAddress: string) => {
+  const updateUSDTBalance = async (_providerInstance: KaiaWeb3Provider, accountAddress: string) => {
     try {
       const reliableProvider = await createJsonRpcProviderWithFallback();
       const usdtContract = new ethers.Contract(
@@ -221,9 +215,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
         reliableProvider
       );
       const balance = await usdtContract.balanceOf(accountAddress);
-      const formattedBalance = ethers.formatUnits(balance, 6); // USDT has 6 decimals
-      setUsdtBalance(formattedBalance);
-      console.log(`USDT Balance fetched: ${formattedBalance} USDT`);
+      setUsdtBalance(ethers.formatUnits(balance, 6));
     } catch (err) {
       console.error("Failed to fetch USDT balance:", err);
       setUsdtBalance("0");
@@ -273,6 +265,8 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Set state
       setChainId(finalChainId);
       setProvider(web3Provider);
+      const newSigner = await web3Provider.getSigner(0);
+      setSigner(newSigner);
       setAccount(accounts[0]);
       setIsConnected(true);
       await updateBalance(web3Provider, accounts[0]);
@@ -294,6 +288,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const disconnectWallet = () => {
     setProvider(undefined);
+    setSigner(null);
     setAccount(null);
     setChainId(null);
     setIsConnected(false);
@@ -363,6 +358,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const value: Web3ContextType = {
     provider,
+    signer,
     account,
     chainId,
     isConnected,

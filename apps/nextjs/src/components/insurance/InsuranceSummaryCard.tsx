@@ -5,10 +5,9 @@ import type { Product, Tranche } from "@dinsure/contracts";
 import { 
   getProductName, 
   getProductDescription, 
-  getProductIcon, 
-  isBTCProduct,
-  isETHProduct 
+  getProductIcon
 } from "@/utils/productHelpers";
+import { formatPercentage, formatUSDT } from "@/utils/calculations";
 
 interface InsuranceSummaryCardProps {
   product: Product;
@@ -26,84 +25,110 @@ export const InsuranceSummaryCard: React.FC<InsuranceSummaryCardProps> = ({
   const productDescription = getProductDescription(product);
   const productIcon = getProductIcon(product);
   
-  // Calculate aggregated statistics
-  const activeTranches = tranches.length;
+  // Calculate aggregated statistics from actual data
+  const activeTranches = tranches.filter(t => t.active).length;
+  const totalTranches = tranches.length;
+  
+  // Calculate total TVL from actual round data
   const totalTVL = tranches.reduce((sum, tranche) => {
-    // For now, use mock data - in real implementation, this would come from pool contracts
-    return sum + 850000; // Mock TVL per tranche
+    const deposits = tranche.currentRound?.totalSellerCollateral || 0;
+    return sum + Number(deposits);
   }, 0);
   
   // Calculate premium range from actual tranche data
-  const premiumRates = tranches.map(tranche => {
-    return tranche.premiumRateBps / 100; // Convert basis points to percentage
-  });
+  const premiumRates = tranches.map(tranche => tranche.premiumRateBps);
+  const minPremium = premiumRates.length > 0 ? Math.min(...premiumRates) : 0;
+  const maxPremium = premiumRates.length > 0 ? Math.max(...premiumRates) : 0;
   
-  const minPremium = premiumRates.length > 0 ? Math.min(...premiumRates) : 2;
-  const maxPremium = premiumRates.length > 0 ? Math.max(...premiumRates) : 10;
+  // Calculate trigger range from actual tranche data  
+  // Assuming threshold represents trigger level in basis points
+  const triggerLevels = tranches.map(tranche => Number(tranche.threshold) / 100);
+  const minTrigger = triggerLevels.length > 0 ? Math.min(...triggerLevels) : 0;
+  const maxTrigger = triggerLevels.length > 0 ? Math.max(...triggerLevels) : 0;
   
-  // Mock current price and change - in real app this would come from oracle
-  const currentPrice = isBTCProduct(product) ? 45234 : isETHProduct(product) ? 2456 : 1000;
-  const priceChange = isBTCProduct(product) ? 2.3 : isETHProduct(product) ? -1.2 : 0;
+  // Check if any rounds are open
+  const hasOpenRounds = tranches.some(t => t.currentRound?.state === 1);
   
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 hover:border-gray-600 transition-colors">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="text-3xl">{productIcon}</div>
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="text-3xl">{productIcon}</div>
+          <div>
+            <h3 className="text-xl font-bold text-white">{productName}</h3>
+            <p className="text-gray-400 text-sm mt-1">{productDescription}</p>
+          </div>
+        </div>
+        {hasOpenRounds && (
+          <span className="px-3 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
+            Open
+          </span>
+        )}
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div>
-          <h3 className="text-xl font-semibold text-white">{productName}</h3>
-          <p className="text-gray-400 text-sm">{productDescription}</p>
+          <div className="text-gray-400 text-xs">Active Tranches</div>
+          <div className="text-white font-semibold text-lg">
+            {activeTranches}/{totalTranches}
+          </div>
         </div>
-      </div>
-      
-      {/* Summary Stats */}
-      <div className="bg-gray-700 rounded-lg p-4 mb-6">
-        <h4 className="text-white font-medium mb-3">Summary Stats:</h4>
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        {totalTVL > 0 && (
           <div>
-            <div className="text-gray-400">Active Tranches</div>
-            <div className="text-white font-medium">{activeTranches}</div>
-          </div>
-          <div>
-            <div className="text-gray-400">Total TVL</div>
-            <div className="text-white font-medium">
-              ${(totalTVL / 1000000).toFixed(1)}M USDT
+            <div className="text-gray-400 text-xs">Total TVL</div>
+            <div className="text-white font-semibold text-lg">
+              ${formatUSDT(totalTVL.toString())}
             </div>
           </div>
-          <div>
-            <div className="text-gray-400">Premium Range</div>
-            <div className="text-white font-medium">
-              {minPremium}% - {maxPremium}%
-            </div>
+        )}
+        <div>
+          <div className="text-gray-400 text-xs">Premium Range</div>
+          <div className="text-white font-semibold text-lg">
+            {formatPercentage(minPremium)}-{formatPercentage(maxPremium)}
           </div>
-          <div>
-            <div className="text-gray-400">Current Price</div>
-            <div className="text-white font-medium">
-              ${currentPrice.toLocaleString()}
-            </div>
-          </div>
-          <div className="col-span-2">
-            <div className="text-gray-400">24h Change</div>
-            <div className={`font-medium ${priceChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {priceChange >= 0 ? '+' : ''}{priceChange}%
-            </div>
+        </div>
+        <div>
+          <div className="text-gray-400 text-xs">Trigger Range</div>
+          <div className="text-white font-semibold text-lg">
+            -{formatPercentage(minTrigger)} to -{formatPercentage(maxTrigger)}
           </div>
         </div>
       </div>
-      
+
+      {/* Tranche Summary */}
+      <div className="border-t border-gray-700 pt-4 mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-gray-400 text-sm">Available Tranches</span>
+          <span className="text-gray-400 text-sm">{activeTranches} active</span>
+        </div>
+        <div className="flex gap-2">
+          {tranches.slice(0, 3).map((tranche, idx) => (
+            <div
+              key={tranche.trancheId}
+              className={`flex-1 px-3 py-2 rounded-lg text-center text-sm ${
+                tranche.active && tranche.currentRound?.state === 1
+                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                  : 'bg-gray-700 text-gray-400 border border-gray-600'
+              }`}
+            >
+              <div className="font-medium">Tranche {String.fromCharCode(65 + idx)}</div>
+              <div className="text-xs mt-1">
+                -{formatPercentage(Number(tranche.threshold) / 100)} / {formatPercentage(tranche.premiumRateBps)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Action Button */}
       <button
         onClick={onViewTranches}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors"
       >
-        View Tranches
-        <span>→</span>
+        View All Tranches
       </button>
-      
-      {/* Debug Info */}
-      <div className="mt-4 text-xs text-gray-500">
-        Product ID: {product.productId} | Tranches: {tranches.map(t => t.trancheId).join(', ')}
-      </div>
     </div>
   );
 };

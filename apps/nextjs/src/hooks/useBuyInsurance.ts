@@ -2,25 +2,9 @@ import { useState, useCallback } from "react";
 import { ethers } from "ethers";
 import { useWeb3 } from "@/context/Web3Provider";
 import { KAIA_TESTNET_ADDRESSES } from "@dinsure/contracts";
+import { USDT_ABI, POOL_ABI } from "@/utils/contractABIs";
+import { calculatePremium as calcPremium } from "@/utils/calculations";
 import type { TrancheDetails, RoundDetails } from "./useTrancheData";
-
-// ABI fragments for the contracts we need
-const USDT_ABI = [
-  "function balanceOf(address account) view returns (uint256)",
-  "function allowance(address owner, address spender) view returns (uint256)",
-  "function approve(address spender, uint256 amount) returns (bool)",
-];
-
-const POOL_ABI = [
-  "function placeBuyerOrder(uint256 roundId, uint256 purchaseAmount) returns (uint256)",
-  "function getBuyerOrder(uint256 roundId, address buyer) view returns (tuple(uint256 purchaseAmount, uint256 premiumPaid, uint256 filledAmount, bool claimed, uint256 refundAmount))",
-  "function getRoundEconomics(uint256 roundId) view returns (uint256, uint256, uint256, uint256, uint256)",
-];
-
-const INSURANCE_TOKEN_ABI = [
-  "function balanceOf(address owner) view returns (uint256)",
-  "function getTokenInfo(uint256 tokenId) view returns (tuple(uint256 trancheId, uint256 roundId, uint256 purchaseAmount, address originalBuyer))",
-];
 
 export interface BuyInsuranceParams {
   tranche: TrancheDetails;
@@ -71,23 +55,8 @@ export function useBuyInsurance() {
     }
   }, [signer]);
 
-  const calculatePremium = useCallback((amount: string, premiumRateBps: number): {
-    purchaseAmount: bigint;
-    premiumAmount: bigint;
-    totalCost: bigint;
-    premiumRate: number;
-  } => {
-    // USDT uses 6 decimals
-    const purchaseAmount = ethers.parseUnits(amount, 6);
-    const premiumAmount = (purchaseAmount * BigInt(premiumRateBps)) / 10000n;
-    const totalCost = purchaseAmount + premiumAmount;
-    
-    return {
-      purchaseAmount,
-      premiumAmount,
-      totalCost,
-      premiumRate: premiumRateBps / 100,
-    };
+  const calculatePremium = useCallback((amount: string, premiumRateBps: number) => {
+    return calcPremium(amount, premiumRateBps);
   }, []);
 
   const checkBalance = useCallback(async (): Promise<bigint> => {

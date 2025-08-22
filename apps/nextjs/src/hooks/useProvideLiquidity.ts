@@ -2,15 +2,10 @@ import { useState, useCallback } from "react";
 import { ethers } from "ethers";
 import { useWeb3 } from "@/context/Web3Provider";
 import { KAIA_TESTNET_ADDRESSES } from "@dinsure/contracts";
+import { USDT_ABI } from "@/utils/contractABIs";
 import type { TrancheDetails, RoundDetails } from "./useTrancheData";
 
-// ABI fragments for the contracts we need
-const USDT_ABI = [
-  "function balanceOf(address account) view returns (uint256)",
-  "function allowance(address owner, address spender) view returns (uint256)",
-  "function approve(address spender, uint256 amount) returns (bool)",
-];
-
+// Pool-specific ABI (not in shared ABIs yet)
 const POOL_ABI = [
   "function depositCollateral(uint256 roundId, uint256 collateralAmount) returns (uint256)",
   "function getSellerPosition(uint256 roundId, address seller) view returns (tuple(uint256 collateralAmount, uint256 filledCollateral, uint256 lockedSharesAssigned, bool withdrawn, uint256 refundAmount))",
