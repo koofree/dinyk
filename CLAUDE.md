@@ -396,7 +396,7 @@ The package provides comprehensive TypeScript interfaces and React hooks for all
 #### Pages
 - **`/`**: Home page with product showcase
 - **`/insurance`**: Insurance marketplace with product cards
-- **`/tranche`**: Tranche listing with filtering and sorting
+- **`/tranches`**: Tranche listing with filtering and sorting
 - **`/tranches/[productId]/[trancheId]`**: Detailed tranche view with buy/sell forms
 - **`/portfolio`**: User's positions and earnings dashboard
 - **`/debug`**: Development tools and contract state viewer

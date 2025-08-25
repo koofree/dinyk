@@ -645,7 +645,7 @@ packages/contracts/
 #### Page Implementation
 - **HomePage (`/`)**: Product showcase, platform stats
 - **InsurancePage (`/insurance`)**: Product grid with filtering
-- **TranchePage (`/tranche`)**: All tranches with sorting
+- **TranchePage (`/tranches`)**: All tranches with sorting
 - **TrancheDetailPage (`/tranches/[productId]/[trancheId]`)**: Buy/sell forms
 - **PortfolioPage (`/portfolio`)**: User positions and earnings
 - **DebugPage (`/debug`)**: Contract state inspection (dev only)

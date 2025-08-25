@@ -215,7 +215,7 @@ export default function HomePage() {
                 Buy Insurance
               </Link>
               <Link
-                href="/tranche"
+                href="/tranches"
                 className="bg-transparent border-2 border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-8 py-4 rounded-lg text-lg font-medium transition-all"
               >
                 Provide Liquidity

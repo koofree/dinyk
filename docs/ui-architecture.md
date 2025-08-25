@@ -475,8 +475,8 @@ interface LiquidityPosition {
 
 #### URL Structure
 - `/insurance` - Insurance summary cards
-- `/tranche?insurance=btc` - Tranche list filtered by BTC
-- `/tranche` - All tranches (default filter state)
+- `/tranches?insurance=btc` - Tranche list filtered by BTC
+- `/tranches` - All tranches (default filter state)
 - `/portfolio` - User's positions
 
 ## Oracle & Price Feeds
@@ -1049,7 +1049,7 @@ The following components have been fully implemented in the Next.js application:
 #### Page Components
 - **HomePage** (`/`) - Landing page with product showcase
 - **InsurancePage** (`/insurance`) - Insurance product marketplace
-- **TranchePage** (`/tranche`) - All tranches with filtering
+- **TranchePage** (`/tranches`) - All tranches with filtering
 - **TrancheDetailPage** (`/tranches/[productId]/[trancheId]`) - Detailed tranche view
 - **PortfolioPage** (`/portfolio`) - User positions dashboard
 - **DebugPage** (`/debug`) - Development tools (dev mode only)

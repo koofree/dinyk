@@ -154,7 +154,7 @@ export default function InsurancePage() {
 
   const handleViewTranches = (productId: number) => {
     // Navigate to tranche page filtered by product
-    router.push(`/tranche?productId=${productId}`);
+    router.push(`/tranches?productId=${productId}`);
   };
   
   const handleViewTrancheDetail = (productId: number, tranchId: number) => {
@@ -313,7 +313,7 @@ export default function InsurancePage() {
                             // Assuming trancheId encodes the index, we can extract it
                             handleViewTrancheDetail(tranche.productId, tranche.trancheId % 10);
                           } else {
-                            router.push(`/tranche?trancheId=${tranche.trancheId}`);
+                            router.push(`/tranches?trancheId=${tranche.trancheId}`);
                           }
                         }}
                         className="mt-4 rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"

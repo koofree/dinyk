@@ -68,7 +68,7 @@ Landing page with platform overview and featured products
 ### `/insurance` - Insurance Marketplace
 Browse all available insurance products and tranches
 
-### `/tranche` - Tranche Listing
+### `/tranches` - Tranche Listing
 View and filter all tranches across products
 
 ### `/tranches/[productId]/[trancheId]` - Tranche Details

@@ -254,7 +254,7 @@ export default function PortfolioPage() {
                   You haven't provided liquidity to any pools yet
                 </p>
                 <a
-                  href="/tranche"
+                  href="/tranches"
                   className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
                 >
                   Provide Liquidity

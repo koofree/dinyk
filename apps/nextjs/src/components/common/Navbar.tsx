@@ -11,7 +11,7 @@ export const Navbar: React.FC = () => {
 
   const navigation = [
     { name: 'Insurance', href: '/insurance', icon: '🛡️' },
-    { name: 'Tranche', href: '/tranche', icon: '💰' },
+    { name: 'Tranches', href: '/tranches', icon: '💰' },
     { name: 'Portfolio', href: '/portfolio', icon: '📊' },
   ];
 
