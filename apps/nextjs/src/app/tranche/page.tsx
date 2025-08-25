@@ -8,11 +8,48 @@ import { useBTCPrice } from "@/hooks/useBTCPrice";
 import type { TrancheDetails } from "@/hooks/useTrancheData";
 import { useTrancheData } from "@/hooks/useTrancheData";
 import { INSURANCE_PRODUCTS } from "@/lib/constants";
-import type { Product, Tranche } from "@dinsure/contracts";
 import { useContractFactory, useContracts, useProductManagement, useWeb3 } from "@dinsure/contracts";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+
+// Product and Tranche types
+interface Product {
+  productId: number;
+  metadataHash: string;
+  active: boolean;
+  createdAt: number;
+  updatedAt: number;
+  tranches: Tranche[];
+  metadata?: {
+    name: string;
+    description: string;
+    category: string;
+    tags: string[];
+    riskLevel: string;
+    underlyingAsset: string;
+  };
+}
+
+interface Tranche {
+  trancheId: number;
+  productId: number;
+  triggerType: number;
+  threshold: bigint;
+  premiumRateBps: number;
+  maturityDays?: number;
+  maturityTimestamp: number;
+  trancheCap: bigint;
+  perAccountMin: bigint;
+  perAccountMax: bigint;
+  oracleRouteId: number;
+  poolAddress: string;
+  active: boolean;
+  isExpired: boolean;
+  availableCapacity: bigint;
+  utilizationRate: number;
+  name: string;
+}
 
 interface TrancheFilters {
   insuranceProduct: number | null;
@@ -280,7 +317,36 @@ function TrancheContent() {
   };
   
   // Filter tranches - combine contract data with round data
-  const filteredTranches = tranches;
+  const filteredTranches = tranches.filter(tranche => {
+    // Filter by insurance product
+    if (filters.insuranceProduct !== null && tranche.productId !== filters.insuranceProduct) {
+      return false;
+    }
+    
+    // Filter by status (based on tranche data if available)
+    if (filters.status !== 'all') {
+      const trancheData = tranchesData?.find(t => t.trancheId === tranche.trancheId);
+      
+      if (filters.status === 'open') {
+        // Check if any round is open (state === 1)
+        if (!trancheData || !trancheData.rounds.some(r => r.state === 1)) {
+          return false;
+        }
+      } else if (filters.status === 'active') {
+        // Check if any round is active (state === 3)
+        if (!trancheData || !trancheData.rounds.some(r => r.state === 3)) {
+          return false;
+        }
+      } else if (filters.status === 'settling') {
+        // Check if any round is settling (state === 4 or 5)
+        if (!trancheData || !trancheData.rounds.some(r => r.state === 4 || r.state === 5)) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  });
   
   // Get unique products for filter options
   const uniqueProducts = Array.from(new Set(products.map(p => p.productId)))
@@ -346,7 +412,7 @@ function TrancheContent() {
         <div className="mb-4 p-2 bg-gray-800 rounded text-xs text-gray-400">
           Debug: Products={products.length} | Contract Tranches={tranches.length} | 
           Tranches with Data={tranchesData?.length || 0} | Filtered={filteredTranches.length} | 
-          Filter Status={filters.status} | Loading={String(loading)}
+          Filter Product={filters.insuranceProduct ?? 'all'} | Filter Status={filters.status} | Loading={String(loading)}
           {tranchesData && tranchesData.length > 0 && (
             <div className="mt-1">
               Round States: {tranchesData.map(t => `T${t.trancheId}: ${t.rounds.map(r => r.state).join(',')}`).join(' | ')}

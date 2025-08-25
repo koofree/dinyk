@@ -1,8 +1,14 @@
 "use client";
 
 import React from "react";
-import type { Product } from "@dinsure/contracts";
 import { getProductName } from "@/utils/productHelpers";
+
+interface Product {
+  productId: number;
+  metadata?: {
+    name: string;
+  };
+}
 
 interface TrancheFilters {
   insuranceProduct: number | null;
