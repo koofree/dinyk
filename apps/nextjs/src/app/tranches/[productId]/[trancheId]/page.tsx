@@ -8,7 +8,6 @@ import { Badge } from "@dinsure/ui/badge";
 import { Button } from "@dinsure/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@dinsure/ui/card";
 import { ScrollArea } from "@dinsure/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@dinsure/ui/tabs";
 import { formatUnits } from "ethers";
 import { motion } from "framer-motion";
 import { AlertCircle, ArrowLeft, Loader2, XCircle } from "lucide-react";
@@ -52,7 +51,6 @@ export default function TrancheDetailPage() {
   const [poolInfo, setPoolInfo] = useState<any>(null);
   const [navInfo, setNavInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("overview");
   const [selectedRound, setSelectedRound] = useState<RoundData | null>(null);
 
   useEffect(() => {
@@ -300,172 +298,155 @@ export default function TrancheDetailPage() {
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="buy">Buy Insurance</TabsTrigger>
-          <TabsTrigger value="provide">Provide Liquidity</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Active & Upcoming Rounds</CardTitle>
-              <CardDescription>
-                View and participate in insurance rounds
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[400px] pr-4">
-                <div className="space-y-4">
-                  {rounds.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No rounds available
-                    </div>
-                  ) : (
-                    rounds.map((round) => (
-                      <motion.div
-                        key={round.id.toString()}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <Card 
-                          className={`cursor-pointer transition-all hover:shadow-md ${
-                            selectedRound?.id === round.id ? "ring-2 ring-primary" : ""
-                          }`}
-                          onClick={() => setSelectedRound(round)}
-                        >
-                          <CardHeader>
-                            <div className="flex items-center justify-between">
-                              <CardTitle className="text-lg">
-                                Round #{round.id.toString()}
-                              </CardTitle>
-                              <Badge className={getRoundStatusColor(round.state)}>
-                                {getRoundStatusText(round.state)}
-                              </Badge>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div>
-                                <p className="text-muted-foreground">Total Orders</p>
-                                <p className="font-medium">
-                                  ${Number(formatUnits(round.totalBuyerOrders, 6)).toLocaleString()}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground">Total Collateral</p>
-                                <p className="font-medium">
-                                  ${Number(formatUnits(round.totalSellerCollateral, 6)).toLocaleString()}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground">Matched Amount</p>
-                                <p className="font-medium">
-                                  ${Number(formatUnits(round.matchedAmount, 6)).toLocaleString()}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground">End Time</p>
-                                <p className="font-medium">
-                                  {new Date(Number(round.endTime) * 1000).toLocaleDateString()}
-                                </p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          {poolInfo && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Pool Statistics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Shares</p>
-                    <p className="text-lg font-semibold">
-                      {Number(formatUnits(poolInfo.totalShares || 0n, 18)).toFixed(2)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Share Price</p>
-                    <p className="text-lg font-semibold">
-                      ${navInfo ? Number(formatUnits(navInfo.sharePrice || 0n, 6)).toFixed(4) : "0"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Available Liquidity</p>
-                    <p className="text-lg font-semibold">
-                      ${poolInfo ? Number(formatUnits(poolInfo.availableLiquidity || 0n, 6)).toLocaleString() : "0"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Active Coverage</p>
-                    <p className="text-lg font-semibold">
-                      ${poolInfo ? Number(formatUnits(poolInfo.totalActiveCoverage || 0n, 6)).toLocaleString() : "0"}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="buy" className="space-y-6">
-          {selectedRound && selectedRound.state === 1 ? (
-            <BuyInsuranceForm
-              productId={BigInt(productId)}
-              trancheId={tranche.trancheId}
-              roundId={selectedRound.id}
-              tranche={tranche}
-              onSuccess={() => loadData()}
-            />
-          ) : (
-            <Card>
-              <CardContent className="py-8">
-                <div className="text-center space-y-4">
-                  <AlertCircle className="h-12 w-12 mx-auto text-yellow-500" />
-                  <h3 className="text-lg font-semibold">No Active Round</h3>
-                  <p className="text-muted-foreground">
-                    Please wait for an active round to buy insurance.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="provide" className="space-y-6">
-          {tranche.poolAddress && tranche.poolAddress !== "0x0000000000000000000000000000000000000000" ? (
+      {/* Current Round Actions */}
+      {selectedRound && selectedRound.state === 1 && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <BuyInsuranceForm
+            productId={BigInt(productId)}
+            trancheId={tranche.trancheId}
+            roundId={selectedRound.id}
+            tranche={tranche}
+            onSuccess={() => loadData()}
+          />
+          {tranche.poolAddress && tranche.poolAddress !== "0x0000000000000000000000000000000000000000" && (
             <ProvideLiquidityForm
               poolAddress={tranche.poolAddress}
               tranche={tranche}
               onSuccess={() => loadData()}
             />
-          ) : (
-            <Card>
-              <CardContent className="py-8">
-                <div className="text-center space-y-4">
-                  <AlertCircle className="h-12 w-12 mx-auto text-yellow-500" />
-                  <h3 className="text-lg font-semibold">Pool Not Available</h3>
-                  <p className="text-muted-foreground">
-                    This tranche pool has not been deployed yet.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
           )}
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
+
+      {/* No Active Round Message */}
+      {(!selectedRound || selectedRound.state !== 1) && (
+        <Card className="bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-900">
+          <CardContent className="py-6">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+              <div>
+                <h3 className="font-semibold text-yellow-900 dark:text-yellow-100">No Active Round</h3>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                  There are no active rounds available for participation. Please check back later or view the rounds below.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Rounds List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Insurance Rounds</CardTitle>
+          <CardDescription>
+            View all rounds for this tranche
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[400px] pr-4">
+            <div className="space-y-4">
+              {rounds.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No rounds available
+                </div>
+              ) : (
+                rounds.map((round) => (
+                  <motion.div
+                    key={round.id.toString()}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Card 
+                      className={`cursor-pointer transition-all hover:shadow-md ${
+                        selectedRound?.id === round.id ? "ring-2 ring-primary" : ""
+                      }`}
+                      onClick={() => setSelectedRound(round)}
+                    >
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">
+                            Round #{round.id.toString()}
+                          </CardTitle>
+                          <Badge className={getRoundStatusColor(round.state)}>
+                            {getRoundStatusText(round.state)}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-muted-foreground">Total Orders</p>
+                            <p className="font-medium">
+                              ${Number(formatUnits(round.totalBuyerOrders, 6)).toLocaleString()}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Total Collateral</p>
+                            <p className="font-medium">
+                              ${Number(formatUnits(round.totalSellerCollateral, 6)).toLocaleString()}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Matched Amount</p>
+                            <p className="font-medium">
+                              ${Number(formatUnits(round.matchedAmount, 6)).toLocaleString()}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">End Time</p>
+                            <p className="font-medium">
+                              {new Date(Number(round.endTime) * 1000).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+
+      {/* Pool Statistics */}
+      {poolInfo && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Pool Statistics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Shares</p>
+                <p className="text-lg font-semibold">
+                  {Number(formatUnits(poolInfo.totalShares || 0n, 18)).toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Share Price</p>
+                <p className="text-lg font-semibold">
+                  ${navInfo ? Number(formatUnits(navInfo.sharePrice || 0n, 6)).toFixed(4) : "0"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Available Liquidity</p>
+                <p className="text-lg font-semibold">
+                  ${poolInfo ? Number(formatUnits(poolInfo.availableLiquidity || 0n, 6)).toLocaleString() : "0"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Active Coverage</p>
+                <p className="text-lg font-semibold">
+                  ${poolInfo ? Number(formatUnits(poolInfo.totalActiveCoverage || 0n, 6)).toLocaleString() : "0"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
