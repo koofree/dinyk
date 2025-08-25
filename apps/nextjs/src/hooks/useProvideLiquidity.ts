@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { ethers } from "ethers";
-import { useWeb3 } from "@/context/Web3Provider";
+import { useWeb3 } from "@dinsure/contracts";
 import { KAIA_TESTNET_ADDRESSES } from "@dinsure/contracts";
 import { USDT_ABI } from "@/utils/contractABIs";
 import type { TrancheDetails, RoundDetails } from "./useTrancheData";

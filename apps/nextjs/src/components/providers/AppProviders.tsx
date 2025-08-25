@@ -1,7 +1,7 @@
 "use client";
 
 import React, { ReactNode } from "react";
-import { Web3Provider, useWeb3 } from "@/context/Web3Provider";
+import { Web3Provider, useWeb3 } from "@dinsure/contracts";
 import { ContractProvider } from "@dinsure/contracts";
 
 // Inner component that has access to Web3Context

@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import { useWeb3 } from "@/context/Web3Provider";
-import { useBuyInsurance } from "@/hooks/useBuyInsurance";
+import { useWeb3, useBuyerOperations, useContracts } from "@dinsure/contracts";
+import { ethers as ethersLib } from "ethers";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import type { TrancheDetails, RoundDetails } from "@/hooks/useTrancheData";
 
@@ -23,32 +23,35 @@ export const EnhancedPurchaseModal: React.FC<EnhancedPurchaseModalProps> = ({
   onSuccess
 }) => {
   const { isConnected, account } = useWeb3();
+  const { usdt } = useContracts();
   const { 
     buyInsurance, 
-    calculatePremium, 
-    checkBalance,
-    loading,
-    approving,
-    error 
-  } = useBuyInsurance();
+    calculatePremium: calcPremium,
+    isLoading: loading,
+    isPreparing: approving
+  } = useBuyerOperations();
 
   const [amount, setAmount] = useState("");
   const [usdtBalance, setUsdtBalance] = useState<string>("0");
   const [step, setStep] = useState<'input' | 'review' | 'approving' | 'processing' | 'success'>('input');
   const [txHash, setTxHash] = useState<string>("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Find the selected round
   const selectedRound = trancheData?.rounds.find(r => r.roundId === roundId);
 
   // Load USDT balance
   useEffect(() => {
-    if (isOpen && isConnected) {
-      checkBalance().then(balance => {
+    if (isOpen && isConnected && account && usdt) {
+      usdt.balanceOf(account).then(balance => {
         setUsdtBalance(ethers.formatUnits(balance, 6));
+      }).catch(err => {
+        console.error("Failed to fetch balance:", err);
+        setUsdtBalance("0");
       });
     }
-  }, [isOpen, isConnected, checkBalance]);
+  }, [isOpen, isConnected, account, usdt]);
 
   // Reset modal when closed
   useEffect(() => {
@@ -65,6 +68,14 @@ export const EnhancedPurchaseModal: React.FC<EnhancedPurchaseModalProps> = ({
   if (!isOpen || !trancheData || !selectedRound) return null;
 
   // Calculate premium and total
+  const calculatePremium = (amt: string, premiumBps: number) => {
+    if (!amt || isNaN(parseFloat(amt))) return null;
+    const amountWei = ethers.parseUnits(amt, 6);
+    const premiumAmount = (amountWei * BigInt(premiumBps)) / 10000n;
+    const totalCost = amountWei + premiumAmount;
+    return { premiumAmount, totalCost };
+  };
+  
   const premium = amount && !isNaN(parseFloat(amount)) 
     ? calculatePremium(amount, trancheData.premiumRateBps)
     : null;
@@ -93,12 +104,11 @@ export const EnhancedPurchaseModal: React.FC<EnhancedPurchaseModalProps> = ({
     
     try {
       const result = await buyInsurance({
-        tranche: trancheData,
-        round: selectedRound,
-        amount
+        roundId: selectedRound.roundId,
+        coverageAmount: amount
       });
       
-      setTxHash(result.txHash);
+      setTxHash(result.transactionHash || '');
       setStep('success');
       
       // Call success callback after a delay

@@ -404,6 +404,5 @@ node scripts/test/TestOracles.js
 - **Whitepaper**: `@docs/whitepaper.md` - Full protocol specification
 - **UI Architecture**: `@docs/ui-architecture.md` - Complete UI/UX flows with contract integration
 - **Technical Architecture**: `@docs/din-architecture.md` - Web3 technical architecture and implementation guide
-- **Contract Integration**: `@docs/din-contracts-integration.md` - Smart contract integration and package design
 - **Smart Contracts**: `../din-contract/` - Solidity contracts and deployment scripts
 - **Contract Docs**: `../din-contract/README.md` - Contract architecture and deployment guide

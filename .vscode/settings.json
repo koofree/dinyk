@@ -3,5 +3,69 @@
     {
       "mode": "auto"
     }
-  ]
+  ],
+
+  // Vitest Extension Settings
+  "vitest.enable": true,
+  "vitest.commandLine": "pnpm test",
+  "vitest.nodeEnv": {},
+
+  // Test Explorer Settings
+  "testing.automaticallyOpenPeekView": "failureInVisibleDocument",
+  "testing.defaultGutterClickAction": "run",
+  "testing.followRunningTest": true,
+  "testing.gutterEnabled": true,
+  "testing.showAllMessages": false,
+
+  // TypeScript Settings for Tests
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+
+  // Editor Settings for Test Files
+  "[typescript]": {
+    "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit",
+      "source.organizeImports": "explicit"
+    }
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit",
+      "source.organizeImports": "explicit"
+    }
+  },
+
+  // Code Coverage
+  "coverage-gutters.showGutterCoverage": true,
+  "coverage-gutters.showLineCoverage": true,
+  "coverage-gutters.showRulerCoverage": true,
+
+  // File Associations
+  "files.associations": {
+    "*.test.ts": "typescript",
+    "*.test.tsx": "typescriptreact",
+    "*.spec.ts": "typescript",
+    "*.spec.tsx": "typescriptreact"
+  },
+
+  // Exclude test output from search
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/coverage": true,
+    "**/test-results": true,
+    "**/.turbo": true,
+    "**/.next": true
+  },
+
+  // Debug Configuration
+  "debug.javascript.autoAttachFilter": "smart",
+  "debug.javascript.terminalOptions": {
+    "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+  },
+  "biome.enabled": false,
+  "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
 }

@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
-import ProductCatalogABI from '../abis/ProductCatalog.json';
-import TranchePoolCoreABI from '../abis/TranchePoolCore.json';
-import TranchePoolFactoryABI from '../abis/TranchePoolFactory.json';
+import ProductCatalogABI from '../config/abis/ProductCatalog.json';
+import TranchePoolCoreABI from '../config/abis/TranchePoolCore.json';
+import TranchePoolFactoryABI from '../config/abis/TranchePoolFactory.json';
 import { Product, Tranche, Round, RoundState, TriggerType } from '../types/products';
 import { KAIA_TESTNET_ADDRESSES } from '../config/addresses';
 
@@ -13,10 +13,10 @@ export class ProductCatalogService {
     private contractAddress: string,
     private provider: ethers.Provider
   ) {
-    this.contract = new ethers.Contract(contractAddress, ProductCatalogABI as any, provider);
+    this.contract = new ethers.Contract(contractAddress, ProductCatalogABI.abi, provider);
     this.poolFactory = new ethers.Contract(
       KAIA_TESTNET_ADDRESSES.TranchePoolFactory,
-      TranchePoolFactoryABI as any,
+      TranchePoolFactoryABI.abi,
       provider
     );
   }
@@ -202,7 +202,7 @@ export class ProductCatalogService {
       }
 
       // Get pool contract
-      const pool = new ethers.Contract(poolAddress, TranchePoolCoreABI as any, this.provider);
+      const pool = new ethers.Contract(poolAddress, TranchePoolCoreABI.abi, this.provider);
       
       // Get pool accounting data
       const getPoolAccounting = pool.poolAccounting as () => Promise<any>;

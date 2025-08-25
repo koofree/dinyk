@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { Product, Tranche, formatCurrency, formatPercentage, formatTimeRemaining, TriggerType } from "@dinsure/contracts";
-import { useWeb3 } from "@/context/Web3Provider";
+import { useWeb3 } from "@dinsure/contracts";
 import { useProvideLiquidity } from "@/hooks/useProvideLiquidity";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 

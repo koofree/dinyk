@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { InsuranceSummaryCard } from "@/components/insurance/InsuranceSummaryCard";
-import { useWeb3 } from "@/context/Web3Provider";
-import { useContracts, useContractFactory, useProducts } from "@dinsure/contracts";
+import { useWeb3 } from "@dinsure/contracts";
+import { useContracts, useContractFactory, useGetActiveProducts } from "@dinsure/contracts";
 import { KAIA_TESTNET } from "@/lib/constants";
 import { getProductName, getUnderlyingAsset } from "@/utils/productHelpers";
 import type { Product } from "@dinsure/contracts";
@@ -13,7 +13,7 @@ export default function InsurancePage() {
   const { isConnected } = useWeb3();
   const { isInitialized, error: contractError } = useContracts();
   const factory = useContractFactory();
-  const { products, tranches, loading: productsLoading, error: productsError } = useProducts(factory);
+  const { products, tranches, loading: productsLoading, error: productsError } = useGetActiveProducts();
   const router = useRouter();
 
   const handleViewTranches = (productId: number) => {

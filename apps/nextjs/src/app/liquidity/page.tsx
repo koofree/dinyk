@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { LiquidityPoolCard } from "@/components/insurance/LiquidityPoolCard";
 import { DepositModal } from "@/components/insurance/DepositModal";
-import { useWeb3 } from "@/context/Web3Provider";
+import { useWeb3 } from "@dinsure/contracts";
 import { INSURANCE_PRODUCTS, KAIA_TESTNET } from "@/lib/constants";
 
 interface LiquidityPool {

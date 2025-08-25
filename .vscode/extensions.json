@@ -1,9 +1,34 @@
 {
   "recommendations": [
+    // Vitest and Testing
+    "vitest.explorer",
+    "ms-vscode.test-adapter-converter",
+    
+    // Code Coverage
+    "ryanluker.vscode-coverage-gutters",
+    
+    // TypeScript and JavaScript
     "dbaeumer.vscode-eslint",
-    "expo.vscode-expo-tools",
     "esbenp.prettier-vscode",
-    "yoavbls.pretty-ts-errors",
-    "bradlc.vscode-tailwindcss"
+    "ms-vscode.vscode-typescript-next",
+    
+    // React
+    "dsznajder.es7-react-js-snippets",
+    "burkeholland.simple-react-snippets",
+    
+    // Debugging
+    "msjsdiag.debugger-for-chrome",
+    "firefox-devtools.vscode-firefox-debug",
+    
+    // Git
+    "eamodio.gitlens",
+    "donjayamanne.githistory",
+    
+    // Other Utilities
+    "streetsidesoftware.code-spell-checker",
+    "christian-kohler.path-intellisense",
+    "aaron-bond.better-comments",
+    "wayou.vscode-todo-highlight",
+    "gruntfuggly.todo-tree"
   ]
 }

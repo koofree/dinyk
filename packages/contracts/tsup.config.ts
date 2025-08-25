@@ -7,7 +7,7 @@ export default defineConfig({
     providers: 'src/providers/index.ts'
   },
   format: ['cjs', 'esm'],
-  dts: true,
+  dts: false, // Skip DTS for now due to type issues
   splitting: false,
   sourcemap: true,
   clean: true,

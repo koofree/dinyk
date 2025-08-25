@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useWeb3 } from "@/context/Web3Provider";
+import { useWeb3 } from "@dinsure/contracts";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 
 interface LiquidityPool {

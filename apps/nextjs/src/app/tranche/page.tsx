@@ -7,8 +7,8 @@ import { EnhancedTrancheCard } from "@/components/tranche/EnhancedTrancheCard";
 import { TrancheFilters } from "@/components/tranche/TrancheFilters";
 import { EnhancedPurchaseModal } from "@/components/insurance/EnhancedPurchaseModal";
 import { LiquidityModal } from "@/components/liquidity/LiquidityModal";
-import { useWeb3 } from "@/context/Web3Provider";
-import { useContracts, useContractFactory, useProducts } from "@dinsure/contracts";
+import { useWeb3 } from "@dinsure/contracts";
+import { useContracts, useContractFactory, useGetActiveProducts } from "@dinsure/contracts";
 import { useTrancheData, type TrancheDetails } from "@/hooks/useTrancheData";
 import { useBTCPrice } from "@/hooks/useBTCPrice";
 import { KAIA_TESTNET } from "@/lib/constants";
@@ -24,7 +24,7 @@ function TrancheContent() {
   const { isConnected } = useWeb3();
   const { isInitialized, error: contractError } = useContracts();
   const factory = useContractFactory();
-  const { products, tranches, loading: productsLoading, error: productsError } = useProducts(factory);
+  const { products, tranches, loading: productsLoading, error: productsError } = useGetActiveProducts();
   
   // Get real contract data
   const { price: btcPrice, loading: priceLoading, error: priceError } = useBTCPrice({ factory });

@@ -11,12 +11,20 @@ export { ProductCatalogService } from './services/ProductCatalogService';
 export { formatCurrency, formatPercentage, formatTimeRemaining, formatAddress, isValidAddress } from './utils/formatters';
 export { CacheManager } from './utils/cache';
 
-// React hooks
-export { useProducts } from './hooks/useProducts';
-export { useBuyInsurance } from './hooks/useBuyInsurance';
+// React hooks - export specific hooks to avoid conflicts
+export { 
+  useContracts,
+  useProductManagement,
+  useRoundManagement,
+  useBuyerOperations,
+  useSellerOperations,
+  useMonitoring,
+  useSettlement
+} from './hooks';
 
 // React providers
-export { ContractProvider, useContracts, useContractFactory } from './providers/ContractProvider';
+export { ContractProvider, useContractFactory } from './providers/ContractProvider';
+export { Web3Provider, useWeb3, ProviderType, ACTIVE_NETWORK, STORAGE_KEYS, switchToKaiaNetwork, KAIA_RPC_ENDPOINTS } from './providers/Web3Provider';
 
 // Configuration
 export * from './config/addresses';

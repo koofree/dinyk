@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Product, Tranche, formatCurrency, formatPercentage, formatTimeRemaining, TriggerType } from "@dinsure/contracts";
-import { useWeb3 } from "@/context/Web3Provider";
+import { useWeb3 } from "@dinsure/contracts";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 
 interface PurchaseModalProps {

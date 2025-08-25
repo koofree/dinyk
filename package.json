@@ -24,7 +24,11 @@
     "typecheck": "turbo run typecheck",
     "ui-add": "turbo run ui-add",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "test": "turbo run test",
+    "test:ui": "turbo run test:ui",
+    "test:coverage": "turbo run test:coverage",
+    "test:watch": "turbo run test:watch"
   },
   "devDependencies": {
     "@dinsure/prettier-config": "workspace:*",

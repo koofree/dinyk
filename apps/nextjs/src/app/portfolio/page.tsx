@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { PositionCard } from "@/components/insurance/PositionCard";
-import { useWeb3 } from "@/context/Web3Provider";
+import { useWeb3 } from "@dinsure/contracts";
 import { KAIA_TESTNET } from "@/lib/constants";
 import type { UserPosition } from "@/lib/types";
 

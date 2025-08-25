@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { useWeb3 } from "@/context/Web3Provider";
+import { useWeb3 } from "@dinsure/contracts";
 import { KAIA_TESTNET, INSURANCE_PRODUCTS } from "@/lib/constants";
 
 export default function HomePage() {

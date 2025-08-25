@@ -3,9 +3,76 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import { Web3Provider as KaiaWeb3Provider } from "@kaiachain/ethers-ext/v6";
 import { ethers } from "ethers";
-import { ACTIVE_NETWORK, switchToKaiaNetwork, STORAGE_KEYS, ProviderType, KAIA_RPC_ENDPOINTS } from "@/lib/constants";
-import { KAIA_TESTNET_ADDRESSES } from "@dinsure/contracts";
-import { USDT_ABI } from "@/utils/contractABIs";
+import { KAIA_TESTNET_ADDRESSES } from "../config/addresses";
+import { KAIA_TESTNET } from "../config/networks";
+import DinUSDTABI from "../config/abis/DinUSDT.json";
+
+// Provider type enum
+export enum ProviderType {
+  METAMASK = "metamask",
+  KAIA = "kaia",
+}
+
+// Storage keys
+export const STORAGE_KEYS = {
+  ACCOUNT: "din_wallet_account",
+  CONNECTED: "din_wallet_connected", 
+  PROVIDER_TYPE: "din_wallet_provider_type",
+} as const;
+
+// Active network configuration
+export const ACTIVE_NETWORK = KAIA_TESTNET;
+
+// RPC endpoints with fallback
+export const KAIA_RPC_ENDPOINTS = [
+  "https://public-en-kairos.node.kaia.io",
+  "https://klaytn-baobab-rpc.allthatnode.com:8551",
+  "https://api.baobab.klaytn.net:8651",
+];
+
+// Network switching utility
+export const switchToKaiaNetwork = async () => {
+  if (typeof window === "undefined" || !window.ethereum) return;
+  
+  try {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: ACTIVE_NETWORK.chainIdHex }],
+    });
+  } catch (switchError: any) {
+    // This error code indicates that the chain has not been added to MetaMask.
+    if (switchError.code === 4902) {
+      try {
+        await window.ethereum.request({
+          method: "wallet_addEthereumChain",
+          params: [
+            {
+              chainId: ACTIVE_NETWORK.chainIdHex,
+              chainName: ACTIVE_NETWORK.name,
+              nativeCurrency: ACTIVE_NETWORK.currency,
+              rpcUrls: KAIA_RPC_ENDPOINTS,
+              blockExplorerUrls: [ACTIVE_NETWORK.blockExplorer],
+            },
+          ],
+        });
+      } catch (addError) {
+        console.error("Failed to add network:", addError);
+        throw addError;
+      }
+    } else {
+      console.error("Failed to switch network:", switchError);
+      throw switchError;
+    }
+  }
+};
+
+// Global window type extensions
+declare global {
+  interface Window {
+    ethereum?: any;
+    klaytn?: any;
+  }
+}
 
 // Context type
 interface Web3ContextType {
@@ -211,10 +278,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const reliableProvider = await createJsonRpcProviderWithFallback();
       const usdtContract = new ethers.Contract(
         KAIA_TESTNET_ADDRESSES.DinUSDT,
-        USDT_ABI,
+        DinUSDTABI.abi,
         reliableProvider
       );
-      const balance = await usdtContract.balanceOf(accountAddress);
+      const balanceOf = usdtContract.balanceOf as (address: string) => Promise<bigint>;
+      const balance = await balanceOf(accountAddress);
       setUsdtBalance(ethers.formatUnits(balance, 6));
     } catch (err) {
       console.error("Failed to fetch USDT balance:", err);
@@ -345,10 +413,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const reliableProvider = await createJsonRpcProviderWithFallback();
       const usdtContract = new ethers.Contract(
         KAIA_TESTNET_ADDRESSES.DinUSDT,
-        USDT_ABI,
+        DinUSDTABI.abi,
         reliableProvider
       );
-      const balance = await usdtContract.balanceOf(account);
+      const balanceOf = usdtContract.balanceOf as (address: string) => Promise<bigint>;
+      const balance = await balanceOf(account);
       return ethers.formatUnits(balance, 6);
     } catch (err) {
       console.error("Failed to get USDT balance:", err);
