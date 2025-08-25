@@ -36,25 +36,55 @@ export function useProductManagement() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Get all products
-  const getProducts = useCallback(async (): Promise<ProductSpec[]> => {
+  const getProducts = useCallback(async (): Promise<any[]> => {
     if (!productCatalog) throw new Error('Product catalog not initialized');
     
     try {
-      const nextProductId = await productCatalog.nextProductId();
-      const products: ProductSpec[] = [];
+      // Get active product IDs using the correct function
+      const activeProductIds = await productCatalog.getActiveProducts();
+      console.log('[useProductManagement] Active product IDs:', activeProductIds);
       
-      for (let i = 1; i < Number(nextProductId); i++) {
-        const product = await productCatalog.getProduct(i);
-        if (product.productId !== 0n) {
-          products.push({
-            productId: Number(product.productId),
-            name: product.name,
-            description: product.description,
-            active: product.active,
-          });
+      const products: any[] = [];
+      
+      // Fetch each active product using products mapping
+      for (const productId of activeProductIds) {
+        try {
+          // Use products mapping directly
+          const product = await productCatalog.products(productId);
+          console.log(`[useProductManagement] Raw product ${productId}:`, product);
+          
+          // Don't filter or map - just return the raw product data
+          if (product && product.productId !== 0n) {
+
+            const processedProduct = {
+              productId: Number(product.productId),
+              name: `Product ${Number(product.productId)}`,
+              metadataHash: product.metadataHash || '',
+              active: product.active !== false,
+              createdAt: product.createdAt ? Number(product.createdAt) : 0,
+              updatedAt: product.updatedAt ? Number(product.updatedAt) : 0,
+              // Include any other fields that exist on the product
+              ...Object.entries(product).reduce((acc, [key, value]) => {
+                if (!['productId', 'metadataHash', 'active', 'createdAt', 'updatedAt'].includes(key)) {
+                  // Handle BigInt conversion
+                  if (typeof value === 'bigint') {
+                    acc[key] = value.toString();
+                  } else {
+                    acc[key] = value;
+                  }
+                }
+                return acc;
+              }, {} as any)
+            };
+            products.push(processedProduct);
+          }
+        } catch (productError) {
+          console.error(`Error fetching product ${productId}:`, productError);
+          // Continue with next product
         }
       }
       
+      console.log('[useProductManagement] All products fetched:', products);
       return products;
     } catch (error) {
       console.error('Error fetching products:', error);

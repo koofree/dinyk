@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { InsuranceSummaryCard } from "@/components/insurance/InsuranceSummaryCard";
+import { SimpleProductCard } from "@/components/insurance/SimpleProductCard";
 import { KAIA_TESTNET } from "@/lib/constants";
 import { getProductName } from "@/utils/productHelpers";
 
@@ -201,7 +202,7 @@ export default function InsurancePage() {
           <>
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
               {products.map((product) => (
-                <InsuranceSummaryCard
+                <SimpleProductCard
                   key={product.productId}
                   product={product}
                   tranches={tranches.filter(
