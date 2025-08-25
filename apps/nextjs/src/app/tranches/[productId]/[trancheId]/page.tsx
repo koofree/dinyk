@@ -94,12 +94,20 @@ export default function TrancheDetailPage() {
       // Get all products and find the one we need
       const products = await getProducts();
       const productData = products.find(p => p.productId === Number(productId));
-      setProduct(productData);
+      if (productData) {
+        setProduct(productData);
+      }
       
       // Get tranche data directly from contract
       let trancheData: any;
-      trancheData = await (productCatalog as any).tranches(Number(trancheId));
-      console.log("Raw tranche data from contract:", trancheData);
+      try {
+        trancheData = await (productCatalog as any).getTranche(Number(trancheId));
+        console.log("Raw tranche data from contract:", trancheData);
+      } catch (err) {
+        console.error("Error getting tranche data:", err);
+        // Try alternative approach if getTranche fails
+        trancheData = null;
+      }
       
       // Get pool address from factory first
       let poolAddress = "0x0000000000000000000000000000000000000000";
@@ -118,13 +126,16 @@ export default function TrancheDetailPage() {
         poolAddress = trancheData.poolAddress;
       }
       
-      setTranche({
+      // Handle the tranche data carefully - it might be null or have different field names
+      const trancheInfo = {
         productId: BigInt(productId),
         trancheId: Number(trancheId),
-        trigger: trancheData?.threshold || trancheData?.triggerThreshold || 0n,
-        premiumBps: trancheData?.premiumRateBps || trancheData?.premiumBps || 0n,
+        trigger: trancheData?.trigger || trancheData?.threshold || trancheData?.triggerThreshold || 0n,
+        premiumBps: trancheData?.premiumBps || trancheData?.premiumRateBps || 0n,
         poolAddress: poolAddress
-      });
+      };
+      
+      setTranche(trancheInfo);
       
       // Continue with pool data if we have a valid pool address
       if (poolAddress && poolAddress !== "0x0000000000000000000000000000000000000000") {
@@ -361,15 +372,13 @@ export default function TrancheDetailPage() {
 
       {/* Current Round Actions - Show forms based on availability */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {selectedRound && (
-          <BuyInsuranceForm
-            productId={BigInt(productId)}
-            trancheId={tranche.trancheId}
-            roundId={selectedRound.id}
-            tranche={tranche}
-            onSuccess={() => loadData()}
-          />
-        )}
+        <BuyInsuranceForm
+          productId={BigInt(productId)}
+          trancheId={tranche.trancheId}
+          roundId={selectedRound?.id || 0n}
+          tranche={tranche}
+          onSuccess={() => loadData()}
+        />
         {tranche.poolAddress && tranche.poolAddress !== "0x0000000000000000000000000000000000000000" ? (
           <ProvideLiquidityForm
             poolAddress={tranche.poolAddress}

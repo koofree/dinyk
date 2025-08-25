@@ -80,7 +80,7 @@ export function ProvideLiquidityForm({
     }
     
     const loadUserData = async () => {
-      if (isConnected && account && poolAddress && isInitialized) {
+      if (isConnected && account && isInitialized) {
         try {
           // Get pool accounting data
           const poolAccounting = await getPoolAccounting(trancheId);
@@ -89,18 +89,24 @@ export function ProvideLiquidityForm({
               totalAssets: poolAccounting.totalAssets ?? 0n,
               sharePrice: poolAccounting.navPerShare ?? 0n
             });
+          } else {
+            // No pool or round exists, clear NAV info
+            setNavInfo(null);
           }
           
-          // Get user's share balance
+          // Get user's share balance (will return 0 if no pool)
           const shares = await getShareBalance(trancheId);
           setUserShares(shares);
         } catch (err) {
           console.error("Error loading user data:", err);
+          // Clear state on error
+          setNavInfo(null);
+          setUserShares(0n);
         }
       }
     };
     void loadUserData();
-  }, [isConnected, account, poolAddress, isInitialized, trancheId, getPoolAccounting, getShareBalance, refreshUSDTBalance]);
+  }, [isConnected, account, isInitialized, trancheId, getPoolAccounting, getShareBalance, refreshUSDTBalance]);
 
   const handleDeposit = async () => {
     if (!isConnected || !account) {

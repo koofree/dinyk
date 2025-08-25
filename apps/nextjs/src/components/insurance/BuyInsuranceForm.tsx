@@ -70,7 +70,8 @@ export function BuyInsuranceForm({
       isConnected,
       account,
       hasUsdtContract: !!usdtContract,
-      isInitialized
+      isInitialized,
+      roundId
     });
     
     if (!isConnected) {
@@ -85,6 +86,11 @@ export function BuyInsuranceForm({
     
     if (!isInitialized || !usdtContract) {
       setError("Contracts are still loading. Please try again.");
+      return;
+    }
+
+    if (roundId === 0n) {
+      setError("No active round available for this tranche");
       return;
     }
 
@@ -140,6 +146,14 @@ export function BuyInsuranceForm({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {roundId === 0n && (
+          <Alert className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20">
+            <AlertCircle className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-600">
+              No active insurance round available. Please check back later or select a different tranche.
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="coverage">Coverage Amount (USDT)</Label>
@@ -149,7 +163,7 @@ export function BuyInsuranceForm({
               placeholder="Enter coverage amount"
               value={coverageAmount}
               onChange={(e) => setCoverageAmount(e.target.value)}
-              disabled={loading}
+              disabled={loading || !isConnected}
             />
             <Slider
               value={[parseFloat(coverageAmount) || 0]}
@@ -157,10 +171,14 @@ export function BuyInsuranceForm({
               max={maxCoverage}
               step={100}
               className="mt-2"
-              disabled={loading}
+              disabled={loading || !isConnected}
             />
             <p className="text-sm text-muted-foreground">
-              Available: ${usdtBalance ? Number(formatUnits(usdtBalance, 6)).toLocaleString() : "0"} USDT
+              {isConnected ? (
+                `Available: $${usdtBalance ? Number(formatUnits(usdtBalance, 6)).toLocaleString() : "0"} USDT`
+              ) : (
+                "Connect wallet to view balance"
+              )}
             </p>
             {usdtBalance === 0n && isConnected && (
               <p className="text-xs text-yellow-600 mt-1">
@@ -244,7 +262,7 @@ export function BuyInsuranceForm({
 
         <Button
           onClick={handleBuyInsurance}
-          disabled={loading || !isConnected || !isInitialized || !coverageAmount}
+          disabled={loading || !isConnected || !isInitialized || roundId === 0n || (!coverageAmount && isConnected)}
           className="w-full"
           size="lg"
         >
@@ -253,6 +271,10 @@ export function BuyInsuranceForm({
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Processing...
             </>
+          ) : !isConnected ? (
+            "Connect Wallet to Buy Insurance"
+          ) : roundId === 0n ? (
+            "No Active Round Available"
           ) : (
             <>
               <Shield className="mr-2 h-4 w-4" />
@@ -263,7 +285,7 @@ export function BuyInsuranceForm({
 
         {!isConnected && (
           <p className="text-center text-sm text-muted-foreground">
-            Please connect your wallet to buy insurance
+            Connect your wallet to purchase insurance coverage
           </p>
         )}
         

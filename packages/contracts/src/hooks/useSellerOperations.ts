@@ -492,7 +492,17 @@ export function useSellerOperations() {
 
       try {
         const poolAddress = await (tranchePoolFactory as any).getTranchePool(Number(trancheId));
-        if (poolAddress === ethers.ZeroAddress) return 0n;
+        if (!poolAddress || poolAddress === ethers.ZeroAddress) {
+          // No pool exists for this tranche (no round)
+          return 0n;
+        }
+
+        // Check if the pool contract actually exists at this address
+        const code = await getProvider().getCode(poolAddress);
+        if (code === '0x' || code === '0x0') {
+          // Contract doesn't exist at this address
+          return 0n;
+        }
 
         const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, getProvider());
 
@@ -500,7 +510,10 @@ export function useSellerOperations() {
         const balance = await (pool as any).shareBalances(sellerAddress);
         return balance;
       } catch (error) {
-        console.error("Error fetching seller share balance:", error);
+        // Only log error if it's not an expected "no pool" scenario
+        if (error instanceof Error && !error.message.includes('missing revert data')) {
+          console.error("Error fetching seller share balance:", error);
+        }
         return 0n;
       }
     },
@@ -518,8 +531,14 @@ export function useSellerOperations() {
       try {
         // Get pool
         const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
-        if (poolAddress === ethers.ZeroAddress) {
+        if (!poolAddress || poolAddress === ethers.ZeroAddress) {
           throw new Error(`No pool found for tranche ${trancheId}`);
+        }
+
+        // Check if the pool contract actually exists at this address
+        const code = await getProvider().getCode(poolAddress);
+        if (code === '0x' || code === '0x0') {
+          throw new Error(`No contract deployed at pool address for tranche ${trancheId}`);
         }
 
         const pool = new Contract(
@@ -593,7 +612,7 @@ export function useSellerOperations() {
       
       if (!tranchePoolFactory || !getProvider()) {
         console.error("Contracts not initialized - tranchePoolFactory:", !!tranchePoolFactory, "provider:", !!getProvider());
-        throw new Error("Contracts not initialized");
+        return null; // Return null instead of throwing when not initialized
       }
 
       let retries = 3;
@@ -603,13 +622,21 @@ export function useSellerOperations() {
           const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
           console.log("Pool address:", poolAddress);
           
-          if (poolAddress === ethers.ZeroAddress) {
+          if (!poolAddress || poolAddress === ethers.ZeroAddress) {
             console.log("No pool found for tranche:", trancheId);
             return null;
           }
 
           // Try with current provider first, then fallback if needed
           let provider = getProvider();
+          
+          // Check if the pool contract actually exists at this address
+          const code = await provider.getCode(poolAddress);
+          if (code === '0x' || code === '0x0') {
+            console.log("No contract deployed at pool address");
+            return null;
+          }
+          
           let pool = new Contract(poolAddress, TranchePoolCoreABI.abi, provider);
           
           try {
@@ -780,13 +807,26 @@ export function useSellerOperations() {
 
       try {
         const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
-        if (poolAddress === ethers.ZeroAddress) return 0n;
+        if (!poolAddress || poolAddress === ethers.ZeroAddress) {
+          // No pool exists for this tranche
+          return 0n;
+        }
+
+        // Check if the pool contract actually exists at this address
+        const code = await getProvider().getCode(poolAddress);
+        if (code === '0x' || code === '0x0') {
+          // Contract doesn't exist at this address
+          return 0n;
+        }
 
         const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, getProvider());
         const available = await (pool as any).getAvailableCollateral(sellerAddress);
         return available;
       } catch (error) {
-        console.error("Error fetching available collateral:", error);
+        // Only log error if it's not an expected "no pool" scenario
+        if (error instanceof Error && !error.message.includes('missing revert data')) {
+          console.error("Error fetching available collateral:", error);
+        }
         return 0n;
       }
     },
