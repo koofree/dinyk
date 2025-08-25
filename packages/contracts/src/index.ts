@@ -19,8 +19,12 @@ export {
   useBuyerOperations,
   useSellerOperations,
   useMonitoring,
-  useSettlement
+  useSettlement,
+  useUserPortfolio
 } from './hooks';
+
+// Export portfolio types
+export type { UserPosition, UserInsurancePosition, UserLiquidityPosition } from './hooks';
 
 // React providers
 export { ContractProvider, useContractFactory } from './providers/ContractProvider';

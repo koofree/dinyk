@@ -49,3 +49,11 @@ export type {
   SettlementStatus
 } from './useSettlement';
 
+// User portfolio management
+export { useUserPortfolio } from './useUserPortfolio';
+export type { 
+  UserPosition, 
+  UserInsurancePosition, 
+  UserLiquidityPosition 
+} from './useUserPortfolio';
+

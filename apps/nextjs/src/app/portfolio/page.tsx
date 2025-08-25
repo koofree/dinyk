@@ -2,114 +2,49 @@
 
 import React, { useState } from "react";
 import { PositionCard } from "@/components/insurance/PositionCard";
-import { useWeb3 } from "@dinsure/contracts";
+import { useWeb3, useUserPortfolio } from "@dinsure/contracts";
 import { KAIA_TESTNET } from "@/lib/constants";
-import type { UserPosition } from "@/lib/types";
-
-// Mock NFT positions - would be fetched from InsuranceToken contract
-const MOCK_NFT_POSITIONS: UserPosition[] = [
-  {
-    id: 'nft-1',
-    tokenId: 1,
-    asset: 'BTC',
-    type: 'insurance',
-    tranche: 'BTC -10% Protection',
-    trancheId: 1,
-    roundId: 1,
-    coverage: '1000',
-    premiumPaid: '50',
-    status: 'active',
-    expiresIn: 7,
-    currentPrice: 44500,
-    triggerPrice: 40500,
-    baseline: 45000,
-    roundState: 'ACTIVE',
-    maturityTimestamp: Date.now() + 7 * 24 * 60 * 60 * 1000,
-    startTime: new Date('2025-01-10T14:00:00Z'),
-    endTime: new Date('2025-01-17T14:00:00Z')
-  },
-  {
-    id: 'nft-2',
-    tokenId: 2,
-    asset: 'ETH',
-    type: 'insurance',
-    tranche: 'ETH -15% Protection',
-    trancheId: 3,
-    roundId: 2,
-    coverage: '500',
-    premiumPaid: '60',
-    status: 'claimable',
-    expiresIn: 0,
-    currentPrice: 2080,
-    triggerPrice: 2088,
-    baseline: 2456,
-    roundState: 'SETTLED',
-    maturityTimestamp: Date.now() - 1 * 24 * 60 * 60 * 1000,
-    startTime: new Date('2025-01-08T10:00:00Z'),
-    endTime: new Date('2025-01-15T10:00:00Z'),
-    claimAmount: '500'
-  }
-];
-
-// Mock liquidity positions - would be fetched from TranchePoolCore
-const MOCK_LP_POSITIONS: UserPosition[] = [
-  {
-    id: 'lp-1',
-    asset: 'BTC',
-    type: 'liquidity',
-    tranche: 'BTC -5% Tranche Pool',
-    trancheId: 1,
-    roundId: 1,
-    deposited: '5000',
-    shares: '850',
-    currentValue: '5120',
-    earnedPremium: '120',
-    stakingRewards: '0',
-    lockedAmount: '5000',
-    roundStatus: 'active',
-    roundState: 'ACTIVE',
-    daysLeft: 7,
-    startTime: new Date('2025-01-10T09:00:00Z'),
-    endTime: new Date('2025-01-17T09:00:00Z')
-  },
-  {
-    id: 'lp-2',
-    asset: 'ETH',
-    type: 'liquidity',
-    tranche: 'ETH -10% Tranche Pool',
-    trancheId: 3,
-    roundId: 2,
-    deposited: '2000',
-    shares: '340',
-    currentValue: '1950',
-    earnedPremium: '0',
-    stakingRewards: '0',
-    lockedAmount: '0',
-    roundStatus: 'settled',
-    roundState: 'SETTLED',
-    daysLeft: 0,
-    startTime: new Date('2025-01-05T16:00:00Z'),
-    endTime: new Date('2025-01-12T16:00:00Z'),
-    lossAmount: '50'
-  }
-];
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function PortfolioPage() {
   const { isConnected, account } = useWeb3();
   const [activeTab, setActiveTab] = useState<'insurance' | 'liquidity' | 'history'>('insurance');
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  
+  const {
+    insurancePositions,
+    liquidityPositions,
+    portfolioSummary,
+    isLoading,
+    error,
+    claimInsurance,
+    withdrawLiquidity,
+    refetch
+  } = useUserPortfolio();
 
   const handleClaim = async (positionId: string) => {
-    console.log(`Claiming position ${positionId}`);
-    // Mock claim transaction
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    alert(`Successfully claimed payout for position ${positionId}!`);
+    setProcessingId(positionId);
+    try {
+      await claimInsurance(positionId);
+      toast.success(`Successfully claimed payout for position ${positionId}!`);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to claim insurance");
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const handleWithdraw = async (positionId: string) => {
-    console.log(`Withdrawing from position ${positionId}`);
-    // Mock withdraw transaction
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    alert(`Successfully withdrew funds from position ${positionId}!`);
+    setProcessingId(positionId);
+    try {
+      await withdrawLiquidity(positionId);
+      toast.success(`Successfully withdrew funds from position ${positionId}!`);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to withdraw liquidity");
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   if (!isConnected) {
@@ -128,20 +63,40 @@ export default function PortfolioPage() {
     );
   }
 
-  const insurancePositions = MOCK_NFT_POSITIONS.filter(p => p.type === 'insurance');
-  const liquidityPositions = MOCK_LP_POSITIONS.filter(p => p.type === 'liquidity');
+  // Show loading state while fetching data
+  if (isLoading && !insurancePositions.length && !liquidityPositions.length) {
+    return (
+      <div className="min-h-screen bg-gray-900 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            <span className="ml-3 text-gray-400">Loading portfolio...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const totalInsuranceCoverage = insurancePositions.reduce((sum, pos) => {
-    return sum + parseInt(pos.coverage || '0');
-  }, 0);
-
-  const totalLiquidityValue = liquidityPositions.reduce((sum, pos) => {
-    return sum + parseInt(pos.currentValue || '0');
-  }, 0);
-
-  const totalEarnings = liquidityPositions.reduce((sum, pos) => {
-    return sum + parseFloat(pos.earnedPremium || '0') + parseFloat(pos.stakingRewards || '0');
-  }, 0);
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-900 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-white mb-4">Error Loading Portfolio</h2>
+            <p className="text-gray-400 mb-8">{error}</p>
+            <button
+              onClick={() => refetch()}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 py-8">
@@ -178,10 +133,10 @@ export default function PortfolioPage() {
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <div className="text-gray-400 text-sm mb-2">Insurance Coverage</div>
             <div className="text-2xl font-bold text-white">
-              ${totalInsuranceCoverage.toLocaleString()} USDT
+              ${portfolioSummary.totalInsuranceCoverage.toLocaleString()} USDT
             </div>
             <div className="text-green-400 text-sm">
-              {insurancePositions.length} NFT{insurancePositions.length !== 1 ? 's' : ''} held
+              {portfolioSummary.activeInsuranceCount} active, {portfolioSummary.claimableInsuranceCount} claimable
             </div>
             <div className="text-gray-500 text-xs mt-1">
               InsuranceToken Contract
@@ -191,10 +146,10 @@ export default function PortfolioPage() {
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <div className="text-gray-400 text-sm mb-2">Liquidity Provided</div>
             <div className="text-2xl font-bold text-white">
-              ${totalLiquidityValue.toLocaleString()} USDT
+              ${portfolioSummary.totalLiquidityValue.toLocaleString()} USDT
             </div>
             <div className="text-blue-400 text-sm">
-              {liquidityPositions.length} tranche pool{liquidityPositions.length !== 1 ? 's' : ''}
+              {portfolioSummary.activeLiquidityCount} active position{portfolioSummary.activeLiquidityCount !== 1 ? 's' : ''}
             </div>
             <div className="text-gray-500 text-xs mt-1">
               TranchePoolCore Shares
@@ -204,7 +159,7 @@ export default function PortfolioPage() {
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <div className="text-gray-400 text-sm mb-2">Total Earnings</div>
             <div className="text-2xl font-bold text-white">
-              ${totalEarnings.toFixed(2)} USDT
+              ${portfolioSummary.totalEarnings.toFixed(2)} USDT
             </div>
             <div className="text-yellow-400 text-sm">
               Premiums + Staking rewards
@@ -254,8 +209,9 @@ export default function PortfolioPage() {
                 {insurancePositions.map((position) => (
                   <PositionCard
                     key={position.id}
-                    position={position}
+                    position={position as any}
                     onClaim={handleClaim}
+                    isProcessing={processingId === position.id}
                   />
                 ))}
               </div>
@@ -284,8 +240,9 @@ export default function PortfolioPage() {
                 {liquidityPositions.map((position) => (
                   <PositionCard
                     key={position.id}
-                    position={position}
+                    position={position as any}
                     onWithdraw={handleWithdraw}
+                    isProcessing={processingId === position.id}
                   />
                 ))}
               </div>
@@ -312,9 +269,16 @@ export default function PortfolioPage() {
             <div className="text-center">
               <div className="text-4xl mb-4">📊</div>
               <h3 className="text-xl font-bold text-white mb-2">Transaction History</h3>
-              <p className="text-gray-400">
+              <p className="text-gray-400 mb-6">
                 Coming soon - View your complete transaction history
               </p>
+              <button
+                onClick={() => refetch()}
+                className="text-blue-400 hover:text-blue-300 text-sm"
+                disabled={isLoading}
+              >
+                {isLoading ? "Refreshing..." : "Refresh Portfolio"}
+              </button>
             </div>
           </div>
         )}

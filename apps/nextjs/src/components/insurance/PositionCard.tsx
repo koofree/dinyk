@@ -7,12 +7,14 @@ interface PositionCardProps {
   position: UserPosition;
   onClaim?: (positionId: string) => void;
   onWithdraw?: (positionId: string) => void;
+  isProcessing?: boolean;
 }
 
 export const PositionCard: React.FC<PositionCardProps> = ({ 
   position, 
   onClaim, 
-  onWithdraw 
+  onWithdraw,
+  isProcessing = false
 }) => {
   const getStatusColor = (status?: string) => {
     switch (status) {
@@ -96,9 +98,10 @@ export const PositionCard: React.FC<PositionCardProps> = ({
           {position.status === 'claimable' && onClaim && (
             <button
               onClick={() => onClaim(position.id)}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors"
+              disabled={isProcessing}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Claim Now
+              {isProcessing ? 'Processing...' : 'Claim Now'}
             </button>
           )}
           <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
@@ -153,12 +156,13 @@ export const PositionCard: React.FC<PositionCardProps> = ({
       )}
 
       <div className="flex gap-2">
-        {position.roundStatus === 'settlement' && onWithdraw && (
+        {position.roundStatus === 'settled' && onWithdraw && (
           <button
             onClick={() => onWithdraw(position.id)}
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors"
+            disabled={isProcessing}
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Withdraw Available
+            {isProcessing ? 'Processing...' : 'Withdraw Available'}
           </button>
         )}
         {position.roundStatus === 'active' && (
