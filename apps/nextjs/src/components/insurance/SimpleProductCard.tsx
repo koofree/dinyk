@@ -18,7 +18,6 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
     product.name || product.metadataHash || `Product #${product.productId}`;
 
   // Calculate aggregated statistics
-  const activeTranches = tranches.filter((t) => t.active !== false).length;
   const totalTranches = tranches.length;
 
   // Calculate premium range
@@ -76,7 +75,7 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
         <div>
           <p className="mb-1 text-xs text-gray-500">Tranches</p>
           <p className="text-lg font-semibold text-white">
-            {activeTranches}{" "}
+            {totalTranches}{" "}
             <span className="text-sm text-gray-400">/ {totalTranches}</span>
           </p>
         </div>
@@ -134,7 +133,7 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
         onClick={onViewTranches}
         className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
       >
-        View Tranches ({activeTranches})
+        View Tranches ({totalTranches})
       </button>
     </div>
   );

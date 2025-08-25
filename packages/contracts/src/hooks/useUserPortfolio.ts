@@ -1,9 +1,8 @@
-import { ethers, Contract } from "ethers";
+import { Contract, ethers } from "ethers";
 import { useCallback, useEffect, useState } from "react";
-import { useWeb3, KAIA_RPC_ENDPOINTS } from "../providers/Web3Provider";
-import { useContracts } from "./useContracts";
 import TranchePoolCoreABI from '../config/abis/TranchePoolCore.json';
-import InsuranceTokenABI from '../config/abis/InsuranceToken.json';
+import { KAIA_RPC_ENDPOINTS, useWeb3 } from "../providers/Web3Provider";
+import { useContracts } from "./useContracts";
 
 export interface UserInsurancePosition {
   id: string;
@@ -282,11 +281,6 @@ export function useUserPortfolio() {
           for (const trancheIdBN of trancheIds) {
             const trancheId = Number(trancheIdBN);
             
-            // Skip invalid tranche IDs
-            if (trancheId === 0 || trancheId > 1000) {
-              continue;
-            }
-            
             try {
               console.log(`Checking tranche ${trancheId}...`);
               
@@ -533,9 +527,9 @@ export function useUserPortfolio() {
       (sum, pos) => sum + parseFloat(pos.earnedPremium || '0') + parseFloat(pos.stakingRewards || '0'), 
       0
     ),
-    activeInsuranceCount: insurancePositions.filter(p => p.status === 'active').length,
-    claimableInsuranceCount: insurancePositions.filter(p => p.status === 'claimable').length,
-    activeLiquidityCount: liquidityPositions.filter(p => p.roundStatus === 'active').length
+    activeInsuranceCount: insurancePositions.length,
+    claimableInsuranceCount: insurancePositions.length,
+    activeLiquidityCount: liquidityPositions.length
   };
 
   return {

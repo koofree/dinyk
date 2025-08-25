@@ -103,6 +103,15 @@ export default function TrancheDetailPage() {
       try {
         trancheData = await (productCatalog as any).getTranche(Number(trancheId));
         console.log("Raw tranche data from contract:", trancheData);
+        
+        // Validate that the tranche exists and belongs to the correct product
+        if (!trancheData || Number(trancheData.productId) !== Number(productId)) {
+          console.warn(`Tranche ${trancheId} doesn't exist or doesn't belong to product ${productId}`);
+          // Still try to use the data if tranche exists but product mismatch
+          if (!trancheData) {
+            trancheData = null;
+          }
+        }
       } catch (err) {
         console.error("Error getting tranche data:", err);
         // Try alternative approach if getTranche fails
@@ -128,10 +137,10 @@ export default function TrancheDetailPage() {
       
       // Handle the tranche data carefully - it might be null or have different field names
       const trancheInfo = {
-        productId: BigInt(productId),
+        productId: BigInt(trancheData?.productId || productId),
         trancheId: Number(trancheId),
-        trigger: trancheData?.trigger || trancheData?.threshold || trancheData?.triggerThreshold || 0n,
-        premiumBps: trancheData?.premiumBps || trancheData?.premiumRateBps || 0n,
+        trigger: BigInt(trancheData?.threshold || trancheData?.trigger || trancheData?.triggerThreshold || 0),
+        premiumBps: BigInt(trancheData?.premiumRateBps || trancheData?.premiumBps || 0),
         poolAddress: poolAddress
       };
       
@@ -211,8 +220,8 @@ export default function TrancheDetailPage() {
               }) || []
             );
             
-            // Filter out null values (non-existent rounds)
-            const validRounds = formattedRounds.filter((round: any) => round !== null);
+            // Use all rounds without filtering
+            const validRounds = formattedRounds;
             
             setRounds(validRounds);
             
@@ -266,6 +275,12 @@ export default function TrancheDetailPage() {
   };
 
   const getTriggerDisplay = (trigger: bigint) => {
+    // If trigger is in wei (1e18), convert to percentage
+    if (trigger > 1000000n) {
+      const percentage = Number(trigger / BigInt(1e16)); // Convert from 1e18 to percentage with 2 decimals
+      return `-${percentage / 100}%`;
+    }
+    // Otherwise assume it's already in basis points
     return `-${Number(trigger) / 100}%`;
   };
 
@@ -364,7 +379,7 @@ export default function TrancheDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {rounds.filter(r => r.state === 1 || r.state === 2).length}
+              {rounds.length}
             </div>
           </CardContent>
         </Card>

@@ -139,11 +139,8 @@ export default function InsurancePage() {
         });
 
         const fetchedTranches = await Promise.all(trancheDetailsPromises);
-        const validTranches = fetchedTranches.filter(
-          (t: any) => t !== null,
-        );
-        console.log("Valid tranches:", validTranches);
-        setTranches(validTranches);
+        console.log("Fetched tranches:", fetchedTranches);
+        setTranches(fetchedTranches);
       } catch (error) {
         console.error("Error in fetchData:", error);
         setProductsError(error as Error);
@@ -252,9 +249,7 @@ export default function InsurancePage() {
                 <SimpleProductCard
                   key={product.productId}
                   product={product}
-                  tranches={product.tranches || tranches.filter(
-                    (t: any) => t.productId === product.productId,
-                  )}
+                  tranches={product.tranches || tranches}
                   onViewTranches={() => handleViewTranches(product.productId)}
                 />
               ))}

@@ -457,7 +457,7 @@ export function useSettlement() {
         }
       }
 
-      const successCount = results.filter((r) => r.success).length;
+      const successCount = results.length;
       toast.success(`Settled ${successCount}/${roundIds.length} rounds`);
 
       return results;

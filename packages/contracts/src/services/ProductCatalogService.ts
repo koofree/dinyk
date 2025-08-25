@@ -2,8 +2,9 @@ import { ethers } from 'ethers';
 import ProductCatalogABI from '../config/abis/ProductCatalog.json';
 import TranchePoolCoreABI from '../config/abis/TranchePoolCore.json';
 import TranchePoolFactoryABI from '../config/abis/TranchePoolFactory.json';
-import { Product, Tranche, Round, RoundState, TriggerType } from '../types/products';
 import { KAIA_TESTNET_ADDRESSES } from '../config/addresses';
+import type { Product, Round, Tranche, TriggerType } from '../types/products';
+import { RoundState } from '../types/products';
 
 export class ProductCatalogService {
   public readonly contract: ethers.Contract;
@@ -27,15 +28,9 @@ export class ProductCatalogService {
       const getActiveProducts = this.contract.getActiveProducts as () => Promise<bigint[]>;
       const ids = await getActiveProducts();
       
-      // Filter out invalid product IDs (0 or > 8, since we know only 1-5 exist on testnet)
-      const validIds = ids
-        .map((id: bigint) => Number(id))
-        .filter(id => id > 0 && id <= 8);
-      
       console.log('Raw product IDs from contract:', ids.map(id => Number(id)));
-      console.log('Filtered valid product IDs:', validIds);
       
-      return validIds;
+      return ids.map((id: bigint) => Number(id));
     } catch (error) {
       console.error('Failed to get active products:', error);
       return [];
@@ -57,12 +52,6 @@ export class ProductCatalogService {
   // Get product details with proper struct handling
   async getProduct(productId: number): Promise<Product | null> {
     try {
-      // Validate productId is a reasonable value (we know only 1-5 exist on testnet)
-      if (productId <= 0 || productId > 8) {
-        console.log(`Product ID ${productId} is out of valid range (1-8), skipping`);
-        return null;
-      }
-
       const getProduct = this.contract.getProduct as (id: number) => Promise<any>;
       const productData = await getProduct(productId);
       
@@ -86,7 +75,7 @@ export class ProductCatalogService {
         active: productData.active,
         createdAt: Number(productData.createdAt),
         updatedAt: Number(productData.updatedAt),
-        tranches: tranches.filter(t => t !== null) as Tranche[],
+        tranches: tranches as Tranche[],
         metadata: this.parseMetadata(productData.metadataHash, Number(productData.productId))
       };
     } catch (error: any) {
@@ -191,10 +180,9 @@ export class ProductCatalogService {
           knownProductIds.map(id => this.getProduct(id))
         );
         
-        const validKnownProducts = knownProducts.filter(p => p !== null) as Product[];
-        if (validKnownProducts.length > 0) {
-          console.log(`Found ${validKnownProducts.length} known products`);
-          return validKnownProducts;
+        if (knownProducts.length > 0) {
+          console.log(`Found ${knownProducts.length} known products`);
+          return knownProducts;
         }
       }
       
@@ -210,21 +198,19 @@ export class ProductCatalogService {
         })
       );
       
-      const validProducts = products.filter(p => p !== null) as Product[];
-      console.log(`Successfully fetched ${validProducts.length} valid products`);
+      console.log(`Successfully fetched ${products.length} products`);
       
       // If no products found through getActiveProducts, try known IDs as fallback
-      if (validProducts.length === 0) {
+      if (products.length === 0) {
         console.log('No products found through active IDs, trying known product IDs as fallback');
         const fallbackIds = [1, 2, 3, 4, 5];
         const fallbackProducts = await Promise.all(
           fallbackIds.map(id => this.getProduct(id))
         );
-        const validFallback = fallbackProducts.filter(p => p !== null) as Product[];
-        return validFallback;
+        return fallbackProducts;
       }
       
-      return validProducts;
+      return products;
     } catch (error) {
       console.error('Failed to get all active products:', error);
       // Return empty array instead of crashing
@@ -419,7 +405,7 @@ export class ProductCatalogService {
   }
 
   // Helper to format threshold price for display
-  formatThresholdPrice(threshold: bigint, decimals: number = 18): string {
+  formatThresholdPrice(threshold: bigint, decimals = 18): string {
     try {
       return ethers.formatUnits(threshold, decimals);
     } catch {

@@ -1,13 +1,13 @@
 "use client";
 
-import React from "react";
-import type { Product, Tranche } from "@dinsure/contracts";
-import { 
-  getProductName, 
-  getProductDescription, 
-  getProductIcon
-} from "@/utils/productHelpers";
 import { formatPercentage, formatUSDT } from "@/utils/calculations";
+import {
+    getProductDescription,
+    getProductIcon,
+    getProductName
+} from "@/utils/productHelpers";
+import type { Product, Tranche } from "@dinsure/contracts";
+import React from "react";
 
 interface InsuranceSummaryCardProps {
   product: Product;
@@ -26,7 +26,6 @@ export const InsuranceSummaryCard: React.FC<InsuranceSummaryCardProps> = ({
   const productIcon = getProductIcon(product);
   
   // Calculate aggregated statistics from actual data
-  const activeTranches = tranches.filter(t => t.active).length;
   const totalTranches = tranches.length;
   
   // Calculate total TVL from actual round data
@@ -72,7 +71,7 @@ export const InsuranceSummaryCard: React.FC<InsuranceSummaryCardProps> = ({
         <div>
           <div className="text-gray-400 text-xs">Active Tranches</div>
           <div className="text-white font-semibold text-lg">
-            {activeTranches}/{totalTranches}
+            {totalTranches}
           </div>
         </div>
         {totalTVL > 0 && (
@@ -101,7 +100,7 @@ export const InsuranceSummaryCard: React.FC<InsuranceSummaryCardProps> = ({
       <div className="border-t border-gray-700 pt-4 mb-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-gray-400 text-sm">Available Tranches</span>
-          <span className="text-gray-400 text-sm">{activeTranches} active</span>
+          <span className="text-gray-400 text-sm">{totalTranches} active</span>
         </div>
         <div className="flex gap-2">
           {tranches.slice(0, 3).map((tranche, idx) => (

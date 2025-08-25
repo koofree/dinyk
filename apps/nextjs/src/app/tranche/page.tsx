@@ -78,154 +78,176 @@ function TrancheContent() {
       try {
         console.log("[Tranche Page] Starting data fetch...");
         
-        // Fetch products
-        console.log("[Tranche Page] Fetching products...");
-        let fetchedProducts: Product[] = [];
+        // Fetch products - only get valid ones from contract
+        console.log("[Tranche Page] Fetching products from contract...");
+        const fetchedProducts: Product[] = [];
+        
         try {
-          fetchedProducts = await getProducts() as Product[];
-          console.log("[Tranche Page] Raw products fetched:", fetchedProducts);
-          setProducts(fetchedProducts);
-        } catch (productError) {
-          console.error("[Tranche Page] Error fetching products:", productError);
-          // Use configured products as fallback
-          fetchedProducts = INSURANCE_PRODUCTS.map(p => ({
-            productId: p.productId,
-            metadataHash: p.metadata,
-            active: true,
-            createdAt: Date.now() / 1000,
-            updatedAt: Date.now() / 1000,
-            tranches: [],
-            metadata: {
-              name: p.name,
-              description: p.description,
-              category: 'Price Protection',
-              tags: [p.asset],
-              riskLevel: 'MEDIUM',
-              underlyingAsset: p.asset,
+          // Get active products from contract
+          const activeProductIds = await (productCatalog as any).getActiveProducts();
+          console.log("[Tranche Page] Active product IDs from contract:", activeProductIds.map(id => Number(id)));
+          
+          // Fetch each product
+          for (const productId of activeProductIds) {
+            try {
+              const productInfo = await (productCatalog as any).getProduct(Number(productId));
+              
+              if (productInfo && Number(productInfo.productId) !== 0) {
+                console.log(`[Tranche Page] Product ${productId} from contract:`, {
+                  exists: !!productInfo,
+                  productId: productInfo?.productId,
+                  active: productInfo?.active,
+                  metadataHash: productInfo?.metadataHash
+                });
+                
+                // Get tranches for this product
+                const trancheIds = productInfo.trancheIds || [];
+                const productTranches: any[] = [];
+                
+                for (const trancheId of trancheIds) {
+                  try {
+                    const tranche = await (productCatalog as any).getTranche(Number(trancheId));
+                    if (tranche && Number(tranche.productId) > 0) {
+                      productTranches.push({
+                        trancheId: Number(trancheId),
+                        productId: Number(tranche.productId),
+                        triggerType: Number(tranche.triggerType || 0),
+                        threshold: tranche.threshold ? BigInt(tranche.threshold.toString()) : BigInt(0),
+                        premiumRateBps: Number(tranche.premiumRateBps || 0),
+                        maturityDays: Number(tranche.maturityDays || 30),
+                        maturityTimestamp: Number(tranche.maturityTimestamp || 0),
+                        trancheCap: tranche.trancheCap ? BigInt(tranche.trancheCap.toString()) : BigInt(0),
+                        perAccountMin: tranche.perAccountMin ? BigInt(tranche.perAccountMin.toString()) : BigInt(0),
+                        perAccountMax: tranche.perAccountMax ? BigInt(tranche.perAccountMax.toString()) : BigInt(0),
+                        oracleRouteId: Number(tranche.oracleRouteId || 0),
+                        poolAddress: tranche.poolAddress || "",
+                        active: true,
+                        isExpired: false,
+                        availableCapacity: BigInt(0),
+                        utilizationRate: 0,
+                        name: `Tranche ${trancheId}`,
+                      });
+                    }
+                  } catch (err) {
+                    console.log(`[Tranche Page] Could not fetch tranche ${trancheId}`);
+                  }
+                }
+                
+                // Find matching config for metadata
+                const configProduct = INSURANCE_PRODUCTS.find(p => p.productId === Number(productId));
+                
+                // Create product entry with actual data from contract
+                fetchedProducts.push({
+                  productId: Number(productId),
+                  metadataHash: productInfo?.metadataHash || "",
+                  active: productInfo?.active || false,
+                  createdAt: Number(productInfo?.createdAt || Date.now() / 1000),
+                  updatedAt: Number(productInfo?.updatedAt || Date.now() / 1000),
+                  tranches: productTranches,
+                  metadata: {
+                    name: configProduct?.name || `Product ${productId}`,
+                    description: configProduct?.description || `Insurance Product ${productId}`,
+                    category: 'Price Protection',
+                    tags: [configProduct?.asset || 'BTC'],
+                    riskLevel: 'MEDIUM',
+                    underlyingAsset: configProduct?.asset || 'BTC',
+                  }
+                } as Product);
+              }
+            } catch (err) {
+              console.log(`[Tranche Page] Could not fetch product ${productId} from contract`);
             }
-          } as Product));
-          setProducts(fetchedProducts);
-        }
-        
-        // Get active tranche IDs from contract
-        console.log("[Tranche Page] Getting active tranche IDs from contract...");
-        let activeTrancheIds: number[] = [];
-        
-        try {
-          const activeTranches = await (productCatalog as any).getActiveTranches();
-          if (activeTranches && activeTranches.length > 0) {
-            console.log("[Tranche Page] Got active tranches from contract:", activeTranches);
-            activeTrancheIds = activeTranches;
-          } else {
-            console.log("[Tranche Page] No active tranches found in contract");
           }
         } catch (err) {
-          console.log("[Tranche Page] getActiveTranches failed:", err);
+          console.error("[Tranche Page] Error fetching products from contract:", err);
         }
         
-        console.log("[Tranche Page] Will check tranche IDs:", activeTrancheIds);
+        console.log("[Tranche Page] Products fetched from contract:", fetchedProducts);
+        setProducts(fetchedProducts);
         
-        const trancheDetailsPromises = activeTrancheIds.map(async (id) => {
+        // Use tranches from products we already fetched
+        console.log("[Tranche Page] Extracting tranches from products...");
+        const allTranches: Tranche[] = [];
+        
+        for (const product of fetchedProducts) {
+          if (product.tranches && product.tranches.length > 0) {
+            allTranches.push(...product.tranches);
+          }
+        }
+        
+        console.log(`[Tranche Page] Found ${allTranches.length} tranches from ${fetchedProducts.length} products`);
+        
+        // If no products/tranches found in contract, try direct tranche query as fallback
+        if (allTranches.length === 0) {
+          console.log("[Tranche Page] No products found, trying direct tranche query...");
+          
           try {
-            console.log(`[Tranche Page] Fetching tranche ${id}...`);
-            // Try different methods to fetch tranche data
-            let tranche: any;
-            try {
-              tranche = await (productCatalog as any).getTranche(id);
-            } catch (getTrancheErr) {
-              // Fallback to tranches mapping
+            // Get active tranches from contract
+            const activeTrancheIds = await (productCatalog as any).getActiveTranches();
+            console.log("[Tranche Page] Active tranche IDs from contract:", activeTrancheIds.map(id => Number(id)));
+            
+            for (const trancheId of activeTrancheIds) {
               try {
-                tranche = await (productCatalog as any).tranches(id);
-              } catch (tranchesErr) {
-                console.log(`[Tranche Page] Tranche ${id} not found`);
-                return null;
+                const tranche = await (productCatalog as any).getTranche(Number(trancheId));
+                
+                // Validate tranche data
+                if (tranche && Number(tranche.productId) > 0 && Number(tranche.premiumRateBps) > 0) {
+                  console.log(`[Tranche Page] Found standalone tranche ${trancheId}:`, tranche);
+                  
+                  allTranches.push({
+                    trancheId: Number(trancheId),
+                    productId: Number(tranche.productId),
+                    triggerType: Number(tranche.triggerType || 0),
+                    threshold: tranche.threshold ? BigInt(tranche.threshold.toString()) : BigInt(0),
+                    premiumRateBps: Number(tranche.premiumRateBps || 0),
+                    maturityDays: Number(tranche.maturityDays || 30),
+                    maturityTimestamp: Number(tranche.maturityTimestamp || 0),
+                    trancheCap: tranche.trancheCap ? BigInt(tranche.trancheCap.toString()) : BigInt(0),
+                    perAccountMin: tranche.perAccountMin ? BigInt(tranche.perAccountMin.toString()) : BigInt(0),
+                    perAccountMax: tranche.perAccountMax ? BigInt(tranche.perAccountMax.toString()) : BigInt(0),
+                    oracleRouteId: Number(tranche.oracleRouteId || 0),
+                    poolAddress: tranche.poolAddress || "",
+                    active: true,
+                    isExpired: false,
+                    availableCapacity: BigInt(0),
+                    utilizationRate: 0,
+                    name: `Tranche ${trancheId}`,
+                  } as Tranche);
+                  
+                  // Also ensure we have the product for this tranche
+                  const productId = Number(tranche.productId);
+                  if (!fetchedProducts.find(p => p.productId === productId)) {
+                    const configProduct = INSURANCE_PRODUCTS.find(p => p.productId === productId);
+                    fetchedProducts.push({
+                      productId: productId,
+                      metadataHash: "",
+                      active: true,
+                      createdAt: Date.now() / 1000,
+                      updatedAt: Date.now() / 1000,
+                      tranches: [],
+                      metadata: {
+                        name: configProduct?.name || `Product ${productId}`,
+                        description: configProduct?.description || `Insurance Product ${productId}`,
+                        category: 'Price Protection',
+                        tags: [configProduct?.asset || 'BTC'],
+                        riskLevel: 'MEDIUM',
+                        underlyingAsset: configProduct?.asset || 'BTC',
+                      }
+                    } as Product);
+                    setProducts([...fetchedProducts]);
+                  }
+                }
+              } catch (err) {
+                // Tranche doesn't exist, continue
               }
             }
-            
-            // Check if tranche actually exists (not just default values)
-            // Also check for BigInt 0 values
-            const hasValidData = tranche && (
-              (tranche.productId && Number(tranche.productId) > 0) ||
-              (tranche.premiumRateBps && Number(tranche.premiumRateBps) > 0) ||
-              (tranche.threshold && tranche.threshold.toString() !== '0') ||
-              (tranche.trancheCap && tranche.trancheCap.toString() !== '0')
-            );
-            
-            if (!hasValidData) {
-              console.log(`[Tranche Page] Tranche ${id} is empty or doesn't exist:`, tranche);
-              return null;
-            }
-            
-            console.log(`[Tranche Page] Tranche ${id} fetched:`, tranche);
-            
-            
-            
-            // Convert BigInt values to regular numbers for display
-            return {
-              trancheId: Number(tranche.trancheId || id), // Use actual trancheId from contract
-              productId: Number(tranche.productId || 0),
-              triggerType: Number(tranche.triggerType || 0),
-              threshold: tranche.threshold ? BigInt(tranche.threshold.toString()) : BigInt(0),
-              premiumRateBps: Number(tranche.premiumRateBps || 0),
-              maturityDays: Number(tranche.maturityDays || 30),
-              maturityTimestamp: Number(tranche.maturityTimestamp || 0),
-              trancheCap: tranche.trancheCap ? BigInt(tranche.trancheCap.toString()) : BigInt(0),
-              perAccountMin: tranche.perAccountMin ? BigInt(tranche.perAccountMin.toString()) : BigInt(0),
-              perAccountMax: tranche.perAccountMax ? BigInt(tranche.perAccountMax.toString()) : BigInt(0),
-              oracleRouteId: Number(tranche.oracleRouteId || 0),
-              poolAddress: tranche.poolAddress || "",
-              active: tranche.active === true,
-              isExpired: false,
-              availableCapacity: BigInt(0),
-              utilizationRate: 0,
-              name: tranche.name || `Tranche ${tranche.trancheId || id}`,
-            } as Tranche;
           } catch (err) {
-            console.error(`[Tranche Page] Error fetching tranche ${id}:`, err);
-            return null;
+            console.error("[Tranche Page] Error fetching active tranches:", err);
           }
-        });
-        
-        const fetchedTranches = await Promise.all(trancheDetailsPromises);
-        let validTranches = fetchedTranches.filter((t: any) => t !== null) as Tranche[];
-        
-        // If no tranches fetched from contract, use configured data as fallback
-        if (validTranches.length === 0) {
-          console.log("[Tranche Page] No tranches from contract, using configured data...");
-          const configuredTranches: Tranche[] = [];
-          
-          for (const product of INSURANCE_PRODUCTS) {
-            for (let i = 0; i < product.tranches.length && i < 4; i++) {
-              const configTranche = product.tranches[i];
-              const trancheId = configTranche.id; // Use actual tranche ID from config
-              
-              configuredTranches.push({
-                trancheId: trancheId,
-                productId: product.productId,
-                triggerType: configTranche.triggerType === 'PRICE_BELOW' ? 0 : 1,
-                threshold: BigInt(configTranche.triggerPrice * 1e18), // Convert to wei
-                premiumRateBps: configTranche.premiumRateBps,
-                maturityDays: configTranche.maturityDays,
-                maturityTimestamp: Math.floor(Date.now() / 1000) + (configTranche.maturityDays * 86400),
-                trancheCap: BigInt(Number(configTranche.capacity) * 1e6), // USDT has 6 decimals
-                perAccountMin: BigInt(Number(configTranche.perAccountMin) * 1e6),
-                perAccountMax: BigInt(Number(configTranche.perAccountMax) * 1e6),
-                oracleRouteId: configTranche.oracleRouteId,
-                poolAddress: "",
-                active: true,
-                isExpired: false,
-                availableCapacity: BigInt(Number(configTranche.available) * 1e6),
-                utilizationRate: 0,
-                name: configTranche.name,
-              } as Tranche);
-            }
-          }
-          
-          validTranches = configuredTranches;
         }
         
-        console.log("[Tranche Page] Valid tranches:", validTranches);
-        setTranches(validTranches);
+        console.log(`[Tranche Page] Final: ${allTranches.length} tranches`);
+        setTranches(allTranches);
       } catch (error) {
         console.error('[Tranche Page] Error in fetchData:', error);
         setProductsError(error as Error);
@@ -257,35 +279,12 @@ function TrancheContent() {
     setFilters(newFilters);
   };
   
-  // Filter tranches
-  const filteredTranches = tranches.filter(tranche => {
-    // Product filter
-    if (filters.insuranceProduct !== null && tranche.productId !== filters.insuranceProduct) {
-      return false;
-    }
-    
-    // Status filter
-    if (filters.status !== 'all') {
-      const roundState = tranche.currentRound?.state;
-      switch (filters.status) {
-        case 'active':
-          return roundState === 3; // ACTIVE
-        case 'open':
-          return roundState === 1; // OPEN
-        case 'settling':
-          return roundState === 4 || roundState === 5; // MATURED or SETTLED
-        default:
-          return true;
-      }
-    }
-    
-    return true;
-  });
+  // Filter tranches - combine contract data with round data
+  const filteredTranches = tranches;
   
   // Get unique products for filter options
   const uniqueProducts = Array.from(new Set(products.map(p => p.productId)))
-    .map(id => products.find(p => p.productId === id)!)
-    .filter(Boolean);
+    .map(id => products.find(p => p.productId === id)!);
   
   const loading = productsLoading || trancheLoading || priceLoading;
   const error = contractError || productsError || trancheError || priceError;
@@ -345,8 +344,14 @@ function TrancheContent() {
         
         {/* Debug Info */}
         <div className="mb-4 p-2 bg-gray-800 rounded text-xs text-gray-400">
-          Debug: Products={products.length} | Total Tranches={tranches.length} | 
-          Filtered={filteredTranches.length} | Loading={String(loading)}
+          Debug: Products={products.length} | Contract Tranches={tranches.length} | 
+          Tranches with Data={tranchesData?.length || 0} | Filtered={filteredTranches.length} | 
+          Filter Status={filters.status} | Loading={String(loading)}
+          {tranchesData && tranchesData.length > 0 && (
+            <div className="mt-1">
+              Round States: {tranchesData.map(t => `T${t.trancheId}: ${t.rounds.map(r => r.state).join(',')}`).join(' | ')}
+            </div>
+          )}
         </div>
         
         {/* Empty State */}

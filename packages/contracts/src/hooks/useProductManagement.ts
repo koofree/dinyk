@@ -51,35 +51,18 @@ export function useProductManagement() {
       activeProductIds = [1n, 2n, 3n, 4n, 5n];
     }
     
-    // Filter out invalid product IDs (0 or unreasonably high values)
-    const validProductIds = activeProductIds
-      .map(id => Number(id))
-      .filter(id => id > 0 && id <= 100);
-    
-    console.log('[useProductManagement] Valid product IDs to fetch:', validProductIds);
+    console.log('[useProductManagement] Product IDs to fetch:', activeProductIds.map(id => Number(id)));
     
     const products: any[] = [];
     
-    // If no valid IDs from contract, try known IDs
-    if (validProductIds.length === 0) {
-      console.log('[useProductManagement] No valid IDs from contract, trying known product IDs 1-5');
-      validProductIds.push(1, 2, 3, 4, 5);
-    }
-    
     // Fetch each product with better error handling
-    for (const productId of validProductIds) {
+    for (const productId of activeProductIds) {
       try {
         let product;
         
-        // Skip invalid IDs that are known to fail
-        if (productId > 8) {
-          console.log(`[useProductManagement] Skipping product ${productId} (likely invalid)`);
-          continue;
-        }
-        
         try {
           // Try getProduct function
-          product = await productCatalog.getProduct(productId);
+          product = await productCatalog.getProduct(Number(productId));
           console.log(`[useProductManagement] getProduct(${productId}) succeeded`);
         } catch (getProductError: any) {
           // Check if it's a contract revert (product doesn't exist)
@@ -91,7 +74,7 @@ export function useProductManagement() {
           // Try fallback to products mapping
           console.log(`[useProductManagement] Trying products mapping for ${productId}`);
           try {
-            product = await productCatalog.products(productId);
+            product = await productCatalog.products(Number(productId));
             console.log(`[useProductManagement] products(${productId}) succeeded as fallback`);
           } catch (mappingError: any) {
             console.log(`[useProductManagement] Both methods failed for product ${productId}, skipping`);
@@ -100,7 +83,7 @@ export function useProductManagement() {
         }
         
         // Validate product data
-        if (product && product.productId && Number(product.productId) !== 0) {
+        if (product?.productId && Number(product.productId) !== 0) {
           console.log(`[useProductManagement] Valid product ${productId} found`);
           
           const processedProduct = {
