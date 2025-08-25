@@ -325,10 +325,16 @@ export function useSellerOperations() {
           throw new Error(`No pool found for tranche ${trancheId}`);
         }
         
-        // Verify pool contract exists
-        const poolCode = await signer.provider?.getCode(poolAddress);
-        if (!poolCode || poolCode === "0x") {
-          throw new Error(`Pool contract not deployed at ${poolAddress}`);
+        // Verify pool contract exists, but handle RPC errors gracefully
+        try {
+          const poolCode = await signer.provider?.getCode(poolAddress);
+          if (!poolCode || poolCode === "0x") {
+            throw new Error(`Pool contract not deployed at ${poolAddress}`);
+          }
+        } catch (codeError) {
+          // If getCode fails (e.g., RPC error), throw a more specific error
+          console.error("Error checking pool contract:", codeError);
+          throw new Error(`Cannot verify pool contract at ${poolAddress}: RPC error`);
         }
 
         // Get pool contract
@@ -497,10 +503,16 @@ export function useSellerOperations() {
           return 0n;
         }
 
-        // Check if the pool contract actually exists at this address
-        const code = await getProvider().getCode(poolAddress);
-        if (code === '0x' || code === '0x0') {
-          // Contract doesn't exist at this address
+        // Try to check if the pool contract exists, but handle RPC errors gracefully
+        try {
+          const code = await getProvider().getCode(poolAddress);
+          if (code === '0x' || code === '0x0') {
+            // Contract doesn't exist at this address
+            return 0n;
+          }
+        } catch (codeError) {
+          // If getCode fails (e.g., RPC error), assume no contract exists
+          console.warn(`Could not verify contract at ${poolAddress}, assuming no pool exists`);
           return 0n;
         }
 
@@ -535,10 +547,15 @@ export function useSellerOperations() {
           throw new Error(`No pool found for tranche ${trancheId}`);
         }
 
-        // Check if the pool contract actually exists at this address
-        const code = await getProvider().getCode(poolAddress);
-        if (code === '0x' || code === '0x0') {
-          throw new Error(`No contract deployed at pool address for tranche ${trancheId}`);
+        // Try to check if the pool contract exists, but handle RPC errors gracefully
+        try {
+          const code = await getProvider().getCode(poolAddress);
+          if (code === '0x' || code === '0x0') {
+            throw new Error(`No contract deployed at pool address for tranche ${trancheId}`);
+          }
+        } catch (codeError) {
+          // If getCode fails (e.g., RPC error), throw a more specific error
+          throw new Error(`Cannot verify pool contract for tranche ${trancheId}: RPC error`);
         }
 
         const pool = new Contract(
@@ -630,10 +647,15 @@ export function useSellerOperations() {
           // Try with current provider first, then fallback if needed
           let provider = getProvider();
           
-          // Check if the pool contract actually exists at this address
-          const code = await provider.getCode(poolAddress);
-          if (code === '0x' || code === '0x0') {
-            console.log("No contract deployed at pool address");
+          // Try to check if the pool contract exists, but handle RPC errors gracefully
+          try {
+            const code = await provider.getCode(poolAddress);
+            if (code === '0x' || code === '0x0') {
+              console.log("No contract deployed at pool address");
+              return null;
+            }
+          } catch (codeError) {
+            console.warn(`Could not verify contract at ${poolAddress}, assuming no pool exists`);
             return null;
           }
           
@@ -812,10 +834,16 @@ export function useSellerOperations() {
           return 0n;
         }
 
-        // Check if the pool contract actually exists at this address
-        const code = await getProvider().getCode(poolAddress);
-        if (code === '0x' || code === '0x0') {
-          // Contract doesn't exist at this address
+        // Try to check if the pool contract exists, but handle RPC errors gracefully
+        try {
+          const code = await getProvider().getCode(poolAddress);
+          if (code === '0x' || code === '0x0') {
+            // Contract doesn't exist at this address
+            return 0n;
+          }
+        } catch (codeError) {
+          // If getCode fails (e.g., RPC error), assume no contract exists
+          console.warn(`Could not verify contract at ${poolAddress}, assuming no pool exists`);
           return 0n;
         }
 
