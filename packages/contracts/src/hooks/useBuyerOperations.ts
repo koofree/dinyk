@@ -1,9 +1,10 @@
-import { ethers } from "ethers";
+import { ethers, Contract } from "ethers";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import { useWeb3 } from "../providers/Web3Provider";
 import { useContracts } from "./useContracts";
+import TranchePoolCoreABI from '../config/abis/TranchePoolCore.json';
 
 export interface BuyInsuranceParams {
   roundId: number;
@@ -185,9 +186,9 @@ export function useBuyerOperations() {
         const tokenBalanceBefore = await insuranceToken.balanceOf(account);
 
         // Place buyer order
-        const pool = await ethers.getContractAt(
-          "TranchePoolCore",
+        const pool = new Contract(
           poolAddress,
+          TranchePoolCoreABI,
           signer,
         );
         const tx = await pool.placeBuyerOrder(
@@ -251,7 +252,7 @@ export function useBuyerOperations() {
         const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
         if (poolAddress === ethers.ZeroAddress) return null;
 
-        const pool = await ethers.getContractAt("TranchePoolCore", poolAddress);
+        const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
         const order = await pool.getBuyerOrder(roundId, buyerAddress);
 
         return {
@@ -352,7 +353,7 @@ export function useBuyerOperations() {
 
         // Get pool to check buyer order
         const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
-        const pool = await ethers.getContractAt("TranchePoolCore", poolAddress);
+        const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
 
         const buyerOrder = await pool.getBuyerOrder(roundId, account);
 
@@ -400,9 +401,9 @@ export function useBuyerOperations() {
         const roundInfo = await productCatalog.getRound(roundId);
         const trancheId = Number(roundInfo.trancheId);
         const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
-        const pool = await ethers.getContractAt(
-          "TranchePoolCore",
+        const pool = new Contract(
           poolAddress,
+          TranchePoolCoreABI,
           signer,
         );
 

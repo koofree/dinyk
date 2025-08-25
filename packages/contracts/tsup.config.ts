@@ -1,5 +1,7 @@
 import { defineConfig } from 'tsup';
 
+const isDebug = process.env.NODE_ENV === 'development';
+
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
@@ -9,8 +11,18 @@ export default defineConfig({
   format: ['cjs', 'esm'],
   dts: false, // Skip DTS for now due to type issues
   splitting: false,
-  sourcemap: true,
+  sourcemap: isDebug ? 'inline' : true,
   clean: true,
   external: ['react', 'react-dom'],
-  treeshake: true
+  treeshake: !isDebug,
+  minify: !isDebug,
+  define: {
+    'process.env.DEBUG': isDebug ? 'true' : 'false'
+  },
+  esbuildOptions(options) {
+    if (isDebug) {
+      options.keepNames = true;
+      options.logLevel = 'info';
+    }
+  }
 });

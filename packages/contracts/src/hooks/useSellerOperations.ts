@@ -1,9 +1,10 @@
-import { ethers } from "ethers";
+import { ethers, Contract } from "ethers";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import { useWeb3 } from "../providers/Web3Provider";
 import { useContracts } from "./useContracts";
+import TranchePoolCoreABI from '../config/abis/TranchePoolCore.json';
 
 export interface DepositCollateralParams {
   roundId: number;
@@ -157,9 +158,9 @@ export function useSellerOperations() {
         }
 
         // Get pool contract
-        const pool = await ethers.getContractAt(
-          "TranchePoolCore",
+        const pool = new Contract(
           poolAddress,
+          TranchePoolCoreABI,
           signer,
         );
 
@@ -245,7 +246,7 @@ export function useSellerOperations() {
         const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
         if (poolAddress === ethers.ZeroAddress) return null;
 
-        const pool = await ethers.getContractAt("TranchePoolCore", poolAddress);
+        const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
         const position = await pool.getSellerPosition(roundId, sellerAddress);
 
         return {
@@ -284,7 +285,7 @@ export function useSellerOperations() {
         const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
         if (poolAddress === ethers.ZeroAddress) return null;
 
-        const pool = await ethers.getContractAt("TranchePoolCore", poolAddress);
+        const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
 
         // Get share balance
         const shares = await pool.shareBalances(sellerAddress);
@@ -326,9 +327,9 @@ export function useSellerOperations() {
           throw new Error(`No pool found for tranche ${trancheId}`);
         }
 
-        const pool = await ethers.getContractAt(
-          "TranchePoolCore",
+        const pool = new Contract(
           poolAddress,
+          TranchePoolCoreABI,
           signer,
         );
 
@@ -385,7 +386,7 @@ export function useSellerOperations() {
         const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
         if (poolAddress === ethers.ZeroAddress) return null;
 
-        const pool = await ethers.getContractAt("TranchePoolCore", poolAddress);
+        const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
         const accounting = await pool.getPoolAccounting();
 
         return {
@@ -424,9 +425,9 @@ export function useSellerOperations() {
 
         // Get pool
         const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
-        const pool = await ethers.getContractAt(
-          "TranchePoolCore",
+        const pool = new Contract(
           poolAddress,
+          TranchePoolCoreABI,
           signer,
         );
 

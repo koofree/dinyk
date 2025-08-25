@@ -1,11 +1,19 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
+import type { ReactNode } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { Web3Provider as KaiaWeb3Provider } from "@kaiachain/ethers-ext/v6";
 import { ethers } from "ethers";
+
+import DinUSDTABI from "../config/abis/DinUSDT.json";
 import { KAIA_TESTNET_ADDRESSES } from "../config/addresses";
 import { KAIA_TESTNET } from "../config/networks";
-import DinUSDTABI from "../config/abis/DinUSDT.json";
 
 // Provider type enum
 export enum ProviderType {
@@ -16,7 +24,7 @@ export enum ProviderType {
 // Storage keys
 export const STORAGE_KEYS = {
   ACCOUNT: "din_wallet_account",
-  CONNECTED: "din_wallet_connected", 
+  CONNECTED: "din_wallet_connected",
   PROVIDER_TYPE: "din_wallet_provider_type",
 } as const;
 
@@ -33,7 +41,7 @@ export const KAIA_RPC_ENDPOINTS = [
 // Network switching utility
 export const switchToKaiaNetwork = async () => {
   if (typeof window === "undefined" || !window.ethereum) return;
-  
+
   try {
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
@@ -86,12 +94,12 @@ interface Web3ContextType {
   error: Error | null;
   balance: string;
   usdtBalance: string;
-  
+
   // Actions
   connectWallet: (type?: ProviderType) => Promise<void>;
   disconnectWallet: () => void;
   switchNetwork: () => Promise<void>;
-  
+
   // Utilities
   getSigner: () => Promise<ethers.JsonRpcSigner | null>;
   getBalance: () => Promise<string>;
@@ -102,25 +110,39 @@ interface Web3ContextType {
 
 const Web3Context = createContext<Web3ContextType | undefined>(undefined);
 
-export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const Web3Provider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [provider, setProvider] = useState<KaiaWeb3Provider>();
   const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
   const [account, setAccount] = useState<string | null>(null);
-  const [chainId, setChainId] = useState<number | null>(null);
+  const [chainId, setChainId] = useState<number | null>(ACTIVE_NETWORK.chainId);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [balance, setBalance] = useState<string>("0");
   const [usdtBalance, setUsdtBalance] = useState<string>("0");
 
+  // Debug logging
+  if (typeof window !== "undefined" && process.env.DEBUG) {
+    console.log(
+      "[Web3Provider] Component rendered, provider:",
+      !!provider,
+      "account:",
+      account,
+    );
+  }
+
   // Initialize from session storage
   useEffect(() => {
     if (typeof window === "undefined") return;
-    
+
     const storedAccount = sessionStorage.getItem(STORAGE_KEYS.ACCOUNT);
     const storedConnected = sessionStorage.getItem(STORAGE_KEYS.CONNECTED);
-    const storedProviderType = sessionStorage.getItem(STORAGE_KEYS.PROVIDER_TYPE);
-    
+    const storedProviderType = sessionStorage.getItem(
+      STORAGE_KEYS.PROVIDER_TYPE,
+    );
+
     if (storedAccount && storedConnected === "true" && window.ethereum) {
       reconnectWallet(storedProviderType as ProviderType);
     }
@@ -144,10 +166,12 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const handleChainChanged = (chainId: string) => {
       const newChainId = parseInt(chainId, 16);
       setChainId(newChainId);
-      
+
       // Update provider if we're on the correct network
       if (newChainId === ACTIVE_NETWORK.chainId && provider && account) {
-        const storedProviderType = sessionStorage.getItem(STORAGE_KEYS.PROVIDER_TYPE) as ProviderType;
+        const storedProviderType = sessionStorage.getItem(
+          STORAGE_KEYS.PROVIDER_TYPE,
+        ) as ProviderType;
         const detectedProvider = detectProvider(storedProviderType);
         if (detectedProvider) {
           const newProvider = new KaiaWeb3Provider(detectedProvider);
@@ -165,9 +189,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     // Get the current provider based on what's stored
-    const storedProviderType = sessionStorage.getItem(STORAGE_KEYS.PROVIDER_TYPE) as ProviderType;
+    const storedProviderType = sessionStorage.getItem(
+      STORAGE_KEYS.PROVIDER_TYPE,
+    ) as ProviderType;
     let targetProvider: any;
-    
+
     if (storedProviderType === ProviderType.KAIA && window.klaytn) {
       targetProvider = window.klaytn;
     } else if (window.ethereum) {
@@ -181,7 +207,10 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return () => {
         if (targetProvider?.removeListener) {
-          targetProvider.removeListener("accountsChanged", handleAccountsChanged);
+          targetProvider.removeListener(
+            "accountsChanged",
+            handleAccountsChanged,
+          );
           targetProvider.removeListener("chainChanged", handleChainChanged);
           targetProvider.removeListener("disconnect", handleDisconnect);
         }
@@ -191,21 +220,21 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const detectProvider = (type?: ProviderType): any => {
     if (typeof window === "undefined") return null;
-    
+
     // If specific type is requested
     if (type === ProviderType.KAIA) {
       return window.klaytn || null;
     } else if (type === ProviderType.METAMASK) {
       return window.ethereum || null;
     }
-    
+
     // Default: check for any available provider
     // Check for Kaia Wallet first (Kaia native wallet)
     if (window.klaytn) return window.klaytn;
-    
+
     // Check for MetaMask or other ethereum wallets
     if (window.ethereum) return window.ethereum;
-    
+
     return null;
   };
 
@@ -216,10 +245,10 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       const web3Provider = new KaiaWeb3Provider(detectedProvider);
       const accounts = await web3Provider.listAccounts();
-      
+
       if (accounts.length > 0) {
         const network = await web3Provider.getNetwork();
-        
+
         setProvider(web3Provider);
         if (accounts[0]?.address) {
           setAccount(accounts[0].address);
@@ -236,33 +265,37 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Helper function to create a reliable JSON RPC provider
-  const createJsonRpcProviderWithFallback = async (): Promise<ethers.JsonRpcProvider> => {
-    // Try RPC endpoints in order until one works
-    for (const rpcUrl of KAIA_RPC_ENDPOINTS) {
-      try {
-        const jsonRpcProvider = new ethers.JsonRpcProvider(rpcUrl, {
-          chainId: ACTIVE_NETWORK.chainId,
-          name: ACTIVE_NETWORK.name,
-        });
-        
-        // Test the connection with a timeout
-        const blockNumberPromise = jsonRpcProvider.getBlockNumber();
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Connection timeout")), 5000)
-        );
-        
-        await Promise.race([blockNumberPromise, timeoutPromise]);
-        console.log(`Successfully connected to RPC: ${rpcUrl}`);
-        return jsonRpcProvider;
-      } catch (error) {
-        console.warn(`RPC endpoint ${rpcUrl} failed, trying next...`, error);
-      }
-    }
-    
-    throw new Error("All RPC endpoints failed");
-  };
+  const createJsonRpcProviderWithFallback =
+    async (): Promise<ethers.JsonRpcProvider> => {
+      // Try RPC endpoints in order until one works
+      for (const rpcUrl of KAIA_RPC_ENDPOINTS) {
+        try {
+          const jsonRpcProvider = new ethers.JsonRpcProvider(rpcUrl, {
+            chainId: ACTIVE_NETWORK.chainId,
+            name: ACTIVE_NETWORK.name,
+          });
 
-  const updateBalance = async (_providerInstance: KaiaWeb3Provider, accountAddress: string) => {
+          // Test the connection with a timeout
+          const blockNumberPromise = jsonRpcProvider.getBlockNumber();
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Connection timeout")), 5000),
+          );
+
+          await Promise.race([blockNumberPromise, timeoutPromise]);
+          console.log(`Successfully connected to RPC: ${rpcUrl}`);
+          return jsonRpcProvider;
+        } catch (error) {
+          console.warn(`RPC endpoint ${rpcUrl} failed, trying next...`, error);
+        }
+      }
+
+      throw new Error("All RPC endpoints failed");
+    };
+
+  const updateBalance = async (
+    _providerInstance: KaiaWeb3Provider,
+    accountAddress: string,
+  ) => {
     try {
       const reliableProvider = await createJsonRpcProviderWithFallback();
       const balance = await reliableProvider.getBalance(accountAddress);
@@ -273,15 +306,20 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const updateUSDTBalance = async (_providerInstance: KaiaWeb3Provider, accountAddress: string) => {
+  const updateUSDTBalance = async (
+    _providerInstance: KaiaWeb3Provider,
+    accountAddress: string,
+  ) => {
     try {
       const reliableProvider = await createJsonRpcProviderWithFallback();
       const usdtContract = new ethers.Contract(
         KAIA_TESTNET_ADDRESSES.DinUSDT,
         DinUSDTABI.abi,
-        reliableProvider
+        reliableProvider,
       );
-      const balanceOf = usdtContract.balanceOf as (address: string) => Promise<bigint>;
+      const balanceOf = usdtContract.balanceOf as (
+        address: string,
+      ) => Promise<bigint>;
       const balance = await balanceOf(accountAddress);
       setUsdtBalance(ethers.formatUnits(balance, 6));
     } catch (err) {
@@ -296,28 +334,33 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     try {
       const detectedProvider = detectProvider(type);
-      
+
       if (!detectedProvider) {
-        const walletName = type === ProviderType.KAIA ? "Kaia Wallet" : "MetaMask";
-        throw new Error(`${walletName} not detected. Please install ${walletName}.`);
+        const walletName =
+          type === ProviderType.KAIA ? "Kaia Wallet" : "MetaMask";
+        throw new Error(
+          `${walletName} not detected. Please install ${walletName}.`,
+        );
       }
 
       // First check and switch network if needed BEFORE creating provider
-      const currentChainIdHex = await detectedProvider.request({ method: 'eth_chainId' });
+      const currentChainIdHex = await detectedProvider.request({
+        method: "eth_chainId",
+      });
       const currentChainId = parseInt(currentChainIdHex, 16);
-      
+
       if (currentChainId !== ACTIVE_NETWORK.chainId) {
         await switchToKaiaNetwork();
         // Wait for network switch to complete
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
       // Now create provider after ensuring we're on the right network
       const web3Provider = new KaiaWeb3Provider(detectedProvider);
-      
+
       // Request accounts
       const accounts = await web3Provider.send("eth_requestAccounts", []);
-      
+
       if (accounts.length === 0) {
         throw new Error("No accounts found. Please unlock your wallet.");
       }
@@ -325,9 +368,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Verify network one more time
       const network = await web3Provider.getNetwork();
       const finalChainId = Number(network.chainId);
-      
+
       if (finalChainId !== ACTIVE_NETWORK.chainId) {
-        throw new Error(`Please switch to ${ACTIVE_NETWORK.name} network (Chain ID: ${ACTIVE_NETWORK.chainId})`);
+        throw new Error(
+          `Please switch to ${ACTIVE_NETWORK.name} network (Chain ID: ${ACTIVE_NETWORK.chainId})`,
+        );
       }
 
       // Set state
@@ -344,7 +389,6 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       sessionStorage.setItem(STORAGE_KEYS.ACCOUNT, accounts[0]);
       sessionStorage.setItem(STORAGE_KEYS.CONNECTED, "true");
       sessionStorage.setItem(STORAGE_KEYS.PROVIDER_TYPE, type);
-
     } catch (err: any) {
       setError(err);
       console.error("Failed to connect wallet:", err);
@@ -365,7 +409,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUsdtBalance("0");
 
     // Clear session storage
-    Object.values(STORAGE_KEYS).forEach(key => {
+    Object.values(STORAGE_KEYS).forEach((key) => {
       sessionStorage.removeItem(key);
     });
   };
@@ -414,9 +458,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const usdtContract = new ethers.Contract(
         KAIA_TESTNET_ADDRESSES.DinUSDT,
         DinUSDTABI.abi,
-        reliableProvider
+        reliableProvider,
       );
-      const balanceOf = usdtContract.balanceOf as (address: string) => Promise<bigint>;
+      const balanceOf = usdtContract.balanceOf as (
+        address: string,
+      ) => Promise<bigint>;
       const balance = await balanceOf(account);
       return ethers.formatUnits(balance, 6);
     } catch (err) {
@@ -445,11 +491,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     refreshUSDTBalance,
   };
 
-  return (
-    <Web3Context.Provider value={value}>
-      {children}
-    </Web3Context.Provider>
-  );
+  return <Web3Context.Provider value={value}>{children}</Web3Context.Provider>;
 };
 
 export const useWeb3 = () => {

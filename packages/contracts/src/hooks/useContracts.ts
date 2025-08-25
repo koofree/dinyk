@@ -11,7 +11,7 @@ import SettlementEngineABI from "../config/abis/SettlementEngine.json";
 import TranchePoolCoreABI from "../config/abis/TranchePoolCore.json";
 import TranchePoolFactoryABI from "../config/abis/TranchePoolFactory.json";
 import { CONTRACT_ADDRESSES } from "../config/addresses";
-import { useWeb3 } from "../providers/Web3Provider";
+import { KAIA_RPC_ENDPOINTS, useWeb3 } from "../providers/Web3Provider";
 
 export interface ContractsState {
   productCatalog: ethers.Contract | null;
@@ -41,18 +41,107 @@ export function useContracts(): ContractsState {
     error: null,
   });
 
+  // Debug logging
+  if (typeof window !== 'undefined' && process.env.DEBUG) {
+    console.log('[useContracts] Hook called, provider:', !!provider, 'signer:', !!signer);
+  }
+
   useEffect(() => {
     if (!provider) {
-      setContracts((prev) => ({
-        ...prev,
-        isInitialized: false,
-        error: new Error("No provider available"),
-      }));
+      if (typeof window !== 'undefined' && process.env.DEBUG) {
+        console.log('[useContracts] No provider available, creating read-only provider');
+      }
+      
+      // Create a read-only provider for contract calls when no wallet is connected
+      const readOnlyProvider = new ethers.JsonRpcProvider(KAIA_RPC_ENDPOINTS[0]);
+      
+      const initializeReadOnlyContracts = async () => {
+        try {
+          if (typeof window !== 'undefined' && process.env.DEBUG) {
+            console.log('[useContracts] Initializing read-only contracts...');
+          }
+
+          // Initialize all contracts with read-only provider
+          const productCatalog = new ethers.Contract(
+            CONTRACT_ADDRESSES.ProductCatalog,
+            ProductCatalogABI.abi,
+            readOnlyProvider,
+          );
+
+          const tranchePoolFactory = new ethers.Contract(
+            CONTRACT_ADDRESSES.TranchePoolFactory,
+            TranchePoolFactoryABI.abi,
+            readOnlyProvider,
+          );
+
+          const insuranceToken = new ethers.Contract(
+            CONTRACT_ADDRESSES.InsuranceToken,
+            InsuranceTokenABI.abi,
+            readOnlyProvider,
+          );
+
+          const settlementEngine = new ethers.Contract(
+            CONTRACT_ADDRESSES.SettlementEngine,
+            SettlementEngineABI.abi,
+            readOnlyProvider,
+          );
+
+          const oracleRouter = new ethers.Contract(
+            CONTRACT_ADDRESSES.OracleRouter,
+            OracleRouterABI.abi,
+            readOnlyProvider,
+          );
+
+          const usdt = new ethers.Contract(
+            CONTRACT_ADDRESSES.DinUSDT,
+            DinUSDTABI.abi,
+            readOnlyProvider,
+          );
+
+          const registry = new ethers.Contract(
+            CONTRACT_ADDRESSES.DinRegistry,
+            DinRegistryABI.abi,
+            readOnlyProvider,
+          );
+
+          const feeTreasury = new ethers.Contract(
+            CONTRACT_ADDRESSES.FeeTreasury,
+            FeeTreasuryABI.abi,
+            readOnlyProvider,
+          );
+
+          setContracts({
+            productCatalog,
+            tranchePoolFactory,
+            insuranceToken,
+            settlementEngine,
+            oracleRouter,
+            usdt,
+            registry,
+            feeTreasury,
+            isInitialized: true,
+            error: null,
+          });
+        } catch (error) {
+          console.error("Error initializing read-only contracts:", error);
+          setContracts((prev) => ({
+            ...prev,
+            isInitialized: false,
+            error: error as Error,
+          }));
+        }
+      };
+
+      initializeReadOnlyContracts();
       return;
     }
 
     const initializeContracts = async () => {
       try {
+        if (typeof window !== 'undefined' && process.env.DEBUG) {
+          console.log('[useContracts] Initializing contracts...');
+        }
+        
         // Use signer if available, otherwise use provider
         const signerOrProvider = signer || provider;
 

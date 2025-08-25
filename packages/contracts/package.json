@@ -24,7 +24,8 @@
   },
   "scripts": {
     "build": "tsup",
-    "dev": "tsup --watch",
+    "build:debug": "NODE_ENV=development tsup",
+    "dev": "NODE_ENV=development tsup --watch",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",

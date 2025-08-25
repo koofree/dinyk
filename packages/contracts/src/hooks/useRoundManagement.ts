@@ -1,8 +1,9 @@
-import { ethers } from 'ethers';
+import { ethers, Contract } from 'ethers';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { useWeb3 } from '../providers/Web3Provider';
 import { useContracts } from './useContracts';
+import TranchePoolCoreABI from '../config/abis/TranchePoolCore.json';
 
 export enum RoundState {
   ANNOUNCED = 0,
@@ -196,7 +197,7 @@ export function useRoundManagement() {
         throw new Error(`No pool found for tranche ${trancheId}`);
       }
       
-      const pool = await ethers.getContractAt('TranchePoolCore', poolAddress, signer);
+      const pool = new Contract(poolAddress, TranchePoolCoreABI, signer);
       
       // Get round economics before matching
       const economicsBefore = await pool.getRoundEconomics(roundId);
@@ -309,7 +310,7 @@ export function useRoundManagement() {
         return null;
       }
       
-      const pool = await ethers.getContractAt('TranchePoolCore', poolAddress);
+      const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
       const economics = await pool.getRoundEconomics(roundId);
       
       return {

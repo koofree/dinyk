@@ -1,6 +1,8 @@
-import { ethers } from 'ethers';
+import { ethers, Contract } from 'ethers';
 import { useCallback, useEffect, useState } from 'react';
 import { useContracts } from './useContracts';
+import TranchePoolCoreABI from '../config/abis/TranchePoolCore.json';
+import { useWeb3 } from '../providers/Web3Provider';
 
 export interface PoolHealth {
   poolAddress: string;
@@ -61,6 +63,7 @@ export interface SystemMetrics {
 
 export function useMonitoring() {
   const { productCatalog, tranchePoolFactory, oracleRouter, usdt } = useContracts();
+  const { provider } = useWeb3();
   const [isLoading, setIsLoading] = useState(false);
   const [marketPrices, setMarketPrices] = useState<Record<string, number>>({});
 
@@ -104,7 +107,7 @@ export function useMonitoring() {
       for (let i = 0; i < Number(poolCount); i++) {
         try {
           const poolAddress = await tranchePoolFactory.allPools(i);
-          const pool = await ethers.getContractAt('TranchePoolCore', poolAddress);
+          const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
           
           const trancheInfo = await pool.getTrancheInfo();
           const accounting = await pool.getPoolAccounting();
@@ -220,7 +223,7 @@ export function useMonitoring() {
           let utilizationRate = 0;
           if (poolAddress !== ethers.ZeroAddress) {
             try {
-              const pool = await ethers.getContractAt('TranchePoolCore', poolAddress);
+              const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
               const accounting = await pool.getPoolAccounting();
               const trancheCap = trancheSpec.trancheCap;
               utilizationRate = trancheCap > 0n ? 
@@ -295,7 +298,7 @@ export function useMonitoring() {
             
             const poolAddress = await tranchePoolFactory.getTranchePool(Number(trancheId));
             if (poolAddress !== ethers.ZeroAddress) {
-              const pool = await ethers.getContractAt('TranchePoolCore', poolAddress);
+              const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
               const poolEconomics = await pool.getRoundEconomics(roundId);
               economics = {
                 totalBuyerPurchases: poolEconomics[0],
@@ -388,7 +391,7 @@ export function useMonitoring() {
       for (let i = 0; i < Number(poolCount); i++) {
         try {
           const poolAddress = await tranchePoolFactory.allPools(i);
-          const pool = await ethers.getContractAt('TranchePoolCore', poolAddress);
+          const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
           const accounting = await pool.getPoolAccounting();
           const usdtBalance = await usdt.balanceOf(poolAddress);
           
