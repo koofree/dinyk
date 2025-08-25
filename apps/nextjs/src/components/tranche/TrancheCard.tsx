@@ -59,15 +59,7 @@ export const TrancheCard: React.FC<TrancheCardProps> = ({
       : 0;
 
   return (
-    <div className="hover:bg-gray-750 rounded-lg bg-gray-800 p-6 transition-colors relative">
-      {/* View Details Link */}
-      <Link 
-        href={`/tranches/${product.productId}/${tranche.trancheId}`}
-        className="absolute top-4 right-4 text-sm text-blue-400 hover:text-blue-300 underline"
-      >
-        View Details →
-      </Link>
-      
+    <div className="hover:bg-gray-750 rounded-lg bg-gray-800 p-6 transition-colors relative">      
       {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
@@ -77,7 +69,7 @@ export const TrancheCard: React.FC<TrancheCardProps> = ({
           </p>
         </div>
         <div
-          className={`rounded-full px-2 py-1 text-xs ${getRoundStateColor(roundState)} mr-20`}
+          className={`rounded-full px-2 py-1 text-xs ${getRoundStateColor(roundState)}`}
         >
           {shortName}
         </div>
