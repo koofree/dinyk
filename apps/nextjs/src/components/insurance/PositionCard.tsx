@@ -43,15 +43,17 @@ export const PositionCard: React.FC<PositionCardProps> = ({
 
   if (position.type === 'insurance') {
     return (
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h3 className="text-white font-medium">Policy #{position.id}</h3>
-            <p className="text-gray-400 text-sm">{position.tranche}</p>
-          </div>
-          <div className={`flex items-center gap-1 ${getStatusColor(position.status)}`}>
-            <span>{getStatusIcon(position.status)}</span>
-            <span className="text-sm capitalize">{position.status}</span>
+      <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 flex flex-col h-full">
+        <div className="mb-10">
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <span className="text-white font-bold text-[20px] block">Policy #{position.id}</span>
+              <p className="text-gray-400 text-sm">{position.tranche}</p>
+            </div>
+            <div className={`flex items-center gap-1 ${getStatusColor(position.status)}`}>
+              <span>{getStatusIcon(position.status)}</span>
+              <span className="text-sm capitalize">{position.status}</span>
+            </div>
           </div>
         </div>
 
@@ -86,22 +88,22 @@ export const PositionCard: React.FC<PositionCardProps> = ({
         {position.status === 'claimable' && (
           <div className="mb-4">
             <div className="bg-gradient-to-br from-[#86D99C]/20 to-[#00B1B8]/20 border border-[#86D99C] rounded-lg p-3">
-              <div className="text-blue-400 font-medium">Payout Available</div>
-              <div className="text-blue-300 text-2xl font-bold">${position.payout} USDT</div>
+              <div className="bg-gradient-to-br from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent font-medium">Payout Available</div>
+              <div className="text-white text-2xl font-bold">${position.payout} USDT</div>
             </div>
           </div>
         )}
 
-        <div className="flex gap-2">
+        <div className="space-y-2 mt-auto">
           {position.status === 'claimable' && onClaim && (
             <button
               onClick={() => onClaim(position.id)}
-              className="flex-1 relative bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white py-2 px-4 rounded-lg transition-all duration-300 hover:scale-98 hover:shadow-lg group overflow-hidden"
+              className="w-full relative bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white py-2 px-4 rounded-lg transition-all duration-300 hover:scale-98 hover:shadow-lg group overflow-hidden"
             >
-                              <span className="font-outfit">Claim Now</span>
+              <span className="font-outfit">Claim Now</span>
             </button>
           )}
-          <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
+          <button className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
             View Details
           </button>
         </div>
@@ -110,16 +112,18 @@ export const PositionCard: React.FC<PositionCardProps> = ({
   }
 
   // Liquidity position
-  return (
-    <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-white font-medium">{position.tranche}</h3>
-          <p className="text-gray-400 text-sm">{position.asset} Pool</p>
-        </div>
-        <div className={`flex items-center gap-1 ${getRoundStatusColor(position.roundStatus)}`}>
-          <span>●</span>
-          <span className="text-sm capitalize">{position.roundStatus}</span>
+      return (
+      <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 flex flex-col h-full">
+            <div className="mb-10">
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <span className="text-white font-bold text-[20px] block">{position.tranche}</span>
+            <p className="text-gray-400 text-sm">{position.asset} Pool</p>
+          </div>
+          <div className={`flex items-center gap-1 ${getRoundStatusColor(position.roundStatus)}`}>
+            <span>●</span>
+            <span className="text-sm capitalize">{position.roundStatus}</span>
+          </div>
         </div>
       </div>
 
@@ -152,21 +156,23 @@ export const PositionCard: React.FC<PositionCardProps> = ({
         </div>
       )}
 
-      <div className="flex gap-2">
-        {position.roundStatus === 'settlement' && onWithdraw && (
-          <button
-            onClick={() => onWithdraw(position.id)}
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors"
-          >
-            Withdraw Available
-          </button>
-        )}
-        {position.roundStatus === 'active' && (
-          <button className="flex-1 bg-gray-600 text-gray-400 py-2 px-4 rounded-lg cursor-not-allowed">
-            Withdraw After Round
-          </button>
-        )}
-        <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
+      <div className="space-y-2 mt-auto">
+        <div className="flex gap-2">
+          {position.roundStatus === 'settlement' && onWithdraw && (
+            <button
+              onClick={() => onWithdraw(position.id)}
+              className="flex-1 relative bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white py-2 px-4 rounded-lg transition-all duration-300 hover:scale-98 hover:shadow-lg group overflow-hidden"
+            >
+              <span className="font-outfit">Withdraw Available</span>
+            </button>
+          )}
+          {position.roundStatus === 'active' && (
+            <button className="flex-1 bg-gray-600 text-gray-400 py-2 px-4 rounded-lg cursor-not-allowed">
+              Withdraw After Round
+            </button>
+          )}
+        </div>
+        <button className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
           Add More
         </button>
       </div>

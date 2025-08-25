@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { LiquidityPoolCard } from "@/components/insurance/LiquidityPoolCard";
 import { DepositModal } from "@/components/insurance/DepositModal";
+import { WithdrawModal } from "@/components/insurance/WithdrawModal";
+import { SuccessModal } from "@/components/common/SuccessModal";
 import { useWeb3 } from "@/context/Web3Provider";
 import { Navbar } from "@/components/common/Navbar";
 
@@ -105,6 +107,9 @@ export default function LiquidityPage() {
   const { isConnected } = useWeb3();
   const [selectedPool, setSelectedPool] = useState<LiquidityPool | null>(null);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [filter, setFilter] = useState({
     asset: 'All',
     riskLevel: 'All',
@@ -130,12 +135,20 @@ export default function LiquidityPage() {
   };
 
   const handleWithdraw = async (pool: LiquidityPool) => {
-    console.log(`Withdrawing from ${pool.asset} ${pool.tranche}`);
+    setSelectedPool(pool);
+    setIsWithdrawModalOpen(true);
+  };
+
+  const handleWithdrawConfirm = async () => {
+    if (!selectedPool) return;
+    
+    console.log(`Withdrawing from ${selectedPool.asset} ${selectedPool.tranche}`);
     
     // Simulate transaction delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    alert(`Successfully withdrew from ${pool.asset} ${pool.tranche}!`);
+    setSuccessMessage(`Successfully withdrew from ${selectedPool.asset} ${selectedPool.tranche}!`);
+    setIsSuccessModalOpen(true);
   };
 
   const handleAddMore = (pool: LiquidityPool) => {
@@ -185,110 +198,136 @@ export default function LiquidityPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-15 pb-15 mt-16">
+      <div className="max-w-[720px] mx-auto px-4 sm:px-6 lg:px-8 pt-15 pb-15 mt-16">
         {/* Header */}
         <div className="mb-16">
-          <h1 className="text-[56px] font-bold text-gray-900 mb-4 font-display">Become a <span className="bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent">Seller</span> and provide liquidity<br />to the insurance market.</h1>
-          <p className="text-gray-600 text-2xl mb-8">
-            By depositing USDT into the insurance pool,<br />
-            <span className="font-bold bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent">you can earn premium rewards</span> whenever buyers purchase coverage.
+          <h1 className="text-[40px] mobile:text-[42px] font-bold text-gray-900 mb-4 font-display break-words leading-tight">
+            Become a <span className="bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent">Depositor(Seller)</span><br />and provide liquidity<br />to the insurance market.
+          </h1>
+          <p className="text-gray-600 text-[18px] mobile:text-[20px] mb-8 break-words leading-tight">
+            By depositing USDT into the insurance pool,<br /><span className="font-bold bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent">you can earn premium rewards</span> whenever buyers purchase coverage.
           </p>
         </div>
 
         {/* Section Title */}
-        <div className="mb-8">
+        {/* Dashboard Header and User Statistics */}
+        <div className="mb-8 Liquidity-Provider-Dashboard">
           <h2 className="text-[30px] font-bold text-gray-900 mb-4 font-display">Liquidity Provider Dashboard</h2>
-          <p className="text-gray-600">
+          <div className="w-full h-px bg-gray-200 mb-8"></div>
+          <p className="text-gray-600 mb-8">
             Provide liquidity to insurance pools and earn premiums + staking rewards
           </p>
-        </div>
 
-        {/* User Statistics */}
-        {isConnected && userPools.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+          {/* Filters */}
+          <div className="mb-8">
+            <div className="flex gap-4 items-end w-full">
+              <div className="flex-1">
+                <label className="block text-gray-800 font-medium mb-2">Asset</label>
+                <select
+                  value={filter.asset}
+                  onChange={(e) => setFilter(prev => ({ ...prev, asset: e.target.value }))}
+                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 pr-12 text-gray-800 focus:border-[#86D99C] focus:outline-none appearance-none"
+                  style={{ 
+                    borderRadius: '8px',
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 12px center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '20px'
+                  }}
+                >
+                  {assets.map(asset => (
+                    <option key={asset} value={asset}>{asset}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex-1">
+                <label className="block text-gray-800 font-medium mb-2">Risk Level</label>
+                <select
+                  value={filter.riskLevel}
+                  onChange={(e) => setFilter(prev => ({ ...prev, riskLevel: e.target.value }))}
+                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 pr-12 text-gray-800 focus:border-[#86D99C] focus:outline-none appearance-none"
+                  style={{ 
+                    borderRadius: '8px',
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 12px center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '20px'
+                  }}
+                >
+                  {riskLevels.map(level => (
+                    <option key={level} value={level}>{level}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <button
+                  onClick={() => setFilter({ asset: 'All', riskLevel: 'All' })}
+                  className="bg-transparent border border-gray-300 text-gray-600 hover:border-[#86D99C] hover:text-[#86D99C] hover:scale-95 px-3 py-2 transition-all duration-300 flex items-center justify-center"
+                  style={{ borderRadius: '8px', height: '42px' }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 4V10H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M3.51 15A9 9 0 1 0 6 5L1 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* User Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col justify-between h-full">
               <div className="text-gray-600 text-sm mb-2">Total Deposited</div>
               <div className="text-2xl font-bold text-gray-900">
-                ${totalDeposited.toLocaleString()} USDT
+                {isConnected && userPools.length > 0 ? (
+                  <>
+                    ${totalDeposited.toLocaleString()} <span className="text-sm text-gray-400">USDT</span>
+                  </>
+                ) : (
+                  <>
+                    $0 <span className="text-sm text-gray-400">USDT</span>
+                  </>
+                )}
               </div>
-              <div className="text-blue-600 text-sm">{userPools.length} active pools</div>
+              <div className="text-blue-600 text-sm mt-auto">
+                {isConnected && userPools.length > 0 ? `${userPools.length} active pools` : '0 active pools'}
+              </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+            <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col justify-between h-full">
               <div className="text-gray-600 text-sm mb-2">Expected Annual Earnings</div>
               <div className="text-2xl font-bold text-gray-900">
-                ${totalExpectedEarnings.toFixed(0)} USDT
+                {isConnected && userPools.length > 0 ? (
+                  <>
+                    ${totalExpectedEarnings.toFixed(0)} <span className="text-sm text-gray-400">USDT</span>
+                  </>
+                ) : (
+                  <>
+                    $0 <span className="text-sm text-gray-400">USDT</span>
+                  </>
+                )}
               </div>
-              <div className="text-green-600 text-sm">
-                {totalDeposited > 0 ? ((totalExpectedEarnings / totalDeposited) * 100).toFixed(1) : 0}% APY
+              <div className="text-green-600 text-sm mt-auto">
+                {isConnected && userPools.length > 0 && totalDeposited > 0 ? `${((totalExpectedEarnings / totalDeposited) * 100).toFixed(1)}% APY` : '0% APY'}
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+            <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col justify-between h-full">
               <div className="text-gray-600 text-sm mb-2">Active Pools</div>
-              <div className="text-2xl font-bold text-gray-900">{userPools.length}</div>
-              <div className="text-yellow-600 text-sm">across {new Set(userPools.map(p => p.asset)).size} assets</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {isConnected && userPools.length > 0 ? userPools.length : 0}
+              </div>
+              <div className="text-yellow-600 text-sm mt-auto">
+                {isConnected && userPools.length > 0 ? `across ${new Set(userPools.map(p => p.asset)).size} assets` : 'across 0 assets'}
+              </div>
             </div>
           </div>
-        )}
-
-        {/* Filters */}
-        <div className="mb-8">
-          <div className="flex gap-4 items-end w-full">
-            <div className="flex-1">
-              <label className="block text-gray-800 font-medium mb-2">Asset</label>
-              <select
-                value={filter.asset}
-                onChange={(e) => setFilter(prev => ({ ...prev, asset: e.target.value }))}
-                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 pr-12 text-gray-800 focus:border-[#86D99C] focus:outline-none appearance-none"
-                style={{ 
-                  borderRadius: '8px',
-                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                  backgroundPosition: 'right 12px center',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: '20px'
-                }}
-              >
-                {assets.map(asset => (
-                  <option key={asset} value={asset}>{asset}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex-1">
-              <label className="block text-gray-800 font-medium mb-2">Risk Level</label>
-              <select
-                value={filter.riskLevel}
-                onChange={(e) => setFilter(prev => ({ ...prev, riskLevel: e.target.value }))}
-                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 pr-12 text-gray-800 focus:border-[#86D99C] focus:outline-none appearance-none"
-                style={{ 
-                  borderRadius: '8px',
-                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                  backgroundPosition: 'right 12px center',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: '20px'
-                }}
-              >
-                {riskLevels.map(level => (
-                  <option key={level} value={level}>{level}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <button
-                onClick={() => setFilter({ asset: 'All', riskLevel: 'All' })}
-                className="bg-transparent border border-gray-300 text-gray-600 hover:border-[#86D99C] hover:text-[#86D99C] hover:scale-95 px-3 py-2 transition-all duration-300 flex items-center justify-center"
-                style={{ borderRadius: '8px', height: '42px' }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M1 4V10H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M3.51 15A9 9 0 1 0 6 5L1 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            </div>
-          </div>
+          <div className="w-full h-px bg-gray-200 mt-8"></div>
         </div>
+
+
 
         {/* Connection Notice */}
         {!isConnected && (
@@ -308,17 +347,17 @@ export default function LiquidityPage() {
         {/* Your Pools Section */}
         {isConnected && userPools.length > 0 && (
           <div className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Liquidity Positions</h2>
+            <h2 className="text-[30px] font-bold text-gray-900 mb-4 font-display">Your Liquidity Positions</h2>
             {groupedUserPools.map(({ asset, pools }, index) => (
               <div key={asset} style={{ marginTop: index > 0 ? '60px' : '0' }}>
                 <div className={`flex items-center mb-4 ${asset === 'KAIA' ? 'gap-4' : 'gap-2'}`}>
                   <img
                     src={`/images/${asset}.svg`}
                     alt={asset}
-                    className={`${asset === 'KAIA' ? 'w-8 h-8' : 'w-12 h-12'}`}
+                    className={`${asset === 'KAIA' ? 'w-6 h-6' : 'w-10 h-10'}`}
                     style={{ filter: 'brightness(0) invert(0.2)' }}
                   />
-                  <h3 className="text-[30px] font-bold text-gray-900 font-display">{asset} Pools</h3>
+                  <h3 className="text-[24px] font-bold text-gray-900 font-display">{asset} Pools</h3>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {pools.map((pool) => (
@@ -336,9 +375,12 @@ export default function LiquidityPage() {
           </div>
         )}
 
+        {/* Divider Line */}
+        <div className="w-full h-px bg-gray-200 my-12"></div>
+
         {/* Available Pools Section */}
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          <h2 className="text-[30px] font-bold text-gray-900 mb-4 font-display">
             {isConnected && userPools.length > 0 ? 'Available Pools' : 'Available Tranche Pools'}
           </h2>
           {groupedAvailablePools.map(({ asset, pools }, index) => (
@@ -347,10 +389,10 @@ export default function LiquidityPage() {
                 <img
                   src={`/images/${asset}.svg`}
                   alt={asset}
-                  className={`${asset === 'KAIA' ? 'w-8 h-8' : 'w-12 h-12'}`}
+                  className={`${asset === 'KAIA' ? 'w-6 h-6' : 'w-10 h-10'}`}
                   style={{ filter: 'brightness(0) invert(0.2)' }}
                 />
-                <h3 className="text-[30px] font-bold text-gray-900 font-display">{asset} Pools</h3>
+                <h3 className="text-[24px] font-bold text-gray-900 font-display">{asset} Pools</h3>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {pools.map((pool) => (
@@ -384,6 +426,21 @@ export default function LiquidityPage() {
           onClose={() => setIsDepositModalOpen(false)}
           onConfirm={handleDepositConfirm}
         />
+
+        {/* Withdraw Modal */}
+        <WithdrawModal
+          pool={selectedPool}
+          isOpen={isWithdrawModalOpen}
+          onClose={() => setIsWithdrawModalOpen(false)}
+          onConfirm={handleWithdrawConfirm}
+        />
+
+        {/* Success Modal */}
+        <SuccessModal
+          message={successMessage}
+          isOpen={isSuccessModalOpen}
+          onClose={() => setIsSuccessModalOpen(false)}
+        />
       </div>
 
       {/* Footer Section */}
@@ -404,6 +461,16 @@ export default function LiquidityPage() {
         
         {/* Footer Logo */}
         <img src="/images/bi-symbol.svg" alt="DIN Logo" className="h-12 w-auto mx-auto" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%)' }} />
+        
+        {/* Footer Text */}
+        <div className="mt-6">
+          <p className="text-gray-400 mb-4">
+            Connect your wallet to start using DIN insurance platform
+          </p>
+          <p className="text-gray-400 text-sm">
+            Supports MetaMask, Kaikas, and other Web3 wallets
+          </p>
+        </div>
       </div>
     </div>
   );

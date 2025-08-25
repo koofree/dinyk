@@ -35,7 +35,7 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className={`${isScrolled ? 'fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm' : 'relative bg-transparent'} transition-all duration-200`}>
+    <nav className={`${isScrolled ? 'fixed top-0 left-0 right-0 z-50 bg-white shadow-sm' : 'relative bg-transparent'} transition-all duration-200`}>
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center h-16 relative">
           {/* Logo */}
@@ -47,12 +47,12 @@ export const Navbar: React.FC = () => {
           </Link>
 
           {/* Navigation Links - Centered */}
-          <div className="hidden md:flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
+          <div className="hidden mobile:flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`px-4 py-2 rounded-lg text-base font-medium transition-all duration-200 ${
+                className={`px-4 py-2 rounded-lg text-base font-medium transition-all duration-200 whitespace-nowrap ${
                   isActive(item.href)
                     ? 'text-gray-900 bg-white'
                     : 'text-gray-500 hover:text-gray-900 hover:bg-white'
@@ -64,7 +64,7 @@ export const Navbar: React.FC = () => {
                   </>
                 ) : item.name === 'For Seller (Liquidity)' ? (
                   <>
-                    For Seller <span className="ml-1 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded font-medium">Liquidity</span>
+                    For Depositor(Seller) <span className="ml-1 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded font-medium">Liquidity</span>
                   </>
                 ) : (
                   item.name
@@ -84,37 +84,36 @@ export const Navbar: React.FC = () => {
             <WalletButton />
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden absolute right-0">
-            <button
-              type="button"
-              className="text-gray-500 hover:text-gray-900 focus:outline-none p-2"
-            >
-              <span className="sr-only">Open main menu</span>
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
+
         </div>
       </div>
 
-      {/* Mobile menu */}
-      <div className="md:hidden border-t border-gray-100">
-        <div className="px-4 py-2 space-y-1">
-          {navigation.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`block px-3 py-2 text-sm font-medium rounded-md ${
-                isActive(item.href)
-                  ? 'text-gray-900 bg-gray-50'
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-              }`}
-            >
-              {item.name}
-            </Link>
-          ))}
+      {/* Mobile Navigation */}
+      <div className={`mobile:hidden border-t border-gray-100 ${isScrolled ? 'bg-white' : 'bg-transparent'}`}>
+                  <div className="px-4 py-2 pb-0">
+            <div className={`flex space-x-1 p-1 pb-0 ${isScrolled ? 'bg-white' : 'bg-transparent'}`}>
+            {navigation.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`flex-1 px-3 py-2 text-sm font-bold transition-colors relative text-center ${
+                  isActive(item.href)
+                    ? 'text-gray-900'
+                    : 'text-gray-500 hover:text-gray-900'
+                }`}
+                style={{ 
+                  height: '42px'
+                }}
+              >
+                {item.name === 'For Buyer (Insurance)' ? 'Buyer' : 
+                 item.name === 'For Seller (Liquidity)' ? 'Depositor' : 
+                 item.name}
+                {isActive(item.href) && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"></div>
+                )}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </nav>

@@ -113,7 +113,7 @@ export default function HomePage() {
       <div>
         {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="max-w-[720px] mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
             <img 
               src="/images/BI-symbol.svg" 
@@ -122,13 +122,13 @@ export default function HomePage() {
                 heroAnimations.logo ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`} 
             />
-            <h1 className={`text-[56px] font-bold text-gray-900 mb-6 font-display transition-all duration-700 ease-out ${
+            <h1 className={`text-[40px] mobile:text-[42px] font-bold text-gray-900 mb-6 font-display break-words leading-tight transition-all duration-700 ease-out ${
               heroAnimations.title ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}>
               {t('hero.title')}
               <span className="block bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent">{t('hero.subtitle')}</span>
             </h1>
-            <p className={`text-lg md:text-[18px] text-gray-600 mb-8 max-w-3xl mx-auto font-semibold font-outfit transition-all duration-700 ease-out ${
+            <p className={`text-lg md:text-[18px] text-gray-600 mb-8 max-w-3xl mx-auto font-semibold font-outfit leading-tight transition-all duration-700 ease-out ${
               heroAnimations.description ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}>
               {t('hero.description')}
@@ -162,7 +162,7 @@ export default function HomePage() {
       </div>
 
       {/* Key Metrics Dashboard */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-[720px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-lg p-6 text-left border border-gray-200 shadow-sm hover:cursor-pointer group">
             {/* TVL 아이콘 */}
@@ -201,7 +201,7 @@ export default function HomePage() {
       </div>
 
       {/* Featured Insurance Products */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-[720px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div>
                       {/* 새로운 문구 섹션 */}
             <div className="text-left mb-12 bg-[#F3FEF6] rounded-2xl p-8">
@@ -350,7 +350,7 @@ export default function HomePage() {
       </div>
 
       {/* How It Works */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-[720px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="text-left">
           <h2 className="text-3xl font-bold text-gray-900 mb-8">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

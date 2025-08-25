@@ -66,21 +66,24 @@ export default function InsurancePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-15 pb-15 mt-16">
+      <div className="max-w-[720px] mx-auto px-4 sm:px-6 lg:px-8 pt-15 pb-15 mt-16">
         {/* Header */}
         <div className="mb-16">
-          <h1 className="text-[56px] font-bold text-gray-900 mb-4 font-display">Protect Your Assets,<br />Secure Your Future</h1>
-          <p className="text-gray-600 text-2xl mb-8">
-            <span className="font-bold bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent">As an insurance buyer</span>, you can protect yourself against the risks of asset price fluctuations.
+          <h1 className="text-[40px] mobile:text-[42px] font-bold text-gray-900 mb-4 font-display break-words leading-tight">
+            Protect Your Assets,<br />Secure Your Future
+          </h1>
+          <p className="text-gray-600 text-[18px] mobile:text-[20px] mb-8 break-words leading-tight">
+            <span className="font-bold bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent">As an insurance buyer</span>, you can protect<br />yourself against the risks of asset price fluctuations.
           </p>
         </div>
 
         {/* Section Title */}
         <div className="mb-8">
           <h2 className="text-[30px] font-bold text-gray-900 mb-4 font-display">Insurance Catalog</h2>
-          <p className="text-gray-600">
+          <p className="text-gray-600 mb-8">
             Choose from our parametric insurance products to protect your crypto assets
           </p>
+          <div className="w-full h-px bg-gray-200"></div>
         </div>
 
         {/* Filters */}
@@ -208,26 +211,36 @@ export default function InsurancePage() {
           onClose={() => setIsModalOpen(false)}
           onConfirm={handlePurchase}
         />
-      </div>
 
-      {/* Footer Section */}
-      <div className="text-center pb-20" style={{ paddingTop: '60px' }}>
-        {/* Connection Status */}
-        {!isConnected && (
-          <div className="mb-6">
-            <div className="rounded-lg p-6">
-              <p className="text-gray-400 mb-4">
-                Connect your wallet to start using DIN insurance platform
-              </p>
-              <p className="text-gray-400 text-sm">
-                Supports MetaMask, Kaikas, and other Web3 wallets
-              </p>
+        {/* Footer Section */}
+        <div className="text-center pb-20" style={{ paddingTop: '60px' }}>
+          {/* Connection Status */}
+          {!isConnected && (
+            <div className="mb-6">
+              <div className="rounded-lg p-6">
+                <p className="text-gray-400 mb-4">
+                  Connect your wallet to start using DIN insurance platform
+                </p>
+                <p className="text-gray-400 text-sm">
+                  Supports MetaMask, Kaikas, and other Web3 wallets
+                </p>
+              </div>
             </div>
+          )}
+          
+          {/* Footer Logo */}
+          <img src="/images/bi-symbol.svg" alt="DIN Logo" className="h-12 w-auto mx-auto" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%)' }} />
+          
+          {/* Footer Text */}
+          <div className="mt-6">
+            <p className="text-gray-400 mb-4">
+              Connect your wallet to start using DIN insurance platform
+            </p>
+            <p className="text-gray-400 text-sm">
+              Supports MetaMask, Kaikas, and other Web3 wallets
+            </p>
           </div>
-        )}
-        
-        {/* Footer Logo */}
-        <img src="/images/bi-symbol.svg" alt="DIN Logo" className="h-12 w-auto mx-auto" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%)' }} />
+        </div>
       </div>
     </div>
   );

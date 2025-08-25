@@ -126,13 +126,13 @@ export const WalletButton: React.FC = () => {
     <>
       <button
         onClick={() => setShowConnectModal(true)}
-        className="relative w-[172px] h-12 bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white rounded-lg text-base font-semibold transition-all duration-300 hover:scale-95 hover:shadow-lg group overflow-hidden"
+        className="relative w-[172px] max-[400px]:w-[160px] h-12 max-[400px]:h-[42px] bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white rounded-lg text-base max-[400px]:text-sm font-semibold transition-all duration-300 hover:scale-95 hover:shadow-lg group overflow-hidden max-[400px]:px-1"
       >
         {/* 그라데이션 애니메이션 배경 */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#00B1B8] to-[#86D99C] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
         
         {/* 버튼 내용 */}
-        <div className="relative flex items-center justify-center gap-2">
+        <div className="relative flex items-center justify-center gap-1">
           {/* 지갑 아이콘 */}
           <svg 
             width="20" 
@@ -143,7 +143,7 @@ export const WalletButton: React.FC = () => {
             strokeWidth="2" 
             strokeLinecap="round" 
             strokeLinejoin="round"
-            className="flex-shrink-0"
+            className="flex-shrink-0 max-[400px]:w-4 max-[400px]:h-4"
           >
             <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
             <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
@@ -160,13 +160,21 @@ export const WalletButton: React.FC = () => {
       {/* Connect Modal */}
       {showConnectModal && (
         <div 
-          className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4"
-          style={{ width: '100vw', height: '100vh' }}
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
+          style={{ 
+            margin: 0, 
+            padding: 0, 
+            left: 0, 
+            right: 0, 
+            top: 0, 
+            bottom: 0,
+            width: '100vw',
+            height: '100vh'
+          }}
           onClick={() => setShowConnectModal(false)}
         >
           <div 
-            className="bg-white p-6 rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-lg border border-gray-200"
-            style={{ maxWidth: '400px', margin: '0 auto' }}
+            className="bg-white p-6 rounded-2xl w-full max-w-md shadow-lg border border-gray-200 mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-xl font-bold text-gray-900 mb-4">Connect Your Wallet</h3>

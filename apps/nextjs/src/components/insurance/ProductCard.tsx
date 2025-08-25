@@ -68,17 +68,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onTrancheSele
                     <img
                       src={`/images/${product.asset}.svg`}
                       alt={product.asset}
-                      className={`${product.asset === 'KAIA' ? 'w-8 h-8' : 'w-12 h-12'}`}
+                      className={`${product.asset === 'KAIA' ? 'w-6 h-6' : 'w-10 h-10'}`}
                       style={{ filter: 'brightness(0) invert(0.2)' }}
                     />
-                    <h3 className="text-[30px] font-bold text-gray-900 font-display">{product.name}</h3>
+                    <h3 className="text-[24px] font-bold text-gray-900 font-display">{product.name}</h3>
                   </div>
                             <p className="text-gray-600 text-base">{product.description}</p>
         </div>
 
       </div>
 
-      <div className="flex gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {product.tranches.map((tranche) => {
           const filledPercentage = getFilledPercentage(tranche.filled, tranche.capacity);
           const isLowCapacity = parseInt(tranche.available) < 5000;
@@ -86,24 +86,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onTrancheSele
           return (
                                 <div
                       key={tranche.id}
-                      className="bg-[#1f2937] rounded-lg p-4 flex-1"
+                      className="bg-[#1f2937] rounded-lg p-4"
                     >
-              <div className="flex justify-between items-center mb-10">
-                <div className="flex items-center gap-3">
-                  <span className="text-white font-bold text-[20px]">
-                    Tranche {tranche.triggerLevel}%
-                  </span>
-                  <span className={`text-xs px-2 py-1 rounded text-white font-bold ${
-                    tranche.riskLevel === 'LOW' ? 'bg-green-500/70' : 
-                    tranche.riskLevel === 'MEDIUM' ? 'bg-yellow-500/70' : 
-                    'bg-red-500/70'
-                  }`}>
-                    {tranche.riskLevel}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <div className="text-white font-medium">Premium: {tranche.premium}%</div>
-                  <div className="text-gray-400 text-sm">Expiry: {tranche.expiry} days</div>
+              <div className="mb-10">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <span className="text-white font-bold text-[20px] block">
+                      Tranche {tranche.triggerLevel}%
+                    </span>
+                    <span className={`text-xs px-2 py-1 rounded text-white font-bold mt-2 inline-block ${
+                      tranche.riskLevel === 'LOW' ? 'bg-green-500/70' : 
+                      tranche.riskLevel === 'MEDIUM' ? 'bg-yellow-500/70' : 
+                      'bg-red-500/70'
+                    }`}>
+                      {tranche.riskLevel}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-white font-medium">Premium: {tranche.premium}%</div>
+                    <div className="text-gray-400 text-sm">Expiry: {tranche.expiry} days</div>
+                  </div>
                 </div>
               </div>
 

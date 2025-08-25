@@ -65,22 +65,24 @@ export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
 
   return (
     <div className="bg-[#1f2937] rounded-lg p-4">
-      <div className="flex justify-between items-center mb-10">
-        <div className="flex items-center gap-3">
-          <span className="text-white font-bold text-[20px]">
-            {pool.asset} {pool.tranche}%
-          </span>
-          <span className={`text-xs px-2 py-1 rounded text-white font-bold ${
-            pool.riskLevel === 'LOW' ? 'bg-green-500/70' : 
-            pool.riskLevel === 'MEDIUM' ? 'bg-yellow-500/70' : 
-            'bg-red-500/70'
-          }`}>
-            {pool.riskLevel}
-          </span>
-        </div>
-        <div className="text-right">
-          <div className="text-white font-medium">Premium: {pool.expectedPremium}%</div>
-          <div className="text-gray-400 text-sm">APY: {pool.stakingAPY}%</div>
+      <div className="mb-10">
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <span className={`text-xs px-2 py-1 rounded text-white font-bold mb-2 inline-block ${
+              pool.riskLevel === 'LOW' ? 'bg-green-500/70' : 
+              pool.riskLevel === 'MEDIUM' ? 'bg-yellow-500/70' : 
+              'bg-red-500/70'
+            }`}>
+              {pool.riskLevel}
+            </span>
+            <span className="text-white font-bold text-[20px] block">
+              {pool.asset} {pool.tranche}%
+            </span>
+          </div>
+          <div className="text-right">
+            <div className="text-white font-medium">Premium: {pool.expectedPremium}%</div>
+            <div className="text-gray-400 text-sm">APY: {pool.stakingAPY}%</div>
+          </div>
         </div>
       </div>
 
@@ -99,8 +101,14 @@ export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
           />
         </div>
         <div className="flex justify-between text-sm text-gray-200 font-bold mt-1">
-          <span>Pool Size: ${parseInt(pool.poolSize).toLocaleString()} USDT</span>
-          <span>Your Share: {hasUserShare ? `$${parseInt(pool.userShare).toLocaleString()}` : '$0'} USDT</span>
+          <div>
+            <span className="block">Pool Size:</span>
+            <span className="block">${parseInt(pool.poolSize).toLocaleString()} USDT</span>
+          </div>
+          <div className="text-right">
+            <span className="block">Your Share:</span>
+            <span className="block">{hasUserShare ? `$${parseInt(pool.userShare).toLocaleString()}` : '$0'} USDT</span>
+          </div>
         </div>
       </div>
 
@@ -169,7 +177,7 @@ export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
             {onWithdraw && (
               <button
                 onClick={() => onWithdraw(pool)}
-                className="flex-1 px-4 py-3 rounded-lg text-base font-medium transition-all duration-300 bg-transparent border-2 border-gray-300 text-gray-600 hover:border-[#86D99C] hover:text-[#86D99C] hover:scale-95"
+                className="flex-1 px-4 py-3 rounded-lg text-base font-medium transition-all duration-300 bg-transparent border border-[#E5E7EB] text-[#E5E7EB] hover:border-[#86D99C] hover:text-[#86D99C] hover:scale-95"
                 style={{ height: '48px' }}
               >
                 Withdraw

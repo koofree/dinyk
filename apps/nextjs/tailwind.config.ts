@@ -10,7 +10,11 @@ export default {
   presets: [baseConfig],
   theme: {
     extend: {
-              fontFamily: {
+      screens: {
+        'nav': '1130px',
+        'mobile': '1000px',
+      },
+      fontFamily: {
           sans: ["var(--font-sans)", "Pretendard", "Outfit", ...fontFamily.sans],
           mono: ["var(--font-geist-mono)", ...fontFamily.mono],
           display: ["var(--font-display)", "Outfit", "Pretendard", ...fontFamily.sans],
