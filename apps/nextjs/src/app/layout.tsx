@@ -4,8 +4,8 @@ import { Inter, Space_Mono } from "next/font/google";
 import { cn } from "@dinsure/ui";
 import { Toaster } from "@dinsure/ui/toast";
 
-import { AppProviders } from "@/components/providers/AppProviders";
 import { Navbar } from "@/components/common/Navbar";
+import { AppProviders } from "@/components/providers/AppProviders";
 
 import "~/app/globals.css";
 
@@ -54,6 +54,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
           inter.variable,
           spaceMono.variable,
         )}
+        suppressHydrationWarning
       >
         <AppProviders>
           <div className="min-h-screen flex flex-col">

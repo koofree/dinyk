@@ -20,6 +20,7 @@ export interface ContractsState {
   settlementEngine: ethers.Contract | null;
   oracleRouter: ethers.Contract | null;
   usdt: ethers.Contract | null;
+  usdtContract?: ethers.Contract | null; // Alias for usdt
   registry: ethers.Contract | null;
   feeTreasury: ethers.Contract | null;
   isInitialized: boolean;
@@ -224,7 +225,11 @@ export function useContracts(): ContractsState {
     initializeContracts();
   }, [provider, signer]);
 
-  return contracts;
+  // Add alias for backward compatibility
+  return {
+    ...contracts,
+    usdtContract: contracts.usdt  // Alias for easier use
+  };
 }
 
 // Helper hook to get a specific pool contract

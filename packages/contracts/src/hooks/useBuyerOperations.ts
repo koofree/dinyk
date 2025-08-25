@@ -188,12 +188,36 @@ export function useBuyerOperations() {
         // Place buyer order
         const pool = new Contract(
           poolAddress,
-          TranchePoolCoreABI,
+          TranchePoolCoreABI.abi,
           signer,
         );
+        
+        // Log details before the transaction
+        console.log("Placing buyer order with:", {
+          poolAddress,
+          roundId: params.roundId,
+          coverageAmount: ethers.formatUnits(calculation.coverageAmount, 6),
+          totalCost: ethers.formatUnits(calculation.totalCost, 6),
+          premium: ethers.formatUnits(calculation.premiumAmount, 6),
+          account,
+          allowance: ethers.formatUnits(currentAllowance, 6),
+        });
+        
+        // Check user's USDT balance
+        const userBalance = await usdt.balanceOf(account);
+        console.log("User USDT balance:", ethers.formatUnits(userBalance, 6));
+        
+        if (userBalance < calculation.totalCost) {
+          throw new Error(`Insufficient USDT balance. Need ${ethers.formatUnits(calculation.totalCost, 6)} USDT, have ${ethers.formatUnits(userBalance, 6)} USDT`);
+        }
+        
+        // Use manual gas limit instead of estimation
         const tx = await pool.placeBuyerOrder(
           params.roundId,
           calculation.coverageAmount,
+          {
+            gasLimit: 500000n, // Manual gas limit
+          }
         );
 
         toast.promise(tx.wait(), {

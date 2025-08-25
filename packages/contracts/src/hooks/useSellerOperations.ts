@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import TranchePoolCoreABI from '../config/abis/TranchePoolCore.json';
-import { useWeb3 } from "../providers/Web3Provider";
+import { useWeb3, KAIA_RPC_ENDPOINTS } from "../providers/Web3Provider";
 import { useContracts } from "./useContracts";
 
 export interface DepositCollateralParams {
@@ -38,19 +38,45 @@ export function useSellerOperations() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
 
-  // Get a provider for read-only operations
+  // Get a provider for read-only operations with fallback support
   const getProvider = useCallback(() => {
     // If we have a signer, use its provider
     if (signer?.provider) {
       return signer.provider;
     }
     
-    // Otherwise, create a read-only provider
-    return new ethers.JsonRpcProvider('https://public-en-kairos.node.kaia.io', {
+    // Otherwise, create a read-only provider with the first RPC endpoint
+    return new ethers.JsonRpcProvider(KAIA_RPC_ENDPOINTS[0], {
       chainId: 1001,
       name: 'Kaia Kairos'
     });
   }, [signer]);
+
+  // Create a provider with fallback RPC endpoints
+  const createProviderWithFallback = useCallback(async (): Promise<ethers.JsonRpcProvider> => {
+    for (const rpcUrl of KAIA_RPC_ENDPOINTS) {
+      try {
+        const provider = new ethers.JsonRpcProvider(rpcUrl, {
+          chainId: 1001,
+          name: 'Kaia Kairos'
+        });
+        
+        // Test the connection
+        const blockNumberPromise = provider.getBlockNumber();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Connection timeout")), 3000)
+        );
+        
+        await Promise.race([blockNumberPromise, timeoutPromise]);
+        console.log(`Successfully connected to RPC: ${rpcUrl}`);
+        return provider;
+      } catch (error) {
+        console.warn(`RPC endpoint ${rpcUrl} failed, trying next...`);
+      }
+    }
+    
+    throw new Error("All RPC endpoints failed. Please try again later.");
+  }, []);
 
   // Calculate potential yield for a collateral amount
   const calculateYield = useCallback(
@@ -61,7 +87,7 @@ export function useSellerOperations() {
       if (!productCatalog) throw new Error("Product catalog not initialized");
 
       try {
-        const trancheSpec = await productCatalog.getTranche(trancheId);
+        const trancheSpec = await (productCatalog as any).getTranche(trancheId);
         const premiumRateBps = Number(trancheSpec.premiumRateBps);
         const premiumRate = premiumRateBps / 100;
 
@@ -91,22 +117,148 @@ export function useSellerOperations() {
   // Deposit collateral to provide liquidity
   const depositCollateral = useCallback(
     async (params: DepositCollateralParams) => {
-      if (
-        !signer ||
-        !account ||
-        !productCatalog ||
-        !tranchePoolFactory ||
-        !usdt
-      ) {
-        throw new Error("Web3 not initialized");
+      console.log("depositCollateral called with:", {
+        hasSigner: !!signer,
+        hasAccount: !!account,
+        hasProductCatalog: !!productCatalog,
+        hasTranchePoolFactory: !!tranchePoolFactory,
+        hasUsdt: !!usdt,
+        isInitialized
+      });
+      
+      if (!signer) {
+        throw new Error("Signer not available. Please connect your wallet.");
+      }
+      if (!account) {
+        throw new Error("Account not available. Please connect your wallet.");
+      }
+      if (!productCatalog) {
+        throw new Error("Product catalog contract not initialized.");
+      }
+      if (!tranchePoolFactory) {
+        throw new Error("Tranche pool factory contract not initialized.");
+      }
+      if (!usdt) {
+        throw new Error("USDT contract not initialized.");
       }
 
       setIsLoading(true);
       try {
+        // Check network
+        const network = await signer.provider?.getNetwork();
+        console.log("Current network:", {
+          chainId: network?.chainId.toString(),
+          name: network?.name
+        });
+        
+        // First verify the ProductCatalog contract is accessible
+        const catalogAddress = await productCatalog.getAddress();
+        console.log("ProductCatalog contract address:", catalogAddress);
+        
+        // Check if the contract has code
+        let catalogCode;
+        try {
+          catalogCode = await signer.provider?.getCode(catalogAddress);
+          console.log("ProductCatalog has code:", catalogCode && catalogCode !== "0x" ? "Yes" : "No");
+        } catch (codeError: any) {
+          console.error("Error checking contract code:", codeError);
+          // If we get a trie node error, it's an RPC issue
+          if (codeError.message?.includes("missing trie node") || codeError.code === -32603) {
+            console.warn("RPC node error detected. The Kaia testnet node might be experiencing issues.");
+            console.warn("You may need to wait a moment and try again, or switch to a different RPC endpoint.");
+            // Continue anyway - the contract likely exists
+            catalogCode = "0x1"; // Assume it exists
+          } else {
+            throw codeError;
+          }
+        }
+        
+        if (!catalogCode || catalogCode === "0x") {
+          throw new Error(`ProductCatalog contract not deployed at ${catalogAddress} on chain ${network?.chainId}`);
+        }
+        
         // Get round info
-        const roundInfo = await productCatalog.getRound(params.roundId);
+        console.log("Getting round info for roundId:", params.roundId);
+        
+        // First, let's check what rounds exist
+        try {
+          // Try to get the round count or check if the round exists
+          console.log("Attempting to get round", params.roundId);
+        } catch (checkError) {
+          console.error("Error checking rounds:", checkError);
+        }
+        
+        let roundInfo;
+        let retries = 3;
+        let currentProductCatalog = productCatalog;
+        
+        while (retries > 0) {
+          try {
+            roundInfo = await (currentProductCatalog as any).getRound(params.roundId);
+            console.log("Round info retrieved successfully");
+            break; // Success, exit loop
+          } catch (roundError: any) {
+            retries--;
+            console.error("Failed to get round info:", roundError);
+            console.error("Error details:", {
+              code: roundError.code,
+              message: roundError.message,
+              data: roundError.data,
+              transaction: roundError.transaction,
+              retriesLeft: retries
+            });
+            
+            // Check for RPC errors that might be temporary
+            if (roundError.message?.includes("missing trie node") || 
+                roundError.code === -32603 || 
+                roundError.code === 'NETWORK_ERROR') {
+              if (retries > 0) {
+                console.log(`RPC error detected, trying fallback RPC... (${retries} attempts left)`);
+                
+                // Try to use a fallback provider
+                try {
+                  const fallbackProvider = await createProviderWithFallback();
+                  const { Contract: EthersContract } = await import('ethers');
+                  const ProductCatalogABI = (await import('../config/abis/ProductCatalog.json')).default;
+                  currentProductCatalog = new EthersContract(
+                    await productCatalog.getAddress(),
+                    ProductCatalogABI.abi,
+                    fallbackProvider
+                  );
+                  console.log("Switched to fallback RPC provider");
+                } catch (fallbackError) {
+                  console.error("Failed to create fallback provider:", fallbackError);
+                }
+                
+                // Wait a bit before retrying
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                continue;
+              } else {
+                throw new Error("RPC node is experiencing issues. Please try again in a few moments.");
+              }
+            }
+            
+            // Check if it's a revert error (round doesn't exist)
+            if (roundError.code === 'CALL_EXCEPTION') {
+              // The round might not exist or the contract call failed
+              throw new Error(`Round ${params.roundId} does not exist. Please ensure you're on the correct network (should be Kaia Testnet, chain ID 1001) and the round ID is valid.`);
+            }
+            throw roundError;
+          }
+        }
+        
         const trancheId = Number(roundInfo.trancheId);
         const roundState = Number(roundInfo.state);
+        
+        console.log("Round info:", {
+          roundId: params.roundId,
+          trancheId,
+          state: roundState,
+          salesStartTime: Number(roundInfo.salesStartTime),
+          salesEndTime: Number(roundInfo.salesEndTime),
+          coverageStartTime: Number(roundInfo.coverageStartTime),
+          coverageEndTime: Number(roundInfo.coverageEndTime)
+        });
 
         // Validate round state
         if (roundState !== 1) {
@@ -134,8 +286,7 @@ export function useSellerOperations() {
           throw new Error("Sales period has ended");
         }
 
-        // Get tranche details
-        const trancheSpec = await productCatalog.getTranche(trancheId);
+        // Get tranche details (removed as unused)
 
         // Calculate yield info
         const yieldAnalysis = await calculateYield(
@@ -158,7 +309,7 @@ export function useSellerOperations() {
         );
 
         // Check USDT balance
-        const balance = await usdt.balanceOf(account);
+        const balance = await (usdt as any).balanceOf(account);
         if (balance < collateralAmountWei) {
           throw new Error(
             `Insufficient USDT balance. Need ${params.collateralAmount} USDT`,
@@ -166,9 +317,18 @@ export function useSellerOperations() {
         }
 
         // Get pool address
-        const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
+        console.log("Getting pool address for tranche:", trancheId);
+        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
+        console.log("Pool address:", poolAddress);
+        
         if (poolAddress === ethers.ZeroAddress) {
           throw new Error(`No pool found for tranche ${trancheId}`);
+        }
+        
+        // Verify pool contract exists
+        const poolCode = await signer.provider?.getCode(poolAddress);
+        if (!poolCode || poolCode === "0x") {
+          throw new Error(`Pool contract not deployed at ${poolAddress}`);
         }
 
         // Get pool contract
@@ -177,36 +337,83 @@ export function useSellerOperations() {
           TranchePoolCoreABI.abi,
           signer,
         );
+        
+        // Try to call a view function to verify the pool is working
+        try {
+          const poolAccounting = await (pool as any).getPoolAccounting();
+          console.log("Pool is accessible, accounting:", {
+            totalAssets: ethers.formatUnits(poolAccounting.totalAssets, 6),
+            totalShares: ethers.formatEther(poolAccounting.totalShares),
+            navPerShare: ethers.formatEther(poolAccounting.navPerShare)
+          });
+        } catch (poolError) {
+          console.error("Failed to access pool contract:", poolError);
+          throw new Error("Pool contract is not accessible");
+        }
 
-        // Get pool accounting before deposit
-        const accountingBefore = await pool.getPoolAccounting();
-        const shareBalanceBefore = await pool.shareBalances(account);
+        // Get share balance before deposit
+        const shareBalanceBefore = await (pool as any).shareBalances(account);
 
         // Approve USDT if needed
         setIsPreparing(true);
-        const currentAllowance = await usdt.allowance(account, poolAddress);
+        console.log("Checking USDT allowance:", {
+          account,
+          poolAddress,
+          usdtAddress: await usdt.getAddress()
+        });
+        
+        const currentAllowance = await (usdt as any).allowance(account, poolAddress);
+        console.log("Current allowance:", ethers.formatUnits(currentAllowance, 6), "USDT");
+        
         if (currentAllowance < collateralAmountWei) {
-          console.log("Approving USDT...");
+          console.log("Need to approve USDT. Current:", ethers.formatUnits(currentAllowance, 6), "Need:", ethers.formatUnits(collateralAmountWei, 6));
 
           // Reset to zero first if needed
           if (currentAllowance > 0n) {
-            const resetTx = await usdt.connect(signer).approve(poolAddress, 0);
+            console.log("Resetting allowance to 0 first...");
+            const resetTx = await (usdt as any).connect(signer).approve(poolAddress, 0);
             await resetTx.wait();
+            console.log("Allowance reset to 0");
           }
 
-          const approveTx = await usdt
+          console.log("Approving", ethers.formatUnits(collateralAmountWei, 6), "USDT for pool", poolAddress);
+          const approveTx = await (usdt as any)
             .connect(signer)
             .approve(poolAddress, collateralAmountWei);
-          await approveTx.wait();
+          const approveReceipt = await approveTx.wait();
+          console.log("Approval transaction:", approveReceipt.hash);
+          
+          // Verify the approval worked
+          const newAllowance = await (usdt as any).allowance(account, poolAddress);
+          console.log("New allowance after approval:", ethers.formatUnits(newAllowance, 6), "USDT");
+          
+          if (newAllowance < collateralAmountWei) {
+            throw new Error("USDT approval failed - allowance not set correctly");
+          }
+          
           toast.success("USDT approved");
+        } else {
+          console.log("USDT already approved, current allowance:", ethers.formatUnits(currentAllowance, 6));
         }
         setIsPreparing(false);
 
         // Deposit collateral
-        console.log("Depositing collateral...");
-        const tx = await pool.depositCollateral(
+        console.log("Depositing collateral to pool:", {
+          poolAddress,
+          roundId: params.roundId,
+          amount: ethers.formatUnits(collateralAmountWei, 6),
+          allowance: ethers.formatUnits(currentAllowance, 6),
+          userBalance: ethers.formatUnits(balance, 6)
+        });
+        
+        // Manually set gas limit instead of estimating
+        const gasLimit = 500000n; // Set a reasonable gas limit
+        console.log("Using manual gas limit:", gasLimit.toString());
+        
+        const tx = await (pool as any).depositCollateral(
           params.roundId,
           collateralAmountWei,
+          { gasLimit }
         );
 
         toast.promise(tx.wait(), {
@@ -218,7 +425,7 @@ export function useSellerOperations() {
         const receipt = await tx.wait();
 
         // Get shares minted
-        const shareBalanceAfter = await pool.shareBalances(account);
+        const shareBalanceAfter = await (pool as any).shareBalances(account);
         const sharesMinted = shareBalanceAfter - shareBalanceBefore;
 
         if (sharesMinted > 0n) {
@@ -235,7 +442,7 @@ export function useSellerOperations() {
         setIsPreparing(false);
       }
     },
-    [signer, account, productCatalog, tranchePoolFactory, usdt, calculateYield],
+    [signer, account, productCatalog, tranchePoolFactory, usdt, calculateYield, isInitialized],
   );
 
   // Get seller's position for a round
@@ -253,15 +460,15 @@ export function useSellerOperations() {
 
       try {
         // Get round info to find tranche
-        const roundInfo = await productCatalog.getRound(roundId);
+        const roundInfo = await (productCatalog as any).getRound(roundId);
         const trancheId = Number(roundInfo.trancheId);
 
         // Get pool
-        const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
+        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
         if (poolAddress === ethers.ZeroAddress) return null;
 
         const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, signer);
-        const position = await pool.getSellerPosition(roundId, sellerAddress);
+        const position = await (pool as any).getSellerPosition(roundId, sellerAddress);
 
         return {
           collateralAmount: position.collateralAmount,
@@ -284,13 +491,13 @@ export function useSellerOperations() {
       if (!sellerAddress || !tranchePoolFactory) return 0n;
 
       try {
-        const poolAddress = await tranchePoolFactory.getTranchePool(Number(trancheId));
+        const poolAddress = await (tranchePoolFactory as any).getTranchePool(Number(trancheId));
         if (poolAddress === ethers.ZeroAddress) return 0n;
 
         const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, getProvider());
 
-        // Get share balance
-        const balance = await pool.balanceOf(sellerAddress);
+        // Get share balance using shareBalances mapping
+        const balance = await (pool as any).shareBalances(sellerAddress);
         return balance;
       } catch (error) {
         console.error("Error fetching seller share balance:", error);
@@ -300,9 +507,9 @@ export function useSellerOperations() {
     [tranchePoolFactory, account, getProvider],
   );
 
-  // Withdraw available collateral
+  // Withdraw available collateral (now accepts shares instead of USDT amount)
   const withdrawCollateral = useCallback(
-    async (trancheId: number, amount: string) => {
+    async (trancheId: number, sharesAmount: string) => {
       if (!tranchePoolFactory || !signer || !account) {
         throw new Error("Not initialized");
       }
@@ -310,7 +517,7 @@ export function useSellerOperations() {
       setIsLoading(true);
       try {
         // Get pool
-        const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
+        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
         if (poolAddress === ethers.ZeroAddress) {
           throw new Error(`No pool found for tranche ${trancheId}`);
         }
@@ -321,32 +528,46 @@ export function useSellerOperations() {
           signer,
         );
 
-        // Check available amount
-        const available = await pool.getAvailableCollateral(account);
-        const withdrawAmount = ethers.parseUnits(amount, 6);
-
-        if (withdrawAmount > available) {
+        // Get user's share balance
+        const userShareBalance = await (pool as any).shareBalances(account);
+        const sharesToBurn = ethers.parseEther(sharesAmount);
+        
+        console.log("Withdrawal request:", {
+          requestedShares: sharesAmount,
+          userShareBalance: ethers.formatEther(userShareBalance),
+          sharesToBurn: ethers.formatEther(sharesToBurn)
+        });
+        
+        if (sharesToBurn > userShareBalance) {
           throw new Error(
-            `Insufficient available collateral. Max: ${ethers.formatUnits(available, 6)} USDT`,
+            `Insufficient shares. You have ${ethers.formatEther(userShareBalance)} shares`,
           );
         }
 
-        // Calculate shares to burn
-        const accounting = await pool.getPoolAccounting();
-        const sharesToBurn =
-          (withdrawAmount * ethers.parseEther("1")) / accounting.navPerShare;
-
-        console.log("Withdrawing collateral:", {
-          amount: ethers.formatUnits(withdrawAmount, 6),
-          sharesToBurn: ethers.formatEther(sharesToBurn),
+        // Get pool accounting to calculate expected USDT
+        const accounting = await (pool as any).getPoolAccounting();
+        const expectedUSDT = (sharesToBurn * accounting.navPerShare) / ethers.parseEther("1");
+        
+        // Check available collateral
+        const available = await (pool as any).getAvailableCollateral(account);
+        
+        console.log("Withdrawal calculation:", {
+          shares: ethers.formatEther(sharesToBurn),
+          navPerShare: ethers.formatEther(accounting.navPerShare),
+          expectedUSDT: ethers.formatUnits(expectedUSDT, 6),
+          availableCollateral: ethers.formatUnits(available, 6)
         });
+        
+        if (expectedUSDT > available) {
+          console.warn("Expected USDT exceeds available collateral, some funds may be locked in active rounds");
+        }
 
-        // Withdraw
-        const tx = await pool.withdrawCollateral(sharesToBurn);
+        // Withdraw using shares
+        const tx = await (pool as any).withdrawCollateral(sharesToBurn);
 
         toast.promise(tx.wait(), {
-          loading: `Withdrawing $${amount}...`,
-          success: `Withdrawn $${amount} successfully!`,
+          loading: `Withdrawing ${sharesAmount} shares...`,
+          success: `Successfully withdrawn ${sharesAmount} shares (≈ ${ethers.formatUnits(expectedUSDT, 6)} USDT)`,
           error: "Failed to withdraw collateral",
         });
 
@@ -375,34 +596,67 @@ export function useSellerOperations() {
         throw new Error("Contracts not initialized");
       }
 
-      try {
-        console.log("Getting pool address for tranche:", trancheId);
-        const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
-        console.log("Pool address:", poolAddress);
-        
-        if (poolAddress === ethers.ZeroAddress) {
-          console.log("No pool found for tranche:", trancheId);
-          return null;
+      let retries = 3;
+      while (retries > 0) {
+        try {
+          console.log("Getting pool address for tranche:", trancheId);
+          const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
+          console.log("Pool address:", poolAddress);
+          
+          if (poolAddress === ethers.ZeroAddress) {
+            console.log("No pool found for tranche:", trancheId);
+            return null;
+          }
+
+          // Try with current provider first, then fallback if needed
+          let provider = getProvider();
+          let pool = new Contract(poolAddress, TranchePoolCoreABI.abi, provider);
+          
+          try {
+            console.log("Calling pool.getPoolAccounting()");
+            const accounting = await (pool as any).getPoolAccounting();
+            console.log("Pool accounting result:", accounting);
+
+            return {
+              totalAssets: accounting.totalAssets,
+              lockedAssets: accounting.lockedAssets,
+              totalShares: accounting.totalShares,
+              navPerShare: accounting.navPerShare,
+            };
+          } catch (poolError: any) {
+            // If RPC error, try fallback
+            if (poolError.message?.includes("missing trie node") || 
+                poolError.code === -32603 || 
+                poolError.code === 'NETWORK_ERROR') {
+              retries--;
+              if (retries > 0) {
+                console.log(`RPC error in getPoolAccounting, trying fallback... (${retries} attempts left)`);
+                try {
+                  provider = await createProviderWithFallback();
+                  pool = new Contract(poolAddress, TranchePoolCoreABI.abi, provider);
+                  // Loop will retry with new provider
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  continue;
+                } catch (fallbackError) {
+                  console.error("Failed to create fallback provider:", fallbackError);
+                }
+              }
+            }
+            throw poolError;
+          }
+        } catch (error) {
+          retries--;
+          if (retries === 0) {
+            console.error("Error fetching pool accounting after all retries:", error);
+            return null;
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
-
-        console.log("Creating pool contract with address:", poolAddress);
-        const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, getProvider());
-        console.log("Calling pool.getPoolAccounting()");
-        const accounting = await pool.getPoolAccounting();
-        console.log("Pool accounting result:", accounting);
-
-        return {
-          totalAssets: accounting.totalAssets,
-          lockedAssets: accounting.lockedAssets,
-          totalShares: accounting.totalShares,
-          navPerShare: accounting.navPerShare,
-        };
-      } catch (error) {
-        console.error("Error fetching pool accounting:", error);
-        return null;
       }
+      
+      return null;
     },
-    [tranchePoolFactory, getProvider],
+    [tranchePoolFactory, getProvider, createProviderWithFallback],
   );
 
   // Claim premium earnings (after settlement)
@@ -415,7 +669,7 @@ export function useSellerOperations() {
       setIsLoading(true);
       try {
         // Get round info
-        const roundInfo = await productCatalog.getRound(roundId);
+        const roundInfo = await (productCatalog as any).getRound(roundId);
         const trancheId = Number(roundInfo.trancheId);
         const roundState = Number(roundInfo.state);
 
@@ -426,7 +680,7 @@ export function useSellerOperations() {
         }
 
         // Get pool
-        const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
+        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
         const pool = new Contract(
           poolAddress,
           TranchePoolCoreABI.abi,
@@ -434,7 +688,7 @@ export function useSellerOperations() {
         );
 
         // Get seller position
-        const position = await pool.getSellerPosition(roundId, account);
+        const position = await (pool as any).getSellerPosition(roundId, account);
 
         if (position.filledCollateral === 0n) {
           throw new Error("No filled collateral to claim");
@@ -442,7 +696,7 @@ export function useSellerOperations() {
 
         // Claim premiums
         console.log("Claiming premiums for round:", roundId);
-        const tx = await pool.claimSellerPremiums(roundId);
+        const tx = await (pool as any).claimSellerPremiums(roundId);
 
         toast.promise(tx.wait(), {
           loading: "Claiming premium earnings...",
@@ -471,14 +725,14 @@ export function useSellerOperations() {
 
       try {
         // Get all active tranches
-        const activeTranches = await productCatalog.getActiveTranches();
+        const activeTranches = await (productCatalog as any).getActiveTranches();
         const positions = [];
 
         for (const trancheId of activeTranches) {
-          const rounds = await productCatalog.getTrancheRounds(trancheId);
+          const rounds = await (productCatalog as any).getTrancheRounds(trancheId);
 
           for (const roundId of rounds) {
-            const roundInfo = await productCatalog.getRound(roundId);
+            const roundInfo = await (productCatalog as any).getRound(roundId);
             const roundState = Number(roundInfo.state);
 
             // Include OPEN, ACTIVE, MATURED states
@@ -489,7 +743,7 @@ export function useSellerOperations() {
               );
 
               if (position && position.collateralAmount > 0n) {
-                const trancheSpec = await productCatalog.getTranche(
+                const trancheSpec = await (productCatalog as any).getTranche(
                   Number(trancheId),
                 );
 
@@ -518,6 +772,27 @@ export function useSellerOperations() {
     [account, productCatalog, tranchePoolFactory, getSellerPosition],
   );
 
+  // Get available collateral for withdrawal
+  const getAvailableCollateral = useCallback(
+    async (trancheId: number, seller?: string): Promise<bigint> => {
+      const sellerAddress = seller || account;
+      if (!sellerAddress || !tranchePoolFactory) return 0n;
+
+      try {
+        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
+        if (poolAddress === ethers.ZeroAddress) return 0n;
+
+        const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, getProvider());
+        const available = await (pool as any).getAvailableCollateral(sellerAddress);
+        return available;
+      } catch (error) {
+        console.error("Error fetching available collateral:", error);
+        return 0n;
+      }
+    },
+    [tranchePoolFactory, account, getProvider],
+  );
+
   return {
     // Deposit functions
     depositCollateral,
@@ -528,6 +803,7 @@ export function useSellerOperations() {
     getShareBalance: getSellerShareBalance,
     getPoolAccounting,
     getActivePositions,
+    getAvailableCollateral,
 
     // Withdrawal functions
     withdrawCollateral,

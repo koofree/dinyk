@@ -31,10 +31,22 @@ export function BuyInsuranceForm({
   tranche,
   onSuccess
 }: BuyInsuranceFormProps) {
-  const { address, isConnected } = useWeb3();
+  const { account, isConnected, usdtBalance: usdtBalanceStr, refreshUSDTBalance } = useWeb3();
   const { buyInsurance, calculatePurchase } = useBuyerOperations();
-  const { usdtContract } = useContracts();
-  const [usdtBalance, setUsdtBalance] = useState<bigint>(0n);
+  const { usdtContract, isInitialized } = useContracts();
+  
+  // Convert string balance to bigint
+  const usdtBalance = usdtBalanceStr ? parseUnits(usdtBalanceStr, 6) : 0n;
+  
+  // Debug logging
+  useEffect(() => {
+    console.log("BuyInsuranceForm state:", {
+      isConnected,
+      account,
+      isInitialized,
+      hasUsdtContract: !!usdtContract
+    });
+  }, [isConnected, account, isInitialized, usdtContract]);
   
   const [coverageAmount, setCoverageAmount] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,24 +58,33 @@ export function BuyInsuranceForm({
   const totalCost = coverageAmount ? 
     (parseFloat(coverageAmount) + parseFloat(premiumAmount)).toFixed(2) : "0";
 
-  // Load USDT balance
+  // Refresh USDT balance when component mounts or when connection changes
   useEffect(() => {
-    const loadBalance = async () => {
-      if (isConnected && address && usdtContract) {
-        try {
-          const balance = await usdtContract.balanceOf(address);
-          setUsdtBalance(balance);
-        } catch (err) {
-          console.error("Error loading balance:", err);
-        }
-      }
-    };
-    loadBalance();
-  }, [isConnected, address, usdtContract]);
+    if (isConnected && refreshUSDTBalance) {
+      refreshUSDTBalance();
+    }
+  }, [isConnected, refreshUSDTBalance]);
 
   const handleBuyInsurance = async () => {
-    if (!isConnected || !address || !usdtContract) {
+    console.log("Buy Insurance clicked - Connection state:", {
+      isConnected,
+      account,
+      hasUsdtContract: !!usdtContract,
+      isInitialized
+    });
+    
+    if (!isConnected) {
       setError("Please connect your wallet");
+      return;
+    }
+    
+    if (!account) {
+      setError("No wallet address found");
+      return;
+    }
+    
+    if (!isInitialized || !usdtContract) {
+      setError("Contracts are still loading. Please try again.");
       return;
     }
 
@@ -77,16 +98,14 @@ export function BuyInsuranceForm({
     setSuccess(false);
 
     try {
-      const coverageAmountWei = parseUnits(coverageAmount, 6);
-      
-      const tx = await buyInsurance({
+      // buyInsurance already waits for the transaction and returns the receipt
+      const receipt = await buyInsurance({
         productId,
         trancheId,
         roundId,
-        coverageAmount: coverageAmountWei
+        coverageAmount: coverageAmount  // Pass as string, not bigint
       });
       
-      const receipt = await tx.wait();
       setTxHash(receipt.hash);
       setSuccess(true);
       setCoverageAmount("");
@@ -143,6 +162,11 @@ export function BuyInsuranceForm({
             <p className="text-sm text-muted-foreground">
               Available: ${usdtBalance ? Number(formatUnits(usdtBalance, 6)).toLocaleString() : "0"} USDT
             </p>
+            {usdtBalance === 0n && isConnected && (
+              <p className="text-xs text-yellow-600 mt-1">
+                No test USDT detected. The contract may not be deployed on this network or you need test tokens.
+              </p>
+            )}
           </div>
 
           <div className="rounded-lg bg-muted p-4 space-y-3">
@@ -220,7 +244,7 @@ export function BuyInsuranceForm({
 
         <Button
           onClick={handleBuyInsurance}
-          disabled={loading || !isConnected || !coverageAmount}
+          disabled={loading || !isConnected || !isInitialized || !coverageAmount}
           className="w-full"
           size="lg"
         >
@@ -240,6 +264,12 @@ export function BuyInsuranceForm({
         {!isConnected && (
           <p className="text-center text-sm text-muted-foreground">
             Please connect your wallet to buy insurance
+          </p>
+        )}
+        
+        {isConnected && !isInitialized && (
+          <p className="text-center text-sm text-muted-foreground">
+            Loading contracts...
           </p>
         )}
       </CardContent>

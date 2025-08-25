@@ -33,6 +33,24 @@ interface RoundData {
   matchedAmount: bigint;
 }
 
+interface ProductData {
+  productId: number;
+  name: string;
+  description: string;
+}
+
+interface PoolInfo {
+  totalAssets: bigint;
+  totalShares: bigint;
+  availableLiquidity: bigint;
+  totalActiveCoverage: bigint;
+}
+
+interface NavInfo {
+  totalAssets: bigint;
+  sharePrice: bigint;
+}
+
 export default function TrancheDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -45,11 +63,11 @@ export default function TrancheDetailPage() {
   const contracts = useContracts();
   const { productCatalog, tranchePoolFactory, isInitialized } = contracts;
   
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<ProductData | null>(null);
   const [tranche, setTranche] = useState<TrancheData | null>(null);
   const [rounds, setRounds] = useState<RoundData[]>([]);
-  const [poolInfo, setPoolInfo] = useState<any>(null);
-  const [navInfo, setNavInfo] = useState<any>(null);
+  const [poolInfo, setPoolInfo] = useState<PoolInfo | null>(null);
+  const [navInfo, setNavInfo] = useState<NavInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRound, setSelectedRound] = useState<RoundData | null>(null);
 
@@ -80,23 +98,37 @@ export default function TrancheDetailPage() {
       
       // Get tranche data directly from contract
       let trancheData: any;
-        trancheData = await (productCatalog as any).tranches(Number(trancheId));
+      trancheData = await (productCatalog as any).tranches(Number(trancheId));
+      console.log("Raw tranche data from contract:", trancheData);
       
+      // Get pool address from factory first
+      let poolAddress = "0x0000000000000000000000000000000000000000";
+      try {
+        const factoryPoolAddress = await (tranchePoolFactory as any).getTranchePool(Number(trancheId));
+        console.log(`Factory pool address for tranche ${trancheId}:`, factoryPoolAddress);
+        if (factoryPoolAddress && factoryPoolAddress !== "0x0000000000000000000000000000000000000000") {
+          poolAddress = factoryPoolAddress;
+        }
+      } catch (err) {
+        console.error("Error getting pool address from factory:", err);
+      }
+      
+      // Use pool address from tranche data if factory didn't have it
+      if (poolAddress === "0x0000000000000000000000000000000000000000" && trancheData?.poolAddress) {
+        poolAddress = trancheData.poolAddress;
+      }
       
       setTranche({
         productId: BigInt(productId),
         trancheId: Number(trancheId),
         trigger: trancheData?.threshold || trancheData?.triggerThreshold || 0n,
         premiumBps: trancheData?.premiumRateBps || trancheData?.premiumBps || 0n,
-        poolAddress: trancheData?.poolAddress || "0x0000000000000000000000000000000000000000"
+        poolAddress: poolAddress
       });
       
-      // Get pool address from factory using tranche ID
-      try {
-        const poolAddress = await (tranchePoolFactory as any).getTranchePool(Number(trancheId));
-        console.log(`Pool address for tranche ${trancheId}:`, poolAddress);
-        
-        if (poolAddress && poolAddress !== "0x0000000000000000000000000000000000000000") {
+      // Continue with pool data if we have a valid pool address
+      if (poolAddress && poolAddress !== "0x0000000000000000000000000000000000000000") {
+        try {
           // Add a small delay to ensure contracts are fully ready
           await new Promise(resolve => setTimeout(resolve, 100));
           
@@ -145,38 +177,65 @@ export default function TrancheDetailPage() {
                     totalSellerCollateral: roundInfo.totalSellerCollateral,
                     matchedAmount: roundInfo.matchedAmount
                   };
-                } catch (err) {
+                } catch (err: any) {
                   console.error(`Error fetching round ${roundId}:`, err);
+                  // If the round doesn't exist, return null to filter it out
+                  if (err.code === 'CALL_EXCEPTION') {
+                    console.warn(`Round ${roundId} does not exist on-chain, skipping`);
+                    return null;
+                  }
+                  // For other errors, return a disabled state
                   return {
                     id: roundId,
-                    state: 1, // Default state
+                    state: 6, // CANCELED state - cannot deposit
                     startTime: 0n,
                     endTime: 0n,
                     maturityTime: 0n,
                     totalBuyerOrders: 0n,
                     totalSellerCollateral: 0n,
-                    matchedAmount: 0n
+                    matchedAmount: 0n,
+                    error: true
                   };
                 }
               }) || []
             );
             
-            setRounds(formattedRounds);
+            // Filter out null values (non-existent rounds)
+            const validRounds = formattedRounds.filter((round: any) => round !== null);
             
-            const activeRound = formattedRounds.find((r: RoundData) => r.state === 1 || r.state === 2);
-            if (activeRound) setSelectedRound(activeRound);
+            setRounds(validRounds);
+            
+            // Find the most recent OPEN or MATCHED round from valid rounds
+            const activeRound = validRounds.find((r: RoundData) => r.state === 1 || r.state === 2);
+            
+            console.log("Rounds loaded:", {
+              totalRounds: validRounds.length,
+              validRounds: validRounds.length,
+              filteredOut: formattedRounds.length - validRounds.length,
+              roundStates: validRounds.map((r: RoundData) => ({ id: r.id.toString(), state: r.state })),
+              activeRound: activeRound ? activeRound.id.toString() : null
+            });
+            
+            if (activeRound) {
+              setSelectedRound(activeRound);
+              console.log("Selected active round:", activeRound);
+            } else if (validRounds.length > 0) {
+              // If no active round, select the first valid round
+              setSelectedRound(validRounds[0]);
+              console.log("No active round, selected first valid round:", validRounds[0]);
+            }
           } catch (err) {
             console.error("Error fetching rounds:", err);
             setRounds([]);
           }
-        } else {
-          console.log(`No pool found for tranche ${trancheId}`);
+        } catch (err) {
+          console.error("Error processing pool data:", err);
           setPoolInfo(null);
           setNavInfo(null);
           setRounds([]);
         }
-      } catch (err) {
-        console.error("Error fetching pool data:", err);
+      } else {
+        console.log(`No valid pool address for tranche ${trancheId}`);
         setPoolInfo(null);
         setNavInfo(null);
         setRounds([]);
@@ -188,9 +247,11 @@ export default function TrancheDetailPage() {
     }
   };
 
-  const getTrancheName = (index: number) => {
+  const getTrancheName = (trancheId: number) => {
+    // Convert trancheId to index (assuming sequential IDs starting from 0 or 1)
+    const index = trancheId % 5; // Adjust based on your actual tranche numbering
     const names = ["A", "B", "C", "D", "E"];
-    return names[index] || `Tranche ${index + 1}`;
+    return names[index] ?? `Tranche ${trancheId}`;
   };
 
   const getTriggerDisplay = (trigger: bigint) => {
@@ -236,7 +297,7 @@ export default function TrancheDetailPage() {
         </Button>
         <div className="flex-1">
           <h1 className="text-3xl font-bold">
-            {product.name} - Tranche {getTrancheName(tranche.index)}
+            {product.name} - Tranche {getTrancheName(tranche.trancheId)}
           </h1>
           <p className="text-muted-foreground mt-1">
             {product.description}
@@ -298,9 +359,9 @@ export default function TrancheDetailPage() {
         </Card>
       </div>
 
-      {/* Current Round Actions */}
-      {selectedRound && selectedRound.state === 1 && (
-        <div className="grid gap-6 lg:grid-cols-2">
+      {/* Current Round Actions - Show forms based on availability */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {selectedRound && (
           <BuyInsuranceForm
             productId={BigInt(productId)}
             trancheId={tranche.trancheId}
@@ -308,26 +369,64 @@ export default function TrancheDetailPage() {
             tranche={tranche}
             onSuccess={() => loadData()}
           />
-          {tranche.poolAddress && tranche.poolAddress !== "0x0000000000000000000000000000000000000000" && (
-            <ProvideLiquidityForm
-              poolAddress={tranche.poolAddress}
-              tranche={tranche}
-              onSuccess={() => loadData()}
-            />
-          )}
-        </div>
-      )}
+        )}
+        {tranche.poolAddress && tranche.poolAddress !== "0x0000000000000000000000000000000000000000" ? (
+          <ProvideLiquidityForm
+            poolAddress={tranche.poolAddress}
+            trancheId={tranche.trancheId}
+            roundId={selectedRound && selectedRound.state === 1 ? selectedRound.id : undefined}
+            onSuccess={() => loadData()}
+          />
+        ) : (
+          <Card className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+            <CardHeader>
+              <CardTitle>Liquidity Pool</CardTitle>
+              <CardDescription>
+                Pool not yet deployed for this tranche
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>The liquidity pool for this tranche has not been deployed yet.</p>
+                <p>Pool deployment is required before liquidity can be provided.</p>
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">
+                    <p>Debug Info:</p>
+                    <p>Tranche ID: {trancheId}</p>
+                    <p>Pool Address: {tranche.poolAddress || 'null'}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* No Active Round Message */}
-      {(!selectedRound || selectedRound.state !== 1) && (
+      {!selectedRound && rounds.length > 0 && (
         <Card className="bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-900">
           <CardContent className="py-6">
             <div className="flex items-center gap-3">
               <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
               <div>
-                <h3 className="font-semibold text-yellow-900 dark:text-yellow-100">No Active Round</h3>
+                <h3 className="font-semibold text-yellow-900 dark:text-yellow-100">Select a Round</h3>
                 <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                  There are no active rounds available for participation. Please check back later or view the rounds below.
+                  Please select a round from the list below. Only rounds with "OPEN" status (highlighted in green) can accept new deposits.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {!selectedRound && rounds.length === 0 && (
+        <Card className="bg-gray-50 dark:bg-gray-950/20 border-gray-200 dark:border-gray-800">
+          <CardContent className="py-6">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">No Rounds Available</h3>
+                <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                  There are no rounds available for this tranche yet. Please check back later.
                 </p>
               </div>
             </div>
@@ -361,6 +460,8 @@ export default function TrancheDetailPage() {
                     <Card 
                       className={`cursor-pointer transition-all hover:shadow-md ${
                         selectedRound?.id === round.id ? "ring-2 ring-primary" : ""
+                      } ${
+                        round.state === 1 ? "border-green-500 bg-green-50/50 dark:bg-green-950/20" : ""
                       }`}
                       onClick={() => setSelectedRound(round)}
                     >
@@ -422,25 +523,25 @@ export default function TrancheDetailPage() {
               <div>
                 <p className="text-sm text-muted-foreground">Total Shares</p>
                 <p className="text-lg font-semibold">
-                  {Number(formatUnits(poolInfo.totalShares || 0n, 18)).toFixed(2)}
+                  {Number(formatUnits(poolInfo.totalShares ?? 0n, 18)).toFixed(2)}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Share Price</p>
                 <p className="text-lg font-semibold">
-                  ${navInfo ? Number(formatUnits(navInfo.sharePrice || 0n, 6)).toFixed(4) : "0"}
+                  ${navInfo ? Number(formatUnits(navInfo.sharePrice ?? 0n, 6)).toFixed(4) : "0"}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Available Liquidity</p>
                 <p className="text-lg font-semibold">
-                  ${poolInfo ? Number(formatUnits(poolInfo.availableLiquidity || 0n, 6)).toLocaleString() : "0"}
+                  ${poolInfo ? Number(formatUnits(poolInfo.availableLiquidity ?? 0n, 6)).toLocaleString() : "0"}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Active Coverage</p>
                 <p className="text-lg font-semibold">
-                  ${poolInfo ? Number(formatUnits(poolInfo.totalActiveCoverage || 0n, 6)).toLocaleString() : "0"}
+                  ${poolInfo ? Number(formatUnits(poolInfo.totalActiveCoverage ?? 0n, 6)).toLocaleString() : "0"}
                 </p>
               </div>
             </div>

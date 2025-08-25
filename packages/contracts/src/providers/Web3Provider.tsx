@@ -251,6 +251,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
 
         setProvider(web3Provider);
         if (accounts[0]?.address) {
+          // Create and set the signer - this was missing!
+          const newSigner = await web3Provider.getSigner(0);
+          setSigner(newSigner);
+          console.log("Signer set during reconnect:", !!newSigner);
+          
           setAccount(accounts[0].address);
           setChainId(Number(network.chainId));
           setIsConnected(true);

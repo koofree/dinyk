@@ -1,19 +1,9 @@
-import { useState, useCallback } from "react";
+import { KAIA_TESTNET_ADDRESSES, useContracts, useWeb3 } from "@dinsure/contracts";
 import { ethers } from "ethers";
-import { useWeb3 } from "@dinsure/contracts";
-import { KAIA_TESTNET_ADDRESSES } from "@dinsure/contracts";
-import { USDT_ABI } from "@/utils/contractABIs";
-import type { TrancheDetails, RoundDetails } from "./useTrancheData";
+import { useCallback, useState } from "react";
+import TranchePoolCoreABI from "../../../../packages/contracts/src/config/abis/TranchePoolCore.json";
+import type { RoundDetails, TrancheDetails } from "./useTrancheData";
 
-// Pool-specific ABI (not in shared ABIs yet)
-const POOL_ABI = [
-  "function depositCollateral(uint256 roundId, uint256 collateralAmount) returns (uint256)",
-  "function getSellerPosition(uint256 roundId, address seller) view returns (tuple(uint256 collateralAmount, uint256 filledCollateral, uint256 lockedSharesAssigned, bool withdrawn, uint256 refundAmount))",
-  "function getPoolAccounting() view returns (tuple(uint256 totalAssets, uint256 lockedAssets, uint256 totalShares, uint256 navPerShare))",
-  "function shareBalances(address account) view returns (uint256)",
-  "function getAvailableCollateral(address seller) view returns (uint256)",
-  "function getRoundEconomics(uint256 roundId) view returns (uint256, uint256, uint256, uint256, uint256)",
-];
 
 export interface ProvideLiquidityParams {
   tranche: TrancheDetails;
@@ -23,36 +13,43 @@ export interface ProvideLiquidityParams {
 
 export function useProvideLiquidity() {
   const { account, signer, isConnected } = useWeb3();
+  const { usdt } = useContracts();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [approving, setApproving] = useState(false);
 
   const checkAllowance = useCallback(async (poolAddress: string, amount: bigint) => {
-    if (!signer || !account) return false;
+    if (!usdt || !account) return false;
 
     try {
-      const usdt = new ethers.Contract(KAIA_TESTNET_ADDRESSES.DinUSDT, USDT_ABI, signer);
+      console.log("Checking USDT allowance:", {
+        account,
+        poolAddress,
+        usdtAddress: await usdt.getAddress()
+      });
+      
       const currentAllowance = await usdt.allowance(account, poolAddress);
+      console.log("Current allowance:", ethers.formatUnits(currentAllowance, 6), "USDT");
+      
       return currentAllowance >= amount;
     } catch (err) {
       console.error("Error checking allowance:", err);
       return false;
     }
-  }, [signer, account]);
+  }, [usdt, account]);
 
   const approveUSDT = useCallback(async (poolAddress: string, amount: bigint) => {
-    if (!signer) throw new Error("No signer available");
+    if (!usdt || !signer) throw new Error("No USDT contract or signer available");
 
     try {
       setApproving(true);
-      const usdt = new ethers.Contract(KAIA_TESTNET_ADDRESSES.DinUSDT, USDT_ABI, signer);
       
       // Reset to zero first (some tokens require this)
-      const resetTx = await usdt.approve(poolAddress, 0);
+      const resetTx = await usdt.connect(signer).approve(poolAddress, 0);
       await resetTx.wait();
       
       // Then approve the amount
-      const approveTx = await usdt.approve(poolAddress, amount);
+      const approveTx = await usdt.connect(signer).approve(poolAddress, amount);
       await approveTx.wait();
       
       return true;
@@ -62,7 +59,7 @@ export function useProvideLiquidity() {
     } finally {
       setApproving(false);
     }
-  }, [signer]);
+  }, [usdt, signer]);
 
   const calculateYield = useCallback((
     amount: string,
@@ -114,7 +111,7 @@ export function useProvideLiquidity() {
     if (!signer) return null;
 
     try {
-      const pool = new ethers.Contract(poolAddress, POOL_ABI, signer);
+      const pool = new ethers.Contract(poolAddress, TranchePoolCoreABI.abi, signer);
       const poolAccounting = await pool.getPoolAccounting();
       
       return {
@@ -186,7 +183,7 @@ export function useProvideLiquidity() {
       }
 
       // Get pool contract
-      const pool = new ethers.Contract(tranche.poolAddress, POOL_ABI, signer);
+      const pool = new ethers.Contract(tranche.poolAddress, TranchePoolCoreABI.abi, signer);
       
       // Get share balance before
       const shareBalanceBefore = await pool.shareBalances(account);

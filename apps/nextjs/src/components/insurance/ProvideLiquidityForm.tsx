@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@dinsure/ui/card";
 import { Button } from "@dinsure/ui/button";
 import { Input } from "@dinsure/ui/input";
@@ -14,61 +14,96 @@ import { formatUnits, parseUnits } from "ethers";
 
 interface ProvideLiquidityFormProps {
   poolAddress: string;
-  tranche: {
-    trigger: bigint;
-    premiumBps: bigint;
-  };
+  trancheId: number; // Need tranche ID for operations
+  roundId?: number | bigint; // Optional round ID for deposits
   onSuccess?: () => void;
 }
 
 export function ProvideLiquidityForm({
   poolAddress,
-  tranche,
+  trancheId,
+  roundId,
   onSuccess
 }: ProvideLiquidityFormProps) {
-  const { address, isConnected } = useWeb3();
-  const { depositCollateral, withdrawCollateral, getSellerPosition, getPoolAccounting } = useSellerOperations();
-  const { usdtContract } = useContracts();
-  const [usdtBalance, setUsdtBalance] = useState<bigint>(0n);
+  const web3Context = useWeb3();
+  const { account, isConnected, usdtBalance: usdtBalanceStr, refreshUSDTBalance, signer } = web3Context;
+  const { depositCollateral, withdrawCollateral, getPoolAccounting, getShareBalance } = useSellerOperations();
+  const contracts = useContracts();
+  const { isInitialized } = contracts;
+  
+  // Debug Web3 context
+  useEffect(() => {
+    console.log("Web3 context in ProvideLiquidityForm:", {
+      account,
+      isConnected,
+      hasSigner: !!signer,
+      signerType: signer ? typeof signer : 'undefined',
+      web3ContextKeys: Object.keys(web3Context)
+    });
+  }, [account, isConnected, signer, web3Context]);
+  
+  // Convert string balance to bigint
+  const usdtBalance = usdtBalanceStr ? parseUnits(usdtBalanceStr, 6) : 0n;
   
   const [activeTab, setActiveTab] = useState("deposit");
   const [amount, setAmount] = useState("");
-  const [shares, setShares] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState(""); // Changed from shares to withdrawAmount (USDT)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [txHash, setTxHash] = useState("");
   const [userShares, setUserShares] = useState<bigint>(0n);
-  const [navInfo, setNavInfo] = useState<any>(null);
+  const [navInfo, setNavInfo] = useState<{
+    totalAssets: bigint;
+    sharePrice: bigint;
+  } | null>(null);
+  
+  // Debug button state
+  useEffect(() => {
+    console.log("Deposit button state:", {
+      loading,
+      isConnected,
+      isInitialized,
+      amount,
+      hasSigner: !!signer,
+      roundId,
+      hasRoundId: !!roundId,
+      buttonDisabled: loading || !isConnected || !isInitialized || !amount || !signer,
+      tabDisabled: !roundId
+    });
+  }, [loading, isConnected, isInitialized, amount, signer, roundId]);
 
   useEffect(() => {
+    // Refresh USDT balance
+    if (isConnected && refreshUSDTBalance && typeof refreshUSDTBalance === 'function') {
+      void refreshUSDTBalance();
+    }
+    
     const loadUserData = async () => {
-      if (isConnected && address && poolAddress) {
+      if (isConnected && account && poolAddress && isInitialized) {
         try {
-          const [position, poolAccounting] = await Promise.all([
-            getSellerPosition(poolAddress, address),
-            getPoolAccounting(poolAddress)
-          ]);
-          setUserShares(position.shares);
-          setNavInfo({
-            totalAssets: poolAccounting.totalAssets,
-            sharePrice: poolAccounting.sharePrice
-          });
-          
-          if (usdtContract) {
-            const balance = await usdtContract.balanceOf(address);
-            setUsdtBalance(balance);
+          // Get pool accounting data
+          const poolAccounting = await getPoolAccounting(trancheId);
+          if (poolAccounting) {
+            setNavInfo({
+              totalAssets: poolAccounting.totalAssets ?? 0n,
+              sharePrice: poolAccounting.navPerShare ?? 0n
+            });
           }
+          
+          // Get user's share balance
+          const shares = await getShareBalance(trancheId);
+          setUserShares(shares);
         } catch (err) {
           console.error("Error loading user data:", err);
         }
       }
     };
-    loadUserData();
-  }, [isConnected, address, poolAddress, usdtContract]);
+    void loadUserData();
+  }, [isConnected, account, poolAddress, isInitialized, trancheId, getPoolAccounting, getShareBalance, refreshUSDTBalance]);
 
   const handleDeposit = async () => {
-    if (!isConnected || !address) {
+    if (!isConnected || !account) {
       setError("Please connect your wallet");
       return;
     }
@@ -78,20 +113,39 @@ export function ProvideLiquidityForm({
       return;
     }
 
+    if (!roundId) {
+      setError("No active round available for deposits");
+      return;
+    }
+    
+    if (!isInitialized) {
+      setError("Contracts are still initializing. Please wait a moment.");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setSuccess(false);
 
     try {
-      const amountWei = parseUnits(amount, 6);
-
-      const tx = await depositCollateral({
-        poolAddress,
-        amount: amountWei
+      console.log("Attempting to deposit collateral with:", {
+        roundId: Number(roundId),
+        amount,
+        isInitialized,
+        hasProductCatalog: !!(contracts as any).productCatalog,
+        hasTranchePoolFactory: !!(contracts as any).tranchePoolFactory,
+        hasUsdt: !!(contracts as any).usdt,
+        hasSigner: !!signer,
+        account
       });
-      const receipt = await tx.wait();
       
-      setTxHash(receipt.hash);
+      // depositCollateral already waits for the transaction and returns the receipt
+      const receipt = await depositCollateral({
+        roundId: Number(roundId),
+        collateralAmount: amount
+      });
+      
+      setTxHash(receipt?.hash ?? "");
       setSuccess(true);
       setAmount("");
       
@@ -99,31 +153,46 @@ export function ProvideLiquidityForm({
         onSuccess();
       }
 
-      const [position, poolAccounting] = await Promise.all([
-        getSellerPosition(poolAddress, address),
-        getPoolAccounting(poolAddress)
-      ]);
-      setUserShares(position.shares);
-      setNavInfo({
-        totalAssets: poolAccounting.totalAssets,
-        sharePrice: poolAccounting.sharePrice
-      });
-    } catch (err: any) {
+      // Update pool accounting and user shares after deposit
+      const poolAccounting = await getPoolAccounting(trancheId);
+      if (poolAccounting) {
+        setNavInfo({
+          totalAssets: poolAccounting.totalAssets ?? 0n,
+          sharePrice: poolAccounting.navPerShare ?? 0n
+        });
+      }
+      
+      // Get updated user shares
+      const updatedShares = await getShareBalance(trancheId);
+      setUserShares(updatedShares);
+    } catch (err) {
       console.error("Error depositing:", err);
-      setError(err.message || "Failed to deposit");
+      const error = err as Error;
+      // Show the specific error message to help debug
+      setError(error.message || "Failed to deposit");
     } finally {
       setLoading(false);
     }
   };
 
   const handleWithdraw = async () => {
-    if (!isConnected || !address) {
+    if (!isConnected || !account) {
       setError("Please connect your wallet");
       return;
     }
 
-    if (!shares || parseFloat(shares) <= 0) {
-      setError("Please enter a valid share amount");
+    if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
+      setError("Please enter a valid USDT amount");
+      return;
+    }
+    
+    if (!isInitialized) {
+      setError("Contracts are still initializing. Please wait a moment.");
+      return;
+    }
+
+    if (!navInfo?.sharePrice || navInfo.sharePrice === 0n) {
+      setError("Unable to calculate shares. Share price not available.");
       return;
     }
 
@@ -132,34 +201,50 @@ export function ProvideLiquidityForm({
     setSuccess(false);
 
     try {
-      const sharesWei = parseUnits(shares, 18);
-
-      const tx = await withdrawCollateral({
-        poolAddress,
-        shares: sharesWei
-      });
-      const receipt = await tx.wait();
+      // Convert USDT amount to shares
+      // shares = usdtAmount * 1e18 / sharePrice
+      // sharePrice is in 18 decimals (price per share in USDT with 6 decimals)
+      const usdtAmountWei = parseUnits(withdrawAmount, 6); // Convert USDT to 6 decimals
+      const sharesToWithdraw = (usdtAmountWei * parseUnits("1", 18)) / navInfo.sharePrice;
+      const sharesToWithdrawStr = formatUnits(sharesToWithdraw, 18);
       
-      setTxHash(receipt.hash);
+      console.log("Withdrawal calculation:", {
+        requestedUSDT: withdrawAmount,
+        usdtAmountWei: formatUnits(usdtAmountWei, 6),
+        sharePrice: formatUnits(navInfo.sharePrice, 18),
+        sharesToWithdraw: sharesToWithdrawStr
+      });
+      
+      // withdrawCollateral accepts shares as a string
+      const receipt = await withdrawCollateral(
+        trancheId,
+        sharesToWithdrawStr
+      );
+      
+      setTxHash(receipt?.hash ?? "");
       setSuccess(true);
-      setShares("");
+      setWithdrawAmount("");
       
       if (onSuccess) {
         onSuccess();
       }
 
-      const [position, poolAccounting] = await Promise.all([
-        getSellerPosition(poolAddress, address),
-        getPoolAccounting(poolAddress)
-      ]);
-      setUserShares(position.shares);
-      setNavInfo({
-        totalAssets: poolAccounting.totalAssets,
-        sharePrice: poolAccounting.sharePrice
-      });
-    } catch (err: any) {
+      // Update pool accounting and user shares after withdrawal
+      const poolAccounting = await getPoolAccounting(trancheId);
+      if (poolAccounting) {
+        setNavInfo({
+          totalAssets: poolAccounting.totalAssets ?? 0n,
+          sharePrice: poolAccounting.navPerShare ?? 0n
+        });
+      }
+      
+      // Get updated user shares
+      const updatedShares = await getShareBalance(trancheId);
+      setUserShares(updatedShares);
+    } catch (err) {
       console.error("Error withdrawing:", err);
-      setError(err.message || "Failed to withdraw");
+      const error = err as Error;
+      setError(error.message || "Failed to withdraw");
     } finally {
       setLoading(false);
     }
@@ -167,23 +252,25 @@ export function ProvideLiquidityForm({
 
   const handleSliderChange = (value: number[]) => {
     if (activeTab === "deposit") {
-      setAmount(value[0]?.toString() || "0");
+      setAmount(value[0]?.toString() ?? "0");
     } else {
-      setShares(value[0]?.toString() || "0");
+      setWithdrawAmount(value[0]?.toString() ?? "0");
     }
   };
 
   const maxDeposit = usdtBalance ? 
     Math.min(Number(formatUnits(usdtBalance, 6)), 100000) : 100000;
   
-  const maxWithdraw = userShares ? 
-    Number(formatUnits(userShares, 18)) : 0;
+  // Max withdraw in USDT based on user's shares
+  const maxWithdraw = userShares && navInfo?.sharePrice ? 
+    Number(formatUnits(userShares, 18)) * Number(navInfo.sharePrice) / 1e6 : 0;
 
   const estimatedShares = amount && navInfo?.sharePrice ? 
     (parseFloat(amount) * 1e6 / Number(navInfo.sharePrice)).toFixed(4) : "0";
   
-  const estimatedUsdt = shares && navInfo?.sharePrice ? 
-    (parseFloat(shares) * Number(navInfo.sharePrice) / 1e6).toFixed(2) : "0";
+  // Calculate shares needed for the USDT withdrawal amount
+  const estimatedSharesForWithdrawal = withdrawAmount && navInfo?.sharePrice && navInfo.sharePrice > 0n ? 
+    (parseFloat(withdrawAmount) * 1e6 / Number(navInfo.sharePrice)).toFixed(6) : "0";
 
   return (
     <Card>
@@ -201,14 +288,16 @@ export function ProvideLiquidityForm({
           <div className="rounded-lg border p-3">
             <div className="flex items-center gap-2 mb-1">
               <Wallet className="h-4 w-4 text-blue-500" />
-              <span className="text-sm font-medium">Your Shares</span>
+              <span className="text-sm font-medium">Your Position</span>
             </div>
             <p className="text-lg font-bold">
-              {Number(formatUnits(userShares, 18)).toFixed(4)}
+              ${navInfo && userShares > 0n 
+                ? (Number(formatUnits(userShares, 18)) * Number(navInfo.sharePrice) / 1e6).toFixed(2)
+                : "0.00"} USDT
             </p>
-            {navInfo && userShares > 0n && (
+            {userShares > 0n && (
               <p className="text-sm text-muted-foreground">
-                ≈ ${(Number(formatUnits(userShares, 18)) * Number(navInfo.sharePrice) / 1e6).toFixed(2)} USDT
+                {Number(formatUnits(userShares, 18)).toFixed(4)} shares
               </p>
             )}
           </div>
@@ -228,9 +317,9 @@ export function ProvideLiquidityForm({
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="deposit">
+            <TabsTrigger value="deposit" disabled={!roundId}>
               <ArrowDownToLine className="mr-2 h-4 w-4" />
-              Deposit
+              Deposit {!roundId && "(No Round)"}
             </TabsTrigger>
             <TabsTrigger value="withdraw">
               <ArrowUpFromLine className="mr-2 h-4 w-4" />
@@ -239,6 +328,15 @@ export function ProvideLiquidityForm({
           </TabsList>
 
           <TabsContent value="deposit" className="space-y-4">
+            {!roundId ? (
+              <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-800 dark:text-amber-200">
+                  Deposits require an OPEN round. Please select a round with "OPEN" status from the rounds list below to provide liquidity.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <>
             <div className="space-y-2">
               <Label htmlFor="deposit-amount">Deposit Amount (USDT)</Label>
               <Input
@@ -279,7 +377,7 @@ export function ProvideLiquidityForm({
 
             <Button
               onClick={handleDeposit}
-              disabled={loading || !isConnected || !amount}
+              disabled={loading || !isConnected || !isInitialized || !amount || !signer}
               className="w-full"
               size="lg"
             >
@@ -295,29 +393,36 @@ export function ProvideLiquidityForm({
                 </>
               )}
             </Button>
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="withdraw" className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="withdraw-shares">Withdraw Shares</Label>
+              <Label htmlFor="withdraw-amount">Withdraw Amount (USDT)</Label>
               <Input
-                id="withdraw-shares"
+                id="withdraw-amount"
                 type="number"
-                placeholder="Enter shares to withdraw"
-                value={shares}
-                onChange={(e) => setShares(e.target.value)}
+                placeholder="Enter USDT amount to withdraw"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
                 disabled={loading}
               />
               <Slider
-                value={[parseFloat(shares) || 0]}
+                value={[parseFloat(withdrawAmount) || 0]}
                 onValueChange={handleSliderChange}
                 max={maxWithdraw}
-                step={0.01}
+                step={1}
                 className="mt-2"
                 disabled={loading}
               />
               <p className="text-sm text-muted-foreground">
-                Available: {Number(formatUnits(userShares, 18)).toFixed(4)} shares
+                Available: ${maxWithdraw.toFixed(2)} USDT
+                {userShares > 0n && (
+                  <span className="block text-xs mt-1">
+                    ({Number(formatUnits(userShares, 18)).toFixed(4)} shares)
+                  </span>
+                )}
               </p>
             </div>
 
@@ -325,20 +430,20 @@ export function ProvideLiquidityForm({
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">You will withdraw:</span>
                 <span className="font-medium">
-                  {parseFloat(shares || "0").toFixed(4)} shares
+                  ${parseFloat(withdrawAmount || "0").toFixed(2)} USDT
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Estimated USDT:</span>
-                <span className="font-medium text-green-600">
-                  ${parseFloat(estimatedUsdt).toLocaleString()} USDT
+                <span className="text-sm text-muted-foreground">Shares to burn:</span>
+                <span className="font-medium text-orange-600">
+                  {estimatedSharesForWithdrawal} shares
                 </span>
               </div>
             </div>
 
             <Button
               onClick={handleWithdraw}
-              disabled={loading || !isConnected || !shares || userShares === 0n}
+              disabled={loading || !isConnected || !isInitialized || !withdrawAmount || userShares === 0n || !signer}
               className="w-full"
               size="lg"
             >
@@ -386,6 +491,12 @@ export function ProvideLiquidityForm({
         {!isConnected && (
           <p className="text-center text-sm text-muted-foreground">
             Please connect your wallet to manage liquidity
+          </p>
+        )}
+        
+        {isConnected && !isInitialized && (
+          <p className="text-center text-sm text-muted-foreground">
+            Loading contracts...
           </p>
         )}
       </CardContent>
