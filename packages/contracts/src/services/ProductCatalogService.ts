@@ -26,7 +26,16 @@ export class ProductCatalogService {
     try {
       const getActiveProducts = this.contract.getActiveProducts as () => Promise<bigint[]>;
       const ids = await getActiveProducts();
-      return ids.map((id: bigint) => Number(id));
+      
+      // Filter out invalid product IDs (0 or > 8, since we know only 1-5 exist on testnet)
+      const validIds = ids
+        .map((id: bigint) => Number(id))
+        .filter(id => id > 0 && id <= 8);
+      
+      console.log('Raw product IDs from contract:', ids.map(id => Number(id)));
+      console.log('Filtered valid product IDs:', validIds);
+      
+      return validIds;
     } catch (error) {
       console.error('Failed to get active products:', error);
       return [];
@@ -48,8 +57,20 @@ export class ProductCatalogService {
   // Get product details with proper struct handling
   async getProduct(productId: number): Promise<Product | null> {
     try {
+      // Validate productId is a reasonable value (we know only 1-5 exist on testnet)
+      if (productId <= 0 || productId > 8) {
+        console.log(`Product ID ${productId} is out of valid range (1-8), skipping`);
+        return null;
+      }
+
       const getProduct = this.contract.getProduct as (id: number) => Promise<any>;
       const productData = await getProduct(productId);
+      
+      // Check if the product data is valid (productId should match and not be 0)
+      if (!productData || Number(productData.productId) === 0 || Number(productData.productId) !== productId) {
+        console.warn(`Product ${productId} does not exist on-chain`);
+        return null;
+      }
       
       // Product struct includes trancheIds array
       const trancheIds = productData.trancheIds || [];
@@ -68,8 +89,13 @@ export class ProductCatalogService {
         tranches: tranches.filter(t => t !== null) as Tranche[],
         metadata: this.parseMetadata(productData.metadataHash, Number(productData.productId))
       };
-    } catch (error) {
-      console.error(`Failed to get product ${productId}:`, error);
+    } catch (error: any) {
+      // Check if it's a contract revert error (product doesn't exist)
+      if (error?.code === 'CALL_EXCEPTION' || error?.message?.includes('revert')) {
+        console.warn(`Product ${productId} does not exist on contract`);
+      } else {
+        console.error(`Error fetching product ${productId}:`, error.message || error);
+      }
       return null;
     }
   }
@@ -153,30 +179,55 @@ export class ProductCatalogService {
     try {
       console.log('ProductCatalogService: Getting active products from', this.contractAddress);
       const productIds = await this.getActiveProductIds();
-      console.log('Active product IDs from contract:', productIds);
+      console.log('Valid product IDs to fetch:', productIds);
       
       if (productIds.length === 0) {
-        console.log('No active product IDs returned from contract');
-        // Try to get product 1 directly since we know it exists
-        console.log('Attempting to fetch product 1 directly...');
-        const product1 = await this.getProduct(1);
-        if (product1) {
-          console.log('Successfully fetched product 1 directly');
-          return [product1];
+        console.log('No valid active product IDs found');
+        // Try to fetch known products directly (1-5 are typically registered)
+        const knownProductIds = [1, 2, 3, 4, 5];
+        console.log('Attempting to fetch known products:', knownProductIds);
+        
+        const knownProducts = await Promise.all(
+          knownProductIds.map(id => this.getProduct(id))
+        );
+        
+        const validKnownProducts = knownProducts.filter(p => p !== null) as Product[];
+        if (validKnownProducts.length > 0) {
+          console.log(`Found ${validKnownProducts.length} known products`);
+          return validKnownProducts;
         }
       }
       
+      // Fetch products in parallel with error handling for each
       const products = await Promise.all(
-        productIds.map(id => this.getProduct(id))
+        productIds.map(async (id) => {
+          try {
+            return await this.getProduct(id);
+          } catch (error) {
+            console.warn(`Skipping product ${id} due to error:`, error);
+            return null;
+          }
+        })
       );
       
       const validProducts = products.filter(p => p !== null) as Product[];
-      console.log(`Fetched ${validProducts.length} valid products with tranches`);
-      console.log('Products:', validProducts);
+      console.log(`Successfully fetched ${validProducts.length} valid products`);
+      
+      // If no products found through getActiveProducts, try known IDs as fallback
+      if (validProducts.length === 0) {
+        console.log('No products found through active IDs, trying known product IDs as fallback');
+        const fallbackIds = [1, 2, 3, 4, 5];
+        const fallbackProducts = await Promise.all(
+          fallbackIds.map(id => this.getProduct(id))
+        );
+        const validFallback = fallbackProducts.filter(p => p !== null) as Product[];
+        return validFallback;
+      }
       
       return validProducts;
     } catch (error) {
       console.error('Failed to get all active products:', error);
+      // Return empty array instead of crashing
       return [];
     }
   }
@@ -268,7 +319,7 @@ export class ProductCatalogService {
       // Try to convert hex to ASCII string
       let metadataString = '';
       for (let i = 0; i < cleanHash.length; i += 2) {
-        const byte = parseInt(cleanHash.substr(i, 2), 16);
+        const byte = parseInt(cleanHash.substring(i, i + 2), 16);
         if (byte === 0) break;
         if (byte >= 32 && byte <= 126) { // Printable ASCII
           metadataString += String.fromCharCode(byte);

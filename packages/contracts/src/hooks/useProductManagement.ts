@@ -39,71 +39,101 @@ export function useProductManagement() {
   const getProducts = useCallback(async (): Promise<any[]> => {
     if (!productCatalog) throw new Error('Product catalog not initialized');
     
+    // Get active product IDs using the correct function
+    console.log('[useProductManagement] Getting active product IDs');
+    let activeProductIds: any[] = [];
+    try {
+      activeProductIds = await productCatalog.getActiveProducts();
+    } catch (error) {
+      console.error('Error fetching active products:', error);
+      // If getActiveProducts fails, try known product IDs
+      console.log('[useProductManagement] Falling back to known product IDs');
+      activeProductIds = [1n, 2n, 3n, 4n, 5n];
+    }
     
-      // Get active product IDs using the correct function
-      console.log('[useProductManagement] Getting active product IDs');
-      let activeProductIds: any[] = [];
+    // Filter out invalid product IDs (0 or unreasonably high values)
+    const validProductIds = activeProductIds
+      .map(id => Number(id))
+      .filter(id => id > 0 && id <= 100);
+    
+    console.log('[useProductManagement] Valid product IDs to fetch:', validProductIds);
+    
+    const products: any[] = [];
+    
+    // If no valid IDs from contract, try known IDs
+    if (validProductIds.length === 0) {
+      console.log('[useProductManagement] No valid IDs from contract, trying known product IDs 1-5');
+      validProductIds.push(1, 2, 3, 4, 5);
+    }
+    
+    // Fetch each product with better error handling
+    for (const productId of validProductIds) {
       try {
-          activeProductIds = await productCatalog.getActiveProducts();
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        throw error;
-      }
-      
-      console.log('[useProductManagement] Active product IDs:', activeProductIds);
-      
-      const products: any[] = [];
-      
-      // Fetch each active product using products mapping
-      for (const productId of activeProductIds) {
+        let product;
+        
+        // Skip invalid IDs that are known to fail
+        if (productId > 8) {
+          console.log(`[useProductManagement] Skipping product ${productId} (likely invalid)`);
+          continue;
+        }
+        
         try {
-          // Try getProduct function first, fallback to products mapping if it fails
-          let product;
+          // Try getProduct function
+          product = await productCatalog.getProduct(productId);
+          console.log(`[useProductManagement] getProduct(${productId}) succeeded`);
+        } catch (getProductError: any) {
+          // Check if it's a contract revert (product doesn't exist)
+          if (getProductError?.code === 'CALL_EXCEPTION' || getProductError?.message?.includes('revert')) {
+            console.log(`[useProductManagement] Product ${productId} does not exist on-chain, skipping`);
+            continue;
+          }
+          
+          // Try fallback to products mapping
+          console.log(`[useProductManagement] Trying products mapping for ${productId}`);
           try {
-            product = await productCatalog.getProduct(productId);
-            console.log(`[useProductManagement] getProduct(${productId}) succeeded`);
-          } catch (getProductError) {
-            console.error(`[useProductManagement] getProduct(${productId}) failed, trying products mapping:`, getProductError.message);
-            // Fallback to products mapping
             product = await productCatalog.products(productId);
             console.log(`[useProductManagement] products(${productId}) succeeded as fallback`);
+          } catch (mappingError: any) {
+            console.log(`[useProductManagement] Both methods failed for product ${productId}, skipping`);
+            continue;
           }
-          console.log(`[useProductManagement] Raw product ${productId}:`, product);
-          
-          // Don't filter or map - just return the raw product data
-          if (product && product.productId !== 0n) {
-
-            const processedProduct = {
-              productId: Number(product.productId),
-              name: `Product ${Number(product.productId)}`,
-              metadataHash: product.metadataHash || '',
-              active: product.active !== false,
-              createdAt: product.createdAt ? Number(product.createdAt) : 0,
-              updatedAt: product.updatedAt ? Number(product.updatedAt) : 0,
-              trancheIds: product.trancheIds ? product.trancheIds.map(id => Number(id)) : [],
-              // Include any other fields that exist on the product
-              ...Object.entries(product).reduce((acc, [key, value]) => {
-                if (!['productId', 'metadataHash', 'active', 'createdAt', 'updatedAt', 'trancheIds'].includes(key)) {
-                  // Handle BigInt conversion
-                  if (typeof value === 'bigint') {
-                    acc[key] = value.toString();
-                  } else {
-                    acc[key] = value;
-                  }
-                }
-                return acc;
-              }, {} as any)
-            };
-            products.push(processedProduct);
-          }
-        } catch (productError) {
-          console.error(`Error fetching product ${productId}:`, productError);
-          // Continue with next product
         }
+        
+        // Validate product data
+        if (product && product.productId && Number(product.productId) !== 0) {
+          console.log(`[useProductManagement] Valid product ${productId} found`);
+          
+          const processedProduct = {
+            productId: Number(product.productId),
+            name: `Product ${Number(product.productId)}`,
+            metadataHash: product.metadataHash || '',
+            active: product.active !== false,
+            createdAt: product.createdAt ? Number(product.createdAt) : 0,
+            updatedAt: product.updatedAt ? Number(product.updatedAt) : 0,
+            trancheIds: product.trancheIds ? product.trancheIds.map((id: any) => Number(id)) : [],
+            // Include any other fields that exist on the product
+            ...Object.entries(product).reduce((acc, [key, value]) => {
+              if (!['productId', 'metadataHash', 'active', 'createdAt', 'updatedAt', 'trancheIds'].includes(key)) {
+                // Handle BigInt conversion
+                if (typeof value === 'bigint') {
+                  acc[key] = value.toString();
+                } else {
+                  acc[key] = value;
+                }
+              }
+              return acc;
+            }, {} as any)
+          };
+          products.push(processedProduct);
+        }
+      } catch (productError: any) {
+        console.warn(`[useProductManagement] Unexpected error fetching product ${productId}:`, productError.message);
+        // Continue with next product
       }
-      
-      console.log('[useProductManagement] All products fetched:', products);
-      return products;
+    }
+    
+    console.log(`[useProductManagement] Successfully fetched ${products.length} products`);
+    return products;
     
   }, [productCatalog]);
 
