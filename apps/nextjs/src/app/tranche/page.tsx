@@ -1,18 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { TrancheCard } from "@/components/tranche/TrancheCard";
-import { EnhancedTrancheCard } from "@/components/tranche/EnhancedTrancheCard";
-import { TrancheFilters } from "@/components/tranche/TrancheFilters";
 import { EnhancedPurchaseModal } from "@/components/insurance/EnhancedPurchaseModal";
 import { LiquidityModal } from "@/components/liquidity/LiquidityModal";
-import { useWeb3, useContracts, useContractFactory, useProductManagement } from "@dinsure/contracts";
-import { useTrancheData, type TrancheDetails } from "@/hooks/useTrancheData";
+import { TrancheCard } from "@/components/tranche/TrancheCard";
+import { TrancheFilters } from "@/components/tranche/TrancheFilters";
 import { useBTCPrice } from "@/hooks/useBTCPrice";
-import { KAIA_TESTNET } from "@/lib/constants";
+import type { TrancheDetails } from "@/hooks/useTrancheData";
+import { useTrancheData } from "@/hooks/useTrancheData";
+import { INSURANCE_PRODUCTS } from "@/lib/constants";
 import type { Product, Tranche } from "@dinsure/contracts";
-import { ethers } from "ethers";
+import { useContractFactory, useContracts, useProductManagement, useWeb3 } from "@dinsure/contracts";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 interface TrancheFilters {
   insuranceProduct: number | null;
@@ -40,6 +40,16 @@ function TrancheContent() {
     insuranceProduct: productIdParam ? parseInt(productIdParam) : null,
     status: 'all'
   });
+  
+  // Update filters when URL params change
+  useEffect(() => {
+    if (productIdParam) {
+      setFilters(prev => ({
+        ...prev,
+        insuranceProduct: parseInt(productIdParam)
+      }));
+    }
+  }, [productIdParam]);
   
   const [selectedTranche, setSelectedTranche] = useState<TrancheDetails | null>(null);
   const [selectedTrancheContract, setSelectedTrancheContract] = useState<Tranche | null>(null);
@@ -70,30 +80,111 @@ function TrancheContent() {
         
         // Fetch products
         console.log("[Tranche Page] Fetching products...");
+        let fetchedProducts: Product[] = [];
         try {
-          const fetchedProducts = await getProducts();
+          fetchedProducts = await getProducts() as Product[];
           console.log("[Tranche Page] Raw products fetched:", fetchedProducts);
-          setProducts(fetchedProducts as Product[]);
+          setProducts(fetchedProducts);
         } catch (productError) {
           console.error("[Tranche Page] Error fetching products:", productError);
-          // Continue to fetch tranches even if products fail
+          // Use configured products as fallback
+          fetchedProducts = INSURANCE_PRODUCTS.map(p => ({
+            productId: p.productId,
+            metadataHash: p.metadata,
+            active: true,
+            createdAt: Date.now() / 1000,
+            updatedAt: Date.now() / 1000,
+            tranches: [],
+            metadata: {
+              name: p.name,
+              description: p.description,
+              category: 'Price Protection',
+              tags: [p.asset],
+              riskLevel: 'MEDIUM',
+              underlyingAsset: p.asset,
+            }
+          } as Product));
+          setProducts(fetchedProducts);
         }
         
-        // Fetch active tranches
-        console.log("[Tranche Page] Fetching active tranches...");
-        const activeTrancheIds = await getActiveTranches();
-        console.log("[Tranche Page] Active tranche IDs:", activeTrancheIds);
+        // Build list of potential tranche IDs to check
+        console.log("[Tranche Page] Building tranche IDs to check...");
+        let activeTrancheIds: number[] = [];
+        
+        // First, try the getActiveTranches function if available
+        try {
+          const activeTranches = await getActiveTranches();
+          if (activeTranches && activeTranches.length > 0) {
+            console.log("[Tranche Page] Got active tranches from contract:", activeTranches);
+            activeTrancheIds = activeTranches;
+          }
+        } catch (err) {
+          console.log("[Tranche Page] getActiveTranches failed, falling back to product-based generation:", err);
+          // Don't throw here, just log and continue with fallback
+        }
+        
+        // If no active tranches found, generate IDs based on products
+        if (activeTrancheIds.length === 0 && fetchedProducts.length > 0) {
+          console.log("[Tranche Page] Generating tranche IDs from products...");
+          for (const product of fetchedProducts) {
+            // Check first 5 tranches for each product (0-4)
+            for (let i = 0; i < 5; i++) {
+              const trancheId = product.productId * 10 + i;
+              activeTrancheIds.push(trancheId);
+            }
+          }
+        }
+        
+        // If still no IDs and no products, use configured tranche IDs from constants
+        if (activeTrancheIds.length === 0) {
+          console.log("[Tranche Page] No products found, using configured tranche IDs from constants...");
+          // Product 1 (BTC) has 4 tranches (indices 0-3)
+          activeTrancheIds = [10, 11, 12, 13]; // Product 1, tranches 0-3
+        }
+        
+        console.log("[Tranche Page] Will check tranche IDs:", activeTrancheIds);
         
         const trancheDetailsPromises = activeTrancheIds.map(async (id) => {
           try {
             console.log(`[Tranche Page] Fetching tranche ${id}...`);
-            const tranche = await productCatalog.getTranche(id);
+            // Try different methods to fetch tranche data
+            let tranche: any;
+            try {
+              tranche = await (productCatalog as any).getTranche(id);
+            } catch (getTrancheErr) {
+              // Fallback to tranches mapping
+              try {
+                tranche = await (productCatalog as any).tranches(id);
+              } catch (tranchesErr) {
+                console.log(`[Tranche Page] Tranche ${id} not found`);
+                return null;
+              }
+            }
+            
+            // Check if tranche actually exists (not just default values)
+            // Also check for BigInt 0 values
+            const hasValidData = tranche && (
+              (tranche.productId && Number(tranche.productId) > 0) ||
+              (tranche.premiumRateBps && Number(tranche.premiumRateBps) > 0) ||
+              (tranche.threshold && tranche.threshold.toString() !== '0') ||
+              (tranche.trancheCap && tranche.trancheCap.toString() !== '0')
+            );
+            
+            if (!hasValidData) {
+              console.log(`[Tranche Page] Tranche ${id} is empty or doesn't exist:`, tranche);
+              return null;
+            }
+            
             console.log(`[Tranche Page] Tranche ${id} fetched:`, tranche);
+            
+            // Extract product ID and tranche index from the ID
+            const productId = Math.floor(id / 10);
+            const trancheIndex = id % 10;
             
             // Convert BigInt values to regular numbers for display
             return {
-              trancheId: Number(tranche.trancheId || id),
-              productId: Number(tranche.productId || 0),
+              trancheId: id,
+              productId: productId,
               triggerType: Number(tranche.triggerType || 0),
               threshold: tranche.threshold ? BigInt(tranche.threshold.toString()) : BigInt(0),
               premiumRateBps: Number(tranche.premiumRateBps || 0),
@@ -104,10 +195,11 @@ function TrancheContent() {
               perAccountMax: tranche.perAccountMax ? BigInt(tranche.perAccountMax.toString()) : BigInt(0),
               oracleRouteId: Number(tranche.oracleRouteId || 0),
               poolAddress: tranche.poolAddress || "",
-              active: tranche.active !== false,
+              active: tranche.active === true,
               isExpired: false,
               availableCapacity: BigInt(0),
               utilizationRate: 0,
+              name: tranche.name || `Tranche ${String.fromCharCode(65 + trancheIndex)}`,
             } as Tranche;
           } catch (err) {
             console.error(`[Tranche Page] Error fetching tranche ${id}:`, err);
@@ -116,7 +208,43 @@ function TrancheContent() {
         });
         
         const fetchedTranches = await Promise.all(trancheDetailsPromises);
-        const validTranches = fetchedTranches.filter(t => t !== null) as Tranche[];
+        let validTranches = fetchedTranches.filter((t: any) => t !== null) as Tranche[];
+        
+        // If no tranches fetched from contract, use configured data as fallback
+        if (validTranches.length === 0) {
+          console.log("[Tranche Page] No tranches from contract, using configured data...");
+          const configuredTranches: Tranche[] = [];
+          
+          for (const product of INSURANCE_PRODUCTS) {
+            for (let i = 0; i < product.tranches.length && i < 4; i++) {
+              const configTranche = product.tranches[i];
+              const trancheId = product.productId * 10 + i;
+              
+              configuredTranches.push({
+                trancheId: trancheId,
+                productId: product.productId,
+                triggerType: configTranche.triggerType === 'PRICE_BELOW' ? 0 : 1,
+                threshold: BigInt(configTranche.triggerPrice * 1e18), // Convert to wei
+                premiumRateBps: configTranche.premiumRateBps,
+                maturityDays: configTranche.maturityDays,
+                maturityTimestamp: Math.floor(Date.now() / 1000) + (configTranche.maturityDays * 86400),
+                trancheCap: BigInt(Number(configTranche.capacity) * 1e6), // USDT has 6 decimals
+                perAccountMin: BigInt(Number(configTranche.perAccountMin) * 1e6),
+                perAccountMax: BigInt(Number(configTranche.perAccountMax) * 1e6),
+                oracleRouteId: configTranche.oracleRouteId,
+                poolAddress: "",
+                active: true,
+                isExpired: false,
+                availableCapacity: BigInt(Number(configTranche.available) * 1e6),
+                utilizationRate: 0,
+                name: configTranche.name,
+              } as Tranche);
+            }
+          }
+          
+          validTranches = configuredTranches;
+        }
+        
         console.log("[Tranche Page] Valid tranches:", validTranches);
         setTranches(validTranches);
       } catch (error) {
@@ -148,56 +276,6 @@ function TrancheContent() {
   
   const handleFilterChange = (newFilters: TrancheFilters) => {
     setFilters(newFilters);
-  };
-  
-  const handleBuyInsurance = (tranche: Tranche, product: Product) => {
-    // Convert to TrancheDetails format for the modal
-    const trancheDetails: TrancheDetails = {
-      trancheId: tranche.trancheId,
-      triggerType: 0, // PRICE_BELOW
-      threshold: tranche.threshold,
-      premiumRateBps: tranche.premiumRateBps,
-      maturityTimestamp: Math.floor(Date.now() / 1000) + (tranche.maturityDays || 30) * 86400,
-      trancheCap: tranche.trancheCap,
-      poolAddress: tranche.poolAddress || '',
-      rounds: []
-    };
-    
-    setSelectedTranche(trancheDetails);
-    setSelectedTrancheContract(tranche);
-    setSelectedProduct(product);
-    
-    // Find the current open round
-    if (tranche.currentRound && tranche.currentRound.state === 1) {
-      setSelectedRoundId(tranche.currentRound.roundId);
-    }
-    
-    setShowPurchaseModal(true);
-  };
-  
-  const handleProvideLiquidity = (tranche: Tranche, product: Product) => {
-    // Convert to TrancheDetails format for the modal
-    const trancheDetails: TrancheDetails = {
-      trancheId: tranche.trancheId,
-      triggerType: 0, // PRICE_BELOW
-      threshold: tranche.threshold,
-      premiumRateBps: tranche.premiumRateBps,
-      maturityTimestamp: Math.floor(Date.now() / 1000) + (tranche.maturityDays || 30) * 86400,
-      trancheCap: tranche.trancheCap,
-      poolAddress: tranche.poolAddress || '',
-      rounds: []
-    };
-    
-    setSelectedTranche(trancheDetails);
-    setSelectedTrancheContract(tranche);
-    setSelectedProduct(product);
-    
-    // Find the current open round
-    if (tranche.currentRound && tranche.currentRound.state === 1) {
-      setSelectedRoundId(tranche.currentRound.roundId);
-    }
-    
-    setShowLiquidityModal(true);
   };
   
   // Filter tranches
@@ -254,7 +332,14 @@ function TrancheContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">Insurance Tranches</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">
+            Insurance Tranches
+            {filters.insuranceProduct !== null && (
+              <span className="ml-2 text-2xl text-gray-400">
+                - Product #{filters.insuranceProduct}
+              </span>
+            )}
+          </h1>
           <p className="text-gray-400">
             Choose your risk level and earn premiums by providing liquidity
           </p>
@@ -306,8 +391,9 @@ function TrancheContent() {
               
               // Show tranche even without product
               if (!product) {
+                const trancheIndex = tranche.trancheId % 10;
                 return (
-                  <div key={tranche.trancheId} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                  <div key={tranche.trancheId} className="bg-gray-800 rounded-lg p-6 border border-gray-700 relative">
                     <h3 className="text-lg font-semibold text-white mb-4">
                       Tranche #{tranche.trancheId}
                     </h3>
@@ -327,19 +413,13 @@ function TrancheContent() {
                         Cap: <span className="text-white">${Number(tranche.trancheCap) / 1e6} USDT</span>
                       </p>
                     </div>
-                    <div className="mt-4 space-y-2">
-                      <button
-                        onClick={() => handleBuyInsurance(tranche, { productId: tranche.productId, name: `Product ${tranche.productId}`, description: "", active: true } as Product)}
-                        className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                    <div className="mt-4">
+                      <Link 
+                        href={`/insurance/tranches/${tranche.productId}/${trancheIndex}`}
+                        className="block w-full text-center rounded bg-blue-600 px-4 py-3 text-white font-medium transition-colors hover:bg-blue-700"
                       >
-                        Buy Insurance
-                      </button>
-                      <button
-                        onClick={() => handleProvideLiquidity(tranche, { productId: tranche.productId, name: `Product ${tranche.productId}`, description: "", active: true } as Product)}
-                        className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
-                      >
-                        Provide Liquidity
-                      </button>
+                        View Details
+                      </Link>
                     </div>
                   </div>
                 );
@@ -350,8 +430,6 @@ function TrancheContent() {
                   key={tranche.trancheId}
                   product={product}
                   tranche={tranche}
-                  onBuyInsurance={() => handleBuyInsurance(tranche, product)}
-                  onProvideLiquidity={() => handleProvideLiquidity(tranche, product)}
                 />
               );
             })}

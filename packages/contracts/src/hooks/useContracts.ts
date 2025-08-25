@@ -53,7 +53,12 @@ export function useContracts(): ContractsState {
       }
       
       // Create a read-only provider for contract calls when no wallet is connected
-      const readOnlyProvider = new ethers.JsonRpcProvider(KAIA_RPC_ENDPOINTS[0]);
+      console.log('[useContracts] Creating read-only provider with RPC:', KAIA_RPC_ENDPOINTS[0]);
+      const readOnlyProvider = new ethers.JsonRpcProvider(KAIA_RPC_ENDPOINTS[0], {
+        chainId: 1001,
+        name: 'Kaia Kairos'
+      });
+      console.log('[useContracts] Read-only provider created:', readOnlyProvider);
       
       const initializeReadOnlyContracts = async () => {
         try {

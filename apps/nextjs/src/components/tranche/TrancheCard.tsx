@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { formatPercentage, formatUSDT } from "@/utils/calculations";
 import { getTrancheName, getTrancheShortName } from "@/utils/productHelpers";
 import {
@@ -15,20 +16,19 @@ import type { Product, Tranche } from "@dinsure/contracts";
 interface TrancheCardProps {
   product: Product;
   tranche: Tranche;
-  onBuyInsurance: () => void;
-  onProvideLiquidity: () => void;
 }
 
 export const TrancheCard: React.FC<TrancheCardProps> = ({
   product,
   tranche,
-  onBuyInsurance,
-  onProvideLiquidity,
 }) => {
   // Get names using helpers
   const trancheName = getTrancheName(tranche, product);
   const shortName = getTrancheShortName(tranche, product);
   const riskLevel = getRiskLevel(Number(tranche.threshold) / 100);
+  
+  // Calculate tranche index from trancheId (assuming encoding is productId * 10 + index)
+  const trancheIndex = tranche.trancheId % 10;
 
   // Use actual data from tranche/round
   const currentRound = tranche.currentRound;
@@ -62,7 +62,15 @@ export const TrancheCard: React.FC<TrancheCardProps> = ({
       : 0;
 
   return (
-    <div className="hover:bg-gray-750 rounded-lg bg-gray-800 p-6 transition-colors">
+    <div className="hover:bg-gray-750 rounded-lg bg-gray-800 p-6 transition-colors relative">
+      {/* View Details Link */}
+      <Link 
+        href={`/insurance/tranches/${product.productId}/${trancheIndex}`}
+        className="absolute top-4 right-4 text-sm text-blue-400 hover:text-blue-300 underline"
+      >
+        View Details →
+      </Link>
+      
       {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
@@ -72,7 +80,7 @@ export const TrancheCard: React.FC<TrancheCardProps> = ({
           </p>
         </div>
         <div
-          className={`rounded-full px-2 py-1 text-xs ${getRoundStateColor(roundState)}`}
+          className={`rounded-full px-2 py-1 text-xs ${getRoundStateColor(roundState)} mr-20`}
         >
           {shortName}
         </div>
@@ -141,32 +149,13 @@ export const TrancheCard: React.FC<TrancheCardProps> = ({
         </div>
       )}
 
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        {roundState === 1 ? (
-          <>
-            <button
-              onClick={onBuyInsurance}
-              className="flex-1 rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700"
-            >
-              Buy Insurance
-            </button>
-            <button
-              onClick={onProvideLiquidity}
-              className="flex-1 rounded-lg bg-green-600 px-4 py-3 font-medium text-white transition-colors hover:bg-green-700"
-            >
-              Provide Liquidity
-            </button>
-          </>
-        ) : (
-          <button
-            className="w-full cursor-not-allowed rounded-lg bg-gray-600 px-4 py-3 font-medium text-gray-300"
-            disabled
-          >
-            {getRoundStateLabel(roundState)}
-          </button>
-        )}
-      </div>
+      {/* Action Button */}
+      <Link 
+        href={`/insurance/tranches/${product.productId}/${trancheIndex}`}
+        className="block w-full text-center rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700"
+      >
+        View Details
+      </Link>
     </div>
   );
 };

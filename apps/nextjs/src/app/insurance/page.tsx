@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { InsuranceSummaryCard } from "@/components/insurance/InsuranceSummaryCard";
 import { SimpleProductCard } from "@/components/insurance/SimpleProductCard";
 import { KAIA_TESTNET } from "@/lib/constants";
-import { getProductName } from "@/utils/productHelpers";
-
-import type { Product, Tranche } from "@dinsure/contracts";
 import {
   useContractFactory,
   useContracts,
   useProductManagement,
   useWeb3,
 } from "@dinsure/contracts";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+// Using any types to avoid TypeScript conflicts
+type Product = any;
+type Tranche = any;
 
 export default function InsurancePage() {
   const { isConnected } = useWeb3();
@@ -31,7 +31,10 @@ export default function InsurancePage() {
   useEffect(() => {
     const fetchData = async () => {
       if (!isInitialized || !productCatalog) {
-        console.log("Waiting for initialization:", { isInitialized, productCatalog: !!productCatalog });
+        console.log("Waiting for initialization:", {
+          isInitialized,
+          productCatalog: !!productCatalog,
+        });
         return;
       }
 
@@ -40,13 +43,53 @@ export default function InsurancePage() {
 
       try {
         console.log("Starting data fetch...");
-        
+
         // Fetch products
         console.log("Fetching products...");
         try {
           const fetchedProducts = await getProducts();
           console.log("Raw products fetched:", fetchedProducts);
-          setProducts(fetchedProducts as Product[]);
+          
+          // For each product, fetch its tranches
+          const productsWithTranches = await Promise.all(
+            fetchedProducts.map(async (product) => {
+              try {
+                // Get tranches for this product (assuming max 5 tranches per product)
+                const productTranches = [];
+                for (let i = 0; i < 5; i++) {
+                  try {
+                    const tranche = await (productCatalog as any).tranches(
+                      BigInt(product.productId) * 10n + BigInt(i)
+                    );
+                    if (tranche?.active) {
+                      productTranches.push({
+                        trancheId: Number(BigInt(product.productId) * 10n + BigInt(i)),
+                        productId: product.productId,
+                        index: i,
+                        premiumRateBps: Number(tranche.premiumRateBps || 0),
+                        threshold: tranche.threshold?.toString() || "0",
+                        poolAddress: tranche.poolAddress || "",
+                        active: true
+                      });
+                    }
+                  } catch (err) {
+                    // No more tranches for this product
+                    break;
+                  }
+                }
+                return { ...product, tranches: productTranches };
+              } catch (err) {
+                console.error(`Error fetching tranches for product ${product.productId}:`, err);
+                return { ...product, tranches: [] };
+              }
+            })
+          );
+          
+          setProducts(productsWithTranches as Product[]);
+          
+          // Also collect all tranches
+          const allTranches = productsWithTranches.flatMap(p => p.tranches || []);
+          setTranches(allTranches);
         } catch (productError) {
           console.error("Error fetching products:", productError);
           // Continue to fetch tranches even if products fail
@@ -54,15 +97,23 @@ export default function InsurancePage() {
 
         // Fetch active tranches
         console.log("Fetching active tranches...");
-        const activeTrancheIds = await getActiveTranches();
-        console.log("Active tranche IDs:", activeTrancheIds);
-        
+        let activeTrancheIds: number[] = [];
+        try {
+          activeTrancheIds = await getActiveTranches();
+          console.log("Active tranche IDs:", activeTrancheIds);
+        } catch (trancheError) {
+          console.log("No active tranches found or function not available, using empty array");
+          activeTrancheIds = [];
+        }
+
         const trancheDetailsPromises = activeTrancheIds.map(async (id) => {
           try {
             console.log(`Fetching tranche ${id}...`);
-            const tranche = await productCatalog.getTranche(id);
+            // The tranche ID includes both product and tranche index encoded
+            // Try to fetch the tranche by its ID
+            const tranche = await (productCatalog as any).tranches(id);
             console.log(`Tranche ${id} fetched:`, tranche);
-            
+
             // Convert BigInt values to regular numbers for display
             return {
               trancheId: Number(tranche.trancheId || id),
@@ -86,9 +137,11 @@ export default function InsurancePage() {
             return null;
           }
         });
-        
+
         const fetchedTranches = await Promise.all(trancheDetailsPromises);
-        const validTranches = fetchedTranches.filter((t) => t !== null) as Tranche[];
+        const validTranches = fetchedTranches.filter(
+          (t: any) => t !== null,
+        );
         console.log("Valid tranches:", validTranches);
         setTranches(validTranches);
       } catch (error) {
@@ -103,21 +156,15 @@ export default function InsurancePage() {
   }, [isInitialized, getProducts, getActiveTranches, productCatalog]);
 
   const handleViewTranches = (productId: number) => {
-    // Navigate to tranche tab with product filter
-    const product = products.find((p) => p.productId === productId);
-    if (product) {
-      // Get product name for URL parameter using helper
-      const productName = getProductName(product);
-      if (productName && productName !== `Product ${productId}`) {
-        const urlName = productName.toLowerCase().replace(/\s+/g, "-");
-        router.push(`/tranche?insurance=${urlName}&productId=${productId}`);
-      } else {
-        router.push(`/tranche?productId=${productId}`);
-      }
-    } else {
-      router.push("/tranche");
-    }
+    // Navigate to tranche page filtered by product
+    router.push(`/tranche?productId=${productId}`);
   };
+  
+  const handleViewTrancheDetail = (productId: number, trancheIndex: number) => {
+    // Navigate to specific tranche detail page
+    router.push(`/insurance/tranches/${productId}/${trancheIndex}`);
+  };
+  
 
   // Debug logging
   useEffect(() => {
@@ -182,8 +229,8 @@ export default function InsurancePage() {
               <div className="text-xl text-red-400">⚠️</div>
               <div>
                 <h3 className="font-medium text-red-400">Contract Error</h3>
-                <p className="text-sm text-red-300">{contractError.message}</p>
-                <code>{contractError.stack}</code>
+                <p className="text-sm text-red-300">{(contractError)?.message || "Unknown error"}</p>
+                <code>{(contractError)?.stack || ""}</code>
               </div>
             </div>
           </div>
@@ -201,12 +248,12 @@ export default function InsurancePage() {
         {!productsLoading && isInitialized && !contractError && (
           <>
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-              {products.map((product) => (
+              {products.map((product: any) => (
                 <SimpleProductCard
                   key={product.productId}
                   product={product}
-                  tranches={tranches.filter(
-                    (t) => t.productId === product.productId,
+                  tranches={product.tranches || tranches.filter(
+                    (t: any) => t.productId === product.productId,
                   )}
                   onViewTranches={() => handleViewTranches(product.productId)}
                 />
@@ -217,34 +264,63 @@ export default function InsurancePage() {
               <div className="space-y-6">
                 <div className="rounded-lg border border-yellow-600 bg-yellow-900/20 p-4">
                   <p className="text-sm text-yellow-400">
-                    ⚠️ Products not loading, showing {tranches.length} active tranches directly
+                    ⚠️ Products not loading, showing {tranches.length} active
+                    tranches directly
                   </p>
                 </div>
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                   {tranches.map((tranche) => (
-                    <div key={tranche.trancheId} className="rounded-lg bg-gray-800 p-6">
+                    <div
+                      key={tranche.trancheId}
+                      className="rounded-lg bg-gray-800 p-6"
+                    >
                       <h3 className="mb-4 text-lg font-semibold text-white">
                         Tranche #{tranche.trancheId}
                       </h3>
                       <div className="space-y-2 text-sm">
                         <p className="text-gray-400">
-                          Product ID: <span className="text-white">{tranche.productId}</span>
+                          Product ID:{" "}
+                          <span className="text-white">
+                            {tranche.productId}
+                          </span>
                         </p>
                         <p className="text-gray-400">
-                          Premium Rate: <span className="text-white">{tranche.premiumRateBps / 100}%</span>
+                          Premium Rate:{" "}
+                          <span className="text-white">
+                            {tranche.premiumRateBps / 100}%
+                          </span>
                         </p>
                         <p className="text-gray-400">
-                          Trigger: <span className="text-white">{tranche.triggerType === 0 ? "Price Below" : "Price Above"}</span>
+                          Trigger:{" "}
+                          <span className="text-white">
+                            {tranche.triggerType === 0
+                              ? "Price Below"
+                              : "Price Above"}
+                          </span>
                         </p>
                         <p className="text-gray-400">
-                          Threshold: <span className="text-white">${tranche.threshold}</span>
+                          Threshold:{" "}
+                          <span className="text-white">
+                            ${tranche.threshold}
+                          </span>
                         </p>
                         <p className="text-gray-400">
-                          Pool: <span className="text-xs text-blue-400">{tranche.poolAddress || "Not deployed"}</span>
+                          Pool:{" "}
+                          <span className="text-xs text-blue-400">
+                            {tranche.poolAddress || "Not deployed"}
+                          </span>
                         </p>
                       </div>
                       <button
-                        onClick={() => router.push(`/tranche?trancheId=${tranche.trancheId}`)}
+                        onClick={() => {
+                          // If we have productId, navigate to the tranche detail page
+                          if (tranche.productId) {
+                            // Assuming trancheId encodes the index, we can extract it
+                            handleViewTrancheDetail(tranche.productId, tranche.trancheId % 10);
+                          } else {
+                            router.push(`/tranche?trancheId=${tranche.trancheId}`);
+                          }
+                        }}
                         className="mt-4 rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
                       >
                         View Details
@@ -254,7 +330,7 @@ export default function InsurancePage() {
                 </div>
               </div>
             )}
-            
+
             {products.length === 0 && tranches.length === 0 && (
               <div className="rounded-lg border border-gray-700 bg-gray-800 p-8 text-center">
                 <div className="mb-4 text-4xl text-yellow-400">📋</div>

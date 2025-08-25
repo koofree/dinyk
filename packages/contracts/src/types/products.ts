@@ -58,6 +58,7 @@ export interface Tranche {
   updatedAt?: number;
   rounds?: number[]; // Array of round IDs
   currentRound?: Round;
+  name?: string; // Optional tranche name
   
   // Derived fields
   premiumRate?: number;

@@ -34,22 +34,22 @@ This project is transitioning from a T3 Turbo monorepo to a Web3-focused archite
 #### Smart Contracts (Deployed on Kaia Testnet - Chain ID: 1001)
 
 ##### Core Contracts
-- **`DinRegistry`** (`0x0000760e713fed5b6F866d3Bad87927337DF61c0`): Central registry for all contract addresses and global parameters. Manages protocol-wide settings with bounded validation (premium rates 0-50%, protocol fees 0-10%, maturity windows 1hr-365days).
-- **`ProductCatalog`** (`0x5c251A3561E47700a9bcbD6ec91e61fB52Eb50d2`): Manages insurance products, tranches, and rounds. Controls the full round lifecycle (ANNOUNCED → OPEN → MATCHED → ACTIVE → MATURED → SETTLED).
+- **`DinRegistry`** (`0xCD2B28186b257869B3C2946ababB56683F4304C3`): Central registry for all contract addresses and global parameters. Manages protocol-wide settings with bounded validation (premium rates 0-50%, protocol fees 0-10%, maturity windows 1hr-365days).
+- **`ProductCatalog`** (`0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D`): Manages insurance products, tranches, and rounds. Controls the full round lifecycle (ANNOUNCED → OPEN → MATCHED → ACTIVE → MATURED → SETTLED).
 - **`TranchePoolCore`**: Economics-focused pool contract managing buyer orders, seller collateral, NAV calculation, and premium distribution. Deployed per tranche via factory.
-- **`InsuranceToken`** (`0x147f4660515aE91c81FdB43Cf743C6faCACa9903`): ERC-721 NFT representing buyer insurance positions with metadata for coverage amount and round details.
-- **`SettlementEngine`** (`0xAE3FA73652499Bf0aB0b79B8C309DD62137f142D`): Handles oracle-based claim processing, dispute resolution, and automatic payout distribution.
-- **`FeeTreasury`** (`0x9C20316Ba669e762Fb43dbb6d3Ff63062b89945D`): Protocol fee collection, distribution to stakers, and treasury management.
+- **`InsuranceToken`** (`0x3bEDE5f043E8D0597F9F0b60eCfc52B134d8E934`): ERC-721 NFT representing buyer insurance positions with metadata for coverage amount and round details.
+- **`SettlementEngine`** (`0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8`): Handles oracle-based claim processing, dispute resolution, and automatic payout distribution.
+- **`FeeTreasury`** (`0xb96D484cB71A5d5C3C3AB1Ac18dF587cC6AC6914`): Protocol fee collection, distribution to stakers, and treasury management.
 
 ##### Infrastructure Contracts
-- **`TranchePoolFactory`** (`0x563e95673d4210148eD59eDb6310AC7d488F5Ec0`): Deploys isolated pool contracts for each tranche with proper integration.
-- **`OracleRouter`** (`0x5d83444EBa6899f1B7abD34eF04dDF7Dd7b38a37`): Aggregates multiple oracle sources with median calculation and outlier detection.
-- **`OraklPriceFeed`** (`0x1320682DCe0b0A52A09937d19b404901d32D5f68`): Primary oracle integration with Orakl Network for real-time price feeds.
-- **`DinoOracle`** (`0x2480108C0dA6F7563a887D7d9d969630529340dD`): Secondary optimistic oracle for dispute resolution and special events.
+- **`TranchePoolFactory`** (`0x3810066EfEAc98F18cF6A1E62FF3f089CC30Fb01`): Deploys isolated pool contracts for each tranche with proper integration.
+- **`OracleRouter`** (`0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72`): Aggregates multiple oracle sources with median calculation and outlier detection.
+- **`OraklPriceFeed`** (`0xFa2f0063BAC2e5BA304f50eC54b6EA07aCC534fF`): Primary oracle integration with Orakl Network for real-time price feeds.
+- **`DinoOracle`** (`0x6317f2f9271d484548871915DDDff95aD4c45aC3`): Secondary optimistic oracle for dispute resolution and special events.
 
 ##### Token Contracts
-- **`DinUSDT`** (`0x53232164780a589dfAe08fB16D1962bD78591Aa0`): Test USDT token (6 decimals) for development.
-- **`DinToken`** (`0x01200e08D6C522C288bE660eb7E8c82d5f095a42`): Protocol governance token (18 decimals, 100M supply).
+- **`DinUSDT`** (`0x8C034f0DBA8664DA4242Cb4CF7fCD7e0a3aa5c90`): Test USDT token (6 decimals) for development.
+- **`DinToken`** (`0x7126Dbd15e6888AeDd606A7242C998DBED7530Fd`): Protocol governance token (18 decimals, 100M supply).
 
 #### Oracle System
 - **Primary**: Kaia Price Feed for standard crypto prices
@@ -169,19 +169,23 @@ pnpm turbo gen init
 3. Add contract addresses (Testnet deployed):
    ```bash
    # Core Contracts
-   NEXT_PUBLIC_REGISTRY_ADDRESS=0x0000760e713fed5b6F866d3Bad87927337DF61c0
-   NEXT_PUBLIC_PRODUCT_CATALOG_ADDRESS=0x5c251A3561E47700a9bcbD6ec91e61fB52Eb50d2
-   NEXT_PUBLIC_INSURANCE_TOKEN_ADDRESS=0x147f4660515aE91c81FdB43Cf743C6faCACa9903
-   NEXT_PUBLIC_SETTLEMENT_ENGINE_ADDRESS=0xAE3FA73652499Bf0aB0b79B8C309DD62137f142D
-   NEXT_PUBLIC_FEE_TREASURY_ADDRESS=0x9C20316Ba669e762Fb43dbb6d3Ff63062b89945D
+   NEXT_PUBLIC_REGISTRY_ADDRESS=0xCD2B28186b257869B3C2946ababB56683F4304C3
+   NEXT_PUBLIC_PRODUCT_CATALOG_ADDRESS=0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D
+   NEXT_PUBLIC_INSURANCE_TOKEN_ADDRESS=0x3bEDE5f043E8D0597F9F0b60eCfc52B134d8E934
+   NEXT_PUBLIC_SETTLEMENT_ENGINE_ADDRESS=0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8
+   NEXT_PUBLIC_FEE_TREASURY_ADDRESS=0xb96D484cB71A5d5C3C3AB1Ac18dF587cC6AC6914
    
    # Infrastructure
-   NEXT_PUBLIC_POOL_FACTORY_ADDRESS=0x563e95673d4210148eD59eDb6310AC7d488F5Ec0
-   NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS=0x5d83444EBa6899f1B7abD34eF04dDF7Dd7b38a37
+   NEXT_PUBLIC_POOL_FACTORY_ADDRESS=0x3810066EfEAc98F18cF6A1E62FF3f089CC30Fb01
+   NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS=0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72
+   
+   # Oracles
+   NEXT_PUBLIC_ORAKL_PRICE_FEED_ADDRESS=0xFa2f0063BAC2e5BA304f50eC54b6EA07aCC534fF
+   NEXT_PUBLIC_DINO_ORACLE_ADDRESS=0x6317f2f9271d484548871915DDDff95aD4c45aC3
    
    # Tokens
-   NEXT_PUBLIC_USDT_ADDRESS=0x53232164780a589dfAe08fB16D1962bD78591Aa0
-   NEXT_PUBLIC_DIN_TOKEN_ADDRESS=0x01200e08D6C522C288bE660eb7E8c82d5f095a42
+   NEXT_PUBLIC_USDT_ADDRESS=0x8C034f0DBA8664DA4242Cb4CF7fCD7e0a3aa5c90
+   NEXT_PUBLIC_DIN_TOKEN_ADDRESS=0x7126Dbd15e6888AeDd606A7242C998DBED7530Fd
    ```
 
 ### Kaia Network Configuration

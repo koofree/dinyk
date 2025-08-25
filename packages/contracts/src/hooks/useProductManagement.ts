@@ -39,9 +39,17 @@ export function useProductManagement() {
   const getProducts = useCallback(async (): Promise<any[]> => {
     if (!productCatalog) throw new Error('Product catalog not initialized');
     
-    try {
+    
       // Get active product IDs using the correct function
-      const activeProductIds = await productCatalog.getActiveProducts();
+      console.log('[useProductManagement] Getting active product IDs');
+      let activeProductIds: any[] = [];
+      try {
+          activeProductIds = await productCatalog.getActiveProducts();
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        throw error;
+      }
+      
       console.log('[useProductManagement] Active product IDs:', activeProductIds);
       
       const products: any[] = [];
@@ -49,8 +57,17 @@ export function useProductManagement() {
       // Fetch each active product using products mapping
       for (const productId of activeProductIds) {
         try {
-          // Use products mapping directly
-          const product = await productCatalog.products(productId);
+          // Try getProduct function first, fallback to products mapping if it fails
+          let product;
+          try {
+            product = await productCatalog.getProduct(productId);
+            console.log(`[useProductManagement] getProduct(${productId}) succeeded`);
+          } catch (getProductError) {
+            console.error(`[useProductManagement] getProduct(${productId}) failed, trying products mapping:`, getProductError.message);
+            // Fallback to products mapping
+            product = await productCatalog.products(productId);
+            console.log(`[useProductManagement] products(${productId}) succeeded as fallback`);
+          }
           console.log(`[useProductManagement] Raw product ${productId}:`, product);
           
           // Don't filter or map - just return the raw product data
@@ -63,9 +80,10 @@ export function useProductManagement() {
               active: product.active !== false,
               createdAt: product.createdAt ? Number(product.createdAt) : 0,
               updatedAt: product.updatedAt ? Number(product.updatedAt) : 0,
+              trancheIds: product.trancheIds ? product.trancheIds.map(id => Number(id)) : [],
               // Include any other fields that exist on the product
               ...Object.entries(product).reduce((acc, [key, value]) => {
-                if (!['productId', 'metadataHash', 'active', 'createdAt', 'updatedAt'].includes(key)) {
+                if (!['productId', 'metadataHash', 'active', 'createdAt', 'updatedAt', 'trancheIds'].includes(key)) {
                   // Handle BigInt conversion
                   if (typeof value === 'bigint') {
                     acc[key] = value.toString();
@@ -86,10 +104,7 @@ export function useProductManagement() {
       
       console.log('[useProductManagement] All products fetched:', products);
       return products;
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      throw error;
-    }
+    
   }, [productCatalog]);
 
   // Register new product
@@ -298,13 +313,58 @@ export function useProductManagement() {
   const getActiveTranches = useCallback(async () => {
     if (!productCatalog) throw new Error('Product catalog not initialized');
     
-    try {
-      const tranches = await productCatalog.getActiveTranches();
-      return tranches.map(id => Number(id));
-    } catch (error) {
-      console.error('Error fetching active tranches:', error);
-      throw error;
+    // Check if the contract has the required function
+    if (!productCatalog.getActiveTranches) {
+      console.warn('[useProductManagement] getActiveTranches function not available on contract');
+      return [];
     }
+    
+    // Check if the contract is properly connected
+    if (!productCatalog.provider) {
+      console.warn('[useProductManagement] Contract provider not initialized');
+      return [];
+    }
+    
+    const maxRetries = 3;
+    let lastError: any;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[useProductManagement] Attempt ${attempt}/${maxRetries}: Calling getActiveTranches on contract:`, productCatalog.address);
+        console.log(`[useProductManagement] Contract provider:`, productCatalog.provider?.connection?.url);
+        
+        const tranches = await productCatalog.getActiveTranches();
+        console.log(`[useProductManagement] Raw tranches result:`, tranches);
+        
+        const mappedTranches = tranches.map(id => Number(id));
+        console.log(`[useProductManagement] Mapped tranches:`, mappedTranches);
+        
+        return mappedTranches;
+      } catch (error) {
+        lastError = error;
+        console.error(`[useProductManagement] Attempt ${attempt} failed:`, error);
+        console.error('Error details:', {
+          message: error.message,
+          code: error.code,
+          data: error.data,
+          transaction: error.transaction,
+          contractAddress: productCatalog.address,
+          provider: productCatalog.provider?.connection?.url
+        });
+        
+        // If this is the last attempt, return empty array instead of throwing
+        if (attempt === maxRetries) {
+          console.warn('[useProductManagement] All attempts failed, returning empty array as fallback');
+          return [];
+        }
+        
+        // Wait a bit before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+    
+    console.warn('[useProductManagement] Returning empty array as fallback');
+    return [];
   }, [productCatalog]);
 
   // Update product status
