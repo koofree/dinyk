@@ -357,38 +357,38 @@ function TrancheContent() {
   
   if (!isInitialized) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Initializing contracts...</div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-gray-600">Initializing contracts...</div>
       </div>
     );
   }
   
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-red-400">Error: {error.message}</div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-red-500">Error: {error.message}</div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen bg-gray-900 pt-20 pb-10">
+    <div className="min-h-screen bg-white pt-20 pb-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">
+          <h1 className="text-4xl font-bold font-display text-gray-900 mb-4">
             Insurance Tranches
             {filters.insuranceProduct !== null && (
-              <span className="ml-2 text-2xl text-gray-400">
+              <span className="ml-2 text-2xl text-gray-500">
                 - Product #{filters.insuranceProduct}
               </span>
             )}
           </h1>
-          <p className="text-gray-400">
+          <p className="text-gray-600">
             Choose your risk level and earn premiums by providing liquidity
           </p>
           {btcPrice && (
-            <div className="mt-4 text-sm text-gray-400">
+            <div className="mt-4 text-sm text-gray-500">
               BTC Price: ${btcPrice.toLocaleString()}
             </div>
           )}
@@ -404,17 +404,19 @@ function TrancheContent() {
         {/* Loading State */}
         {loading && (
           <div className="text-center py-12">
-            <div className="text-white">Loading tranches...</div>
+            <div className="text-gray-600">Loading tranches...</div>
           </div>
         )}
         
         {/* Debug Info */}
-        <div className="mb-4 p-2 bg-gray-800 rounded text-xs text-gray-400">
-          Debug: Products={products.length} | Contract Tranches={tranches.length} | 
-          Tranches with Data={tranchesData?.length || 0} | Filtered={filteredTranches.length} | 
-          Filter Product={filters.insuranceProduct ?? 'all'} | Filter Status={filters.status} | Loading={String(loading)}
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-500 overflow-x-auto border border-gray-100">
+          <div className="whitespace-nowrap">
+            Debug: Products={products.length} | Contract Tranches={tranches.length} | 
+            Tranches with Data={tranchesData?.length || 0} | Filtered={filteredTranches.length} | 
+            Filter Product={filters.insuranceProduct ?? 'all'} | Filter Status={filters.status} | Loading={String(loading)}
+          </div>
           {tranchesData && tranchesData.length > 0 && (
-            <div className="mt-1">
+            <div className="mt-1 whitespace-nowrap">
               Round States: {tranchesData.map(t => `T${t.trancheId}: ${t.rounds.map(r => r.state).join(',')}`).join(' | ')}
             </div>
           )}
@@ -423,13 +425,13 @@ function TrancheContent() {
         {/* Empty State */}
         {!loading && filteredTranches.length === 0 && tranches.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-gray-400">No tranches available</div>
+            <div className="text-gray-500">No tranches available</div>
           </div>
         )}
         
         {!loading && filteredTranches.length === 0 && tranches.length > 0 && (
           <div className="text-center py-12">
-            <div className="text-gray-400">No tranches matching your filters (Total: {tranches.length})</div>
+            <div className="text-gray-500">No tranches matching your filters (Total: {tranches.length})</div>
           </div>
         )}
         
@@ -442,30 +444,30 @@ function TrancheContent() {
               // Show tranche even without product
               if (!product) {
                 return (
-                  <div key={tranche.trancheId} className="bg-gray-800 rounded-lg p-6 border border-gray-700 relative">
-                    <h3 className="text-lg font-semibold text-white mb-4">
+                  <div key={tranche.trancheId} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 relative">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
                       Tranche #{tranche.trancheId}
                     </h3>
                     <div className="space-y-2 text-sm">
-                      <p className="text-gray-400">
-                        Product ID: <span className="text-white">{tranche.productId}</span>
+                      <p className="text-gray-600">
+                        Product ID: <span className="text-gray-900 font-medium">{tranche.productId}</span>
                       </p>
-                      <p className="text-gray-400">
-                        Premium: <span className="text-white">{tranche.premiumRateBps / 100}%</span>
+                      <p className="text-gray-600">
+                        Premium: <span className="text-gray-900 font-medium">{tranche.premiumRateBps / 100}%</span>
                       </p>
-                      <p className="text-gray-400">
-                        Trigger: <span className="text-white">
+                      <p className="text-gray-600">
+                        Trigger: <span className="text-gray-900 font-medium">
                           {tranche.triggerType === 0 ? "Price Below" : "Price Above"} ${tranche.threshold.toString()}
                         </span>
                       </p>
-                      <p className="text-gray-400">
-                        Cap: <span className="text-white">${Number(tranche.trancheCap) / 1e6} USDT</span>
+                      <p className="text-gray-600">
+                        Cap: <span className="text-gray-900 font-medium">${Number(tranche.trancheCap) / 1e6} USDT</span>
                       </p>
                     </div>
                     <div className="mt-4">
                       <Link 
                         href={`/tranches/${tranche.productId}/${tranche.trancheId}`}
-                        className="block w-full text-center rounded bg-blue-600 px-4 py-3 text-white font-medium transition-colors hover:bg-blue-700"
+                        className="block w-full text-center rounded-xl bg-gradient-to-br from-[#86D99C] to-[#00B1B8] px-4 py-3 text-white font-semibold transition-all duration-300 hover:scale-95 hover:shadow-md"
                       >
                         View Details
                       </Link>
@@ -528,8 +530,8 @@ function TrancheContent() {
 export default function TranchePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
       </div>
     }>
       <TrancheContent />

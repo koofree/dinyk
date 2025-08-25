@@ -186,10 +186,10 @@ export default function InsurancePage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-gray-900 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Debug Info */}
-        <div className="mb-4 rounded bg-gray-800 p-2 text-xs text-gray-400">
+        <div className="mb-4 rounded-lg bg-gray-50 border border-gray-100 p-3 text-xs text-gray-500">
           Debug: isInitialized={String(isInitialized)} | productsLoading=
           {String(productsLoading)} | products={products.length} | tranches=
           {tranches.length} | error={productsError ? "Yes" : "No"}
@@ -197,22 +197,22 @@ export default function InsurancePage() {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="mb-4 text-3xl font-bold text-white">
+          <h1 className="mb-4 text-4xl font-bold font-display text-gray-900">
             Insurance Products
           </h1>
-          <p className="text-gray-400">
+          <p className="text-gray-600 text-lg">
             Overview of all available insurance products with aggregated
             statistics from all tranches
           </p>
-          <div className="mt-2 flex items-center gap-4 text-sm">
-            <span className="text-green-400">
+          <div className="mt-4 flex items-center gap-4 text-sm">
+            <span className="text-green-600 bg-green-100 px-3 py-1 rounded-full font-medium">
               ● Connected to {KAIA_TESTNET.name}
             </span>
             <a
               href={`${KAIA_TESTNET.blockExplorer}/address/${KAIA_TESTNET.contracts.productCatalog}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300"
+              className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
             >
               View Contracts ↗
             </a>
@@ -221,13 +221,13 @@ export default function InsurancePage() {
 
         {/* Contract Error */}
         {contractError && (
-          <div className="mb-8 rounded-lg border border-red-600 bg-red-900 p-4">
+          <div className="mb-8 rounded-lg border border-red-200 bg-red-50 p-4">
             <div className="flex items-center gap-3">
-              <div className="text-xl text-red-400">⚠️</div>
+              <div className="text-xl text-red-500">⚠️</div>
               <div>
-                <h3 className="font-medium text-red-400">Contract Error</h3>
-                <p className="text-sm text-red-300">{(contractError)?.message || "Unknown error"}</p>
-                <code>{(contractError)?.stack || ""}</code>
+                <h3 className="font-medium text-red-700">Contract Error</h3>
+                <p className="text-sm text-red-600">{(contractError)?.message || "Unknown error"}</p>
+                <code className="text-xs text-red-500">{(contractError)?.stack || ""}</code>
               </div>
             </div>
           </div>
@@ -236,8 +236,8 @@ export default function InsurancePage() {
         {/* Loading State */}
         {productsLoading && isInitialized && (
           <div className="py-12 text-center">
-            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-400"></div>
-            <div className="text-gray-400">Loading insurance products...</div>
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-[#00B1B8]"></div>
+            <div className="text-gray-600">Loading insurance products...</div>
           </div>
         )}
 
@@ -257,8 +257,8 @@ export default function InsurancePage() {
 
             {products.length === 0 && tranches.length > 0 && (
               <div className="space-y-6">
-                <div className="rounded-lg border border-yellow-600 bg-yellow-900/20 p-4">
-                  <p className="text-sm text-yellow-400">
+                <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+                  <p className="text-sm text-yellow-700">
                     ⚠️ Products not loading, showing {tranches.length} active
                     tranches directly
                   </p>
@@ -267,41 +267,41 @@ export default function InsurancePage() {
                   {tranches.map((tranche) => (
                     <div
                       key={tranche.trancheId}
-                      className="rounded-lg bg-gray-800 p-6"
+                      className="rounded-2xl bg-white border border-gray-100 shadow-sm p-6"
                     >
-                      <h3 className="mb-4 text-lg font-semibold text-white">
+                      <h3 className="mb-4 text-lg font-semibold text-gray-900">
                         Tranche #{tranche.trancheId}
                       </h3>
                       <div className="space-y-2 text-sm">
-                        <p className="text-gray-400">
+                        <p className="text-gray-600">
                           Product ID:{" "}
-                          <span className="text-white">
+                          <span className="text-gray-900 font-medium">
                             {tranche.productId}
                           </span>
                         </p>
-                        <p className="text-gray-400">
+                        <p className="text-gray-600">
                           Premium Rate:{" "}
-                          <span className="text-white">
+                          <span className="text-gray-900 font-medium">
                             {tranche.premiumRateBps / 100}%
                           </span>
                         </p>
-                        <p className="text-gray-400">
+                        <p className="text-gray-600">
                           Trigger:{" "}
-                          <span className="text-white">
+                          <span className="text-gray-900 font-medium">
                             {tranche.triggerType === 0
                               ? "Price Below"
                               : "Price Above"}
                           </span>
                         </p>
-                        <p className="text-gray-400">
+                        <p className="text-gray-600">
                           Threshold:{" "}
-                          <span className="text-white">
+                          <span className="text-gray-900 font-medium">
                             ${tranche.threshold}
                           </span>
                         </p>
-                        <p className="text-gray-400">
+                        <p className="text-gray-600">
                           Pool:{" "}
-                          <span className="text-xs text-blue-400">
+                          <span className="text-xs text-[#00B1B8]">
                             {tranche.poolAddress || "Not deployed"}
                           </span>
                         </p>
@@ -316,7 +316,7 @@ export default function InsurancePage() {
                             router.push(`/tranches?trancheId=${tranche.trancheId}`);
                           }
                         }}
-                        className="mt-4 rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+                        className="mt-4 rounded-xl bg-gradient-to-br from-[#86D99C] to-[#00B1B8] px-4 py-2 text-sm text-white font-semibold hover:scale-95 transition-all duration-300"
                       >
                         View Details
                       </button>

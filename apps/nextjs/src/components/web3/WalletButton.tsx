@@ -46,8 +46,25 @@ export const WalletButton: React.FC = () => {
 
   if (isConnecting) {
     return (
-      <button className="bg-blue-600 text-white px-4 py-2 rounded-lg opacity-50 cursor-not-allowed">
-        Connecting...
+      <button className="w-[172px] h-12 bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white rounded-lg text-base font-semibold opacity-50 cursor-not-allowed flex items-center justify-center gap-2">
+        <svg 
+          width="20" 
+          height="20" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+          className="animate-spin"
+        >
+          <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+          <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+          <path d="M18 12a2 2 0 0 0-2 2v4h4v-4a2 2 0 0 0-2-2z"/>
+        </svg>
+        <span className="font-semibold">
+          Connecting...
+        </span>
       </button>
     );
   }
@@ -60,13 +77,13 @@ export const WalletButton: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={handleNetworkSwitch}
-            className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition-colors"
+            className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1.5 rounded text-sm font-medium transition-colors"
           >
             Switch to {ACTIVE_NETWORK.name}
           </button>
           <button
             onClick={disconnectWallet}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg transition-colors"
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded text-sm font-medium transition-colors"
           >
             Disconnect
           </button>
@@ -77,12 +94,12 @@ export const WalletButton: React.FC = () => {
     return (
       <div className="flex items-center gap-3">
         <div className="text-right text-sm">
-          <div className="text-gray-300">{formatBalance(usdtBalance)} USDT</div>
-          <div className="text-gray-400">{formatAddress(account)}</div>
+          <div className="text-gray-700 font-medium">{formatBalance(usdtBalance)} USDT</div>
+          <div className="text-gray-500 text-xs">{formatAddress(account)}</div>
         </div>
         <button
           onClick={disconnectWallet}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+          className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded text-sm font-medium transition-colors"
         >
           Disconnect
         </button>
@@ -94,55 +111,97 @@ export const WalletButton: React.FC = () => {
     <>
       <button
         onClick={() => setShowConnectModal(true)}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+        className="relative w-[172px] max-[400px]:w-[160px] h-12 max-[400px]:h-[42px] bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white rounded-lg text-base max-[400px]:text-sm font-semibold transition-all duration-300 hover:scale-95 hover:shadow-lg group overflow-hidden max-[400px]:px-1"
       >
-        Connect Wallet
+        {/* Gradient animation background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#00B1B8] to-[#86D99C] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
+        
+        {/* Button content */}
+        <div className="relative flex items-center justify-center gap-1">
+          {/* Wallet icon */}
+          <svg 
+            width="20" 
+            height="20" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+            className="flex-shrink-0 max-[400px]:w-4 max-[400px]:h-4"
+          >
+            <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+            <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+            <path d="M18 12a2 2 0 0 0-2 2v4h4v-4a2 2 0 0 0-2-2z"/>
+          </svg>
+          
+          {/* Text */}
+          <span className="font-semibold">
+            Connect Wallet
+          </span>
+        </div>
       </button>
 
       {/* Connect Modal */}
       {showConnectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-6 rounded-lg max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-white mb-4">Connect Your Wallet</h3>
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
+          style={{ 
+            margin: 0, 
+            padding: 0, 
+            left: 0, 
+            right: 0, 
+            top: 0, 
+            bottom: 0,
+            width: '100vw',
+            height: '100vh'
+          }}
+          onClick={() => setShowConnectModal(false)}
+        >
+          <div 
+            className="bg-white p-6 rounded-2xl w-full max-w-md shadow-lg border border-gray-200 mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Connect Your Wallet</h3>
             
             <div className="space-y-3">
               <button
                 onClick={() => handleConnect(ProviderType.METAMASK)}
-                className="w-full flex items-center gap-3 p-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                className="w-full flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
               >
                 <div className="text-2xl">🦊</div>
                 <div className="text-left">
-                  <div className="text-white font-medium">MetaMask</div>
-                  <div className="text-gray-400 text-sm">Recommended</div>
+                  <div className="text-gray-900 font-medium">MetaMask</div>
+                  <div className="text-gray-600 text-sm">Recommended</div>
                 </div>
               </button>
 
               <button
                 onClick={() => handleConnect(ProviderType.KAIA)}
-                className="w-full flex items-center gap-3 p-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                className="w-full flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
               >
                 <div className="text-2xl">🔷</div>
                 <div className="text-left">
-                  <div className="text-white font-medium">Kaia Wallet</div>
-                  <div className="text-gray-400 text-sm">Official Kaia Wallet</div>
+                  <div className="text-gray-900 font-medium">Kaia Wallet</div>
+                  <div className="text-gray-600 text-sm">Official Kaia Wallet</div>
                 </div>
               </button>
 
               <button
                 onClick={() => handleConnect(ProviderType.WALLET_CONNECT)}
-                className="w-full flex items-center gap-3 p-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                className="w-full flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 opacity-50 cursor-not-allowed"
                 disabled
               >
                 <div className="text-2xl">🔗</div>
                 <div className="text-left">
-                  <div className="text-white font-medium">WalletConnect</div>
-                  <div className="text-gray-400 text-sm">Coming Soon</div>
+                  <div className="text-gray-900 font-medium">WalletConnect</div>
+                  <div className="text-gray-600 text-sm">Coming Soon</div>
                 </div>
               </button>
             </div>
 
             {error && (
-              <div className="mt-4 p-3 bg-red-900 text-red-300 rounded-lg text-sm">
+              <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm border border-red-200">
                 {error.message}
                 {error.message.includes("Kaia Wallet") && (
                   <div className="mt-2">
@@ -150,7 +209,7 @@ export const WalletButton: React.FC = () => {
                       href="https://chromewebstore.google.com/detail/kaia-wallet/jblndlipeogpafnldhgmapagcccfchpi"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-400 hover:text-blue-300 underline"
+                      className="text-blue-600 hover:text-blue-500 underline"
                     >
                       Install Kaia Wallet from Chrome Store
                     </a>
@@ -162,7 +221,7 @@ export const WalletButton: React.FC = () => {
                       href="https://metamask.io/download/"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-400 hover:text-blue-300 underline"
+                      className="text-blue-600 hover:text-blue-500 underline"
                     >
                       Install MetaMask
                     </a>
@@ -174,13 +233,13 @@ export const WalletButton: React.FC = () => {
             <div className="mt-4 text-center">
               <button
                 onClick={() => setShowConnectModal(false)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
               >
                 Cancel
               </button>
             </div>
 
-            <div className="mt-4 text-xs text-gray-400 text-center">
+            <div className="mt-4 text-xs text-gray-500 text-center">
               By connecting, you agree to our Terms of Service
             </div>
           </div>

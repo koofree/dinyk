@@ -49,12 +49,12 @@ export default function PortfolioPage() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gray-900 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-16">
             <div className="text-6xl mb-4">🔗</div>
-            <h2 className="text-2xl font-bold text-white mb-4">Connect Your Wallet</h2>
-            <p className="text-gray-400 mb-8">
+            <h2 className="text-2xl font-bold font-display text-gray-900 mb-4">Connect Your Wallet</h2>
+            <p className="text-gray-600 mb-8">
               Please connect your wallet to view your portfolio
             </p>
           </div>
@@ -66,11 +66,11 @@ export default function PortfolioPage() {
   // Show loading state while fetching data
   if (isLoading && !insurancePositions.length && !liquidityPositions.length) {
     return (
-      <div className="min-h-screen bg-gray-900 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-            <span className="ml-3 text-gray-400">Loading portfolio...</span>
+            <Loader2 className="h-8 w-8 animate-spin text-[#00B1B8]" />
+            <span className="ml-3 text-gray-600">Loading portfolio...</span>
           </div>
         </div>
       </div>
@@ -80,15 +80,15 @@ export default function PortfolioPage() {
   // Show error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-900 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-16">
             <div className="text-6xl mb-4">⚠️</div>
-            <h2 className="text-2xl font-bold text-white mb-4">Error Loading Portfolio</h2>
-            <p className="text-gray-400 mb-8">{error}</p>
+            <h2 className="text-2xl font-bold font-display text-gray-900 mb-4">Error Loading Portfolio</h2>
+            <p className="text-gray-600 mb-8">{error}</p>
             <button
               onClick={() => refetch()}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
+              className="bg-gradient-to-br from-[#86D99C] to-[#00B1B8] hover:scale-95 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
             >
               Retry
             </button>
@@ -99,21 +99,21 @@ export default function PortfolioPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-4">My DIN Portfolio</h1>
-          <p className="text-gray-400">
+          <h1 className="text-4xl font-bold font-display text-gray-900 mb-4">My DIN Portfolio</h1>
+          <p className="text-gray-600 text-lg">
             Manage your insurance NFTs and liquidity positions
           </p>
-          <div className="mt-2 flex items-center gap-4 text-sm">
-            <span className="text-green-400">● Connected: {account?.slice(0, 6)}...{account?.slice(-4)}</span>
+          <div className="mt-4 flex items-center gap-4 text-sm">
+            <span className="text-green-600 bg-green-100 px-3 py-1 rounded-full font-medium">● Connected: {account?.slice(0, 6)}...{account?.slice(-4)}</span>
             <a 
               href={`${KAIA_TESTNET.blockExplorer}/address/${account}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300"
+              className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
             >
               View on Explorer ↗
             </a>
@@ -121,7 +121,7 @@ export default function PortfolioPage() {
               href={`${KAIA_TESTNET.blockExplorer}/token/${KAIA_TESTNET.contracts.insuranceToken}?a=${account}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300"
+              className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
             >
               View NFTs ↗
             </a>

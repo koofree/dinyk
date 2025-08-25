@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useWeb3, useContracts, useProductManagement } from "@dinsure/contracts";
 import { KAIA_TESTNET } from "@/lib/constants";
@@ -26,6 +26,54 @@ interface Product {
   active: boolean;
 }
 
+// Progress bar component
+function ProgressBar({ label, value, maxValue = 100, isVisible = false }: { label: string; value: number; maxValue?: number; isVisible?: boolean }) {
+  const [displayValue, setDisplayValue] = useState(0);
+  const [progressWidth, setProgressWidth] = useState(0);
+
+  useEffect(() => {
+    if (isVisible) {
+      const duration = 1500;
+      const steps = 60;
+      const increment = value / steps;
+      const progressIncrement = (value / maxValue) * 100 / steps;
+      let current = 0;
+      let currentProgress = 0;
+      
+      const timer = setInterval(() => {
+        current += increment;
+        currentProgress += progressIncrement;
+        
+        if (current >= value) {
+          current = value;
+          currentProgress = (value / maxValue) * 100;
+          clearInterval(timer);
+        }
+        
+        setDisplayValue(Math.floor(current));
+        setProgressWidth(currentProgress);
+      }, duration / steps);
+
+      return () => clearInterval(timer);
+    }
+  }, [isVisible, value, maxValue]);
+
+  return (
+    <div>
+      <div className="flex justify-between text-xs text-gray-400 mb-1">
+        <span className="font-bold">{label}</span>
+        <span className={isVisible ? 'count-animate' : ''}>{displayValue}</span>
+      </div>
+      <div className="w-full bg-gray-100 rounded-full h-2">
+        <div 
+          className="bg-gradient-to-r from-[#86D99C] to-[#00B1B8] h-2 rounded-full transition-all duration-1500 ease-out"
+          style={{ width: isVisible ? `${progressWidth}%` : '0%' }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const { isConnected } = useWeb3();
   const { isInitialized, productCatalog } = useContracts();
@@ -36,6 +84,60 @@ export default function HomePage() {
   const [activeTranchesCount, setActiveTranchesCount] = useState(0);
   const [premiumRange, setPremiumRange] = useState({ min: 0, max: 0 });
   const [loading, setLoading] = useState(true);
+  const [isProgressVisible, setIsProgressVisible] = useState(false);
+  const [heroAnimations, setHeroAnimations] = useState({
+    logo: false,
+    title: false,
+    subtitle: false,
+    description: false,
+    buttons: false
+  });
+  const [mounted, setMounted] = useState(false);
+  const progressRef = useRef<HTMLDivElement>(null);
+
+  // Track mounting state
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Intersection observer for progress bars
+  useEffect(() => {
+    if (!mounted) return;
+    
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setIsProgressVisible(true);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (progressRef.current) {
+      observer.observe(progressRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [mounted]);
+
+  // Hero Section sequential animation
+  useEffect(() => {
+    if (!mounted) return;
+    
+    const timer1 = setTimeout(() => setHeroAnimations(prev => ({ ...prev, logo: true })), 200);
+    const timer2 = setTimeout(() => setHeroAnimations(prev => ({ ...prev, title: true })), 400);
+    const timer3 = setTimeout(() => setHeroAnimations(prev => ({ ...prev, subtitle: true })), 600);
+    const timer4 = setTimeout(() => setHeroAnimations(prev => ({ ...prev, description: true })), 800);
+    const timer5 = setTimeout(() => setHeroAnimations(prev => ({ ...prev, buttons: true })), 1000);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+      clearTimeout(timer4);
+      clearTimeout(timer5);
+    };
+  }, [mounted]);
 
   // Fetch real data from contracts
   useEffect(() => {
@@ -172,28 +274,33 @@ export default function HomePage() {
   }, [isInitialized, productCatalog, getProducts, getActiveTranches]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
+    <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
+            <div className={`transition-all duration-700 ${heroAnimations.logo ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              <img src="/images/BI.svg" alt="DIN Logo" className="h-16 w-auto mx-auto mb-8" />
+            </div>
+            <h1 className={`text-5xl md:text-7xl font-bold font-display text-gray-900 mb-6 transition-all duration-700 ${heroAnimations.title ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               DIN Protocol
-              <span className="block text-blue-400">Decentralized Insurance on Kaia</span>
+              <span className={`block text-transparent bg-clip-text bg-gradient-to-r from-[#86D99C] to-[#00B1B8] transition-all duration-700 delay-200 ${heroAnimations.subtitle ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                Decentralized Insurance on Kaia
+              </span>
             </h1>
-            <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
+            <p className={`text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto transition-all duration-700 delay-400 ${heroAnimations.description ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               On-chain parametric insurance with automatic oracle-triggered payouts.
               100% collateralized pools with NFT insurance tokens.
             </p>
-            <div className="flex justify-center items-center gap-4 mb-6">
-              <span className="text-sm text-green-400 bg-green-900 px-3 py-1 rounded">
+            <div className={`flex justify-center items-center gap-4 mb-8 transition-all duration-700 delay-600 ${heroAnimations.buttons ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              <span className="text-sm text-green-600 bg-green-100 px-3 py-1 rounded-full font-medium">
                 ● Live on Testnet
               </span>
               <a 
                 href={`${KAIA_TESTNET.blockExplorer}/address/${KAIA_TESTNET.contracts.productCatalog}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-blue-400 hover:text-blue-300"
+                className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
               >
                 View Contracts ↗
               </a>
@@ -201,22 +308,23 @@ export default function HomePage() {
                 href={KAIA_TESTNET.faucet}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-blue-400 hover:text-blue-300"
+                className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
               >
                 Get Test KLAY ↗
               </a>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div className={`flex flex-col sm:flex-row gap-4 justify-center items-center transition-all duration-700 delay-800 ${heroAnimations.buttons ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               <Link
                 href="/insurance"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-medium transition-colors"
+                className="relative bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white px-8 py-4 rounded-2xl text-lg font-semibold font-outfit transition-all duration-300 hover:scale-95 hover:shadow-lg group overflow-hidden"
               >
-                Buy Insurance
+                <div className="absolute inset-0 bg-gradient-to-br from-[#00B1B8] to-[#86D99C] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                <span className="relative">Buy Insurance</span>
               </Link>
               <Link
                 href="/tranches"
-                className="bg-transparent border-2 border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-8 py-4 rounded-lg text-lg font-medium transition-all"
+                className="bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 px-8 py-4 rounded-2xl text-lg font-semibold font-outfit transition-all duration-300"
               >
                 Provide Liquidity
               </Link>
@@ -227,72 +335,102 @@ export default function HomePage() {
 
       {/* Key Metrics Dashboard */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          <div className="bg-gray-800 rounded-lg p-6 text-center border border-gray-700">
-            <div className="text-3xl font-bold text-blue-400 mb-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16" ref={progressRef}>
+          <div className="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div className="text-4xl font-bold font-display text-transparent bg-clip-text bg-gradient-to-r from-[#86D99C] to-[#00B1B8] mb-2">
               {loading ? (
-                <span className="text-xl">Loading...</span>
+                <span className="text-2xl text-gray-400">Loading...</span>
               ) : (
                 `$${(Number(totalCapacity) / 1e6).toFixed(0)}${Number(totalCapacity) >= 1e6 ? 'M' : 'K'}`
               )}
             </div>
-            <div className="text-gray-400">Total Capacity</div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-gray-700 font-medium">Total Capacity</div>
+            <div className="text-sm text-gray-500 mt-2">
               {loading ? '-' : `${activeTranchesCount} Active Tranches`}
             </div>
+            {!loading && (
+              <div className="mt-4">
+                <ProgressBar 
+                  label="Capacity Filled" 
+                  value={75} 
+                  maxValue={100} 
+                  isVisible={isProgressVisible} 
+                />
+              </div>
+            )}
           </div>
-          <div className="bg-gray-800 rounded-lg p-6 text-center border border-gray-700">
-            <div className="text-3xl font-bold text-green-400 mb-2">
+          <div className="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div className="text-4xl font-bold font-display text-gray-900 mb-2">
               {loading ? '-' : activeTranchesCount}
             </div>
-            <div className="text-gray-400">Risk Tranches</div>
-            <div className="text-xs text-gray-500 mt-1">BTC Protection</div>
+            <div className="text-gray-700 font-medium">Risk Tranches</div>
+            <div className="text-sm text-gray-500 mt-2">BTC Protection</div>
+            {!loading && (
+              <div className="mt-4">
+                <ProgressBar 
+                  label="Active Tranches" 
+                  value={activeTranchesCount} 
+                  maxValue={10} 
+                  isVisible={isProgressVisible} 
+                />
+              </div>
+            )}
           </div>
-          <div className="bg-gray-800 rounded-lg p-6 text-center border border-gray-700">
-            <div className="text-3xl font-bold text-yellow-400 mb-2">
+          <div className="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div className="text-4xl font-bold font-display text-gray-900 mb-2">
               {loading ? '-' : `${premiumRange.min}-${premiumRange.max}%`}
             </div>
-            <div className="text-gray-400">Premium Range</div>
-            <div className="text-xs text-gray-500 mt-1">30-Day Maturity</div>
+            <div className="text-gray-700 font-medium">Premium Range</div>
+            <div className="text-sm text-gray-500 mt-2">30-Day Maturity</div>
+            {!loading && (
+              <div className="mt-4">
+                <ProgressBar 
+                  label="Average Premium" 
+                  value={(premiumRange.min + premiumRange.max) / 2} 
+                  maxValue={10} 
+                  isVisible={isProgressVisible} 
+                />
+              </div>
+            )}
           </div>
         </div>
 
         {/* Live Insurance Products */}
         <div className="mb-16">
-          <h2 className="text-3xl font-bold text-white mb-8 text-center">
+          <h2 className="text-4xl font-bold font-display text-gray-900 mb-12 text-center">
             Live Insurance Products
           </h2>
           {loading ? (
             <div className="text-center py-12">
-              <div className="text-white">Loading insurance products...</div>
+              <div className="text-gray-600">Loading insurance products...</div>
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-gray-400">No insurance products available</div>
+              <div className="text-gray-500">No insurance products available</div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {products.flatMap(product => 
                 product.tranches.slice(0, 4).map((tranche) => (
-                  <div key={tranche.trancheId} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-bold text-white">{tranche.name || `Tranche ${tranche.trancheId}`}</h3>
-                      <span className="text-2xl">₿</span>
+                  <div key={tranche.trancheId} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 group">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-xl font-bold font-display text-gray-900">{tranche.name || `Tranche ${tranche.trancheId}`}</h3>
+                      <img src="/images/BTC.svg" alt="BTC" className="w-8 h-8" />
                     </div>
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Trigger:</span>
-                        <span className="text-white">
+                        <span className="text-gray-600">Trigger:</span>
+                        <span className="text-gray-900 font-semibold">
                           {tranche.triggerType === 0 ? '<' : '>'} ${(Number(tranche.threshold) / 1000).toFixed(0)}K
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Premium:</span>
-                        <span className="text-white">{(tranche.premiumRateBps / 100).toFixed(1)}%</span>
+                        <span className="text-gray-600">Premium:</span>
+                        <span className="text-gray-900 font-semibold">{(tranche.premiumRateBps / 100).toFixed(1)}%</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Capacity:</span>
-                        <span className="text-white">
+                        <span className="text-gray-600">Capacity:</span>
+                        <span className="text-gray-900 font-semibold">
                           ${Number(tranche.trancheCap) >= 1e6 
                             ? `${(Number(tranche.trancheCap) / 1e6).toFixed(0)}M`
                             : `${(Number(tranche.trancheCap) / 1e3).toFixed(0)}K`
@@ -300,11 +438,11 @@ export default function HomePage() {
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Risk:</span>
-                        <span className={`font-medium ${
-                          tranche.riskLevel === 'LOW' ? 'text-green-400' :
-                          tranche.riskLevel === 'MEDIUM' ? 'text-yellow-400' :
-                          'text-red-400'
+                        <span className="text-gray-600">Risk:</span>
+                        <span className={`font-bold px-2 py-1 rounded-lg text-xs ${
+                          tranche.riskLevel === 'LOW' ? 'bg-green-100 text-green-700' :
+                          tranche.riskLevel === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
                         }`}>
                           {tranche.riskLevel || 'MEDIUM'}
                         </span>
@@ -312,9 +450,10 @@ export default function HomePage() {
                     </div>
                     <Link
                       href={`/tranches/${tranche.productId}/${tranche.trancheId}`}
-                      className="block w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white text-center py-2 rounded-lg transition-colors text-sm"
+                      className="block w-full mt-6 relative bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white text-center py-3 rounded-xl font-semibold font-outfit transition-all duration-300 group-hover:scale-95 group-hover:shadow-md overflow-hidden"
                     >
-                      View Details
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#00B1B8] to-[#86D99C] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+                      <span className="relative">View Details</span>
                     </Link>
                   </div>
                 ))
@@ -325,27 +464,51 @@ export default function HomePage() {
 
         {/* How It Works */}
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-white mb-8">How It Works</h2>
+          <h2 className="text-4xl font-bold font-display text-gray-900 mb-12">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
-              <div className="text-4xl mb-4">🛡️</div>
-              <h3 className="text-xl font-bold text-white mb-4">For Insurance Buyers</h3>
-              <ul className="text-gray-400 text-left space-y-2">
-                <li>• Browse available insurance products</li>
-                <li>• Select coverage amount and duration</li>
-                <li>• Pay premium to secure protection</li>
-                <li>• Receive automatic payouts when triggered</li>
+            <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
+              <div className="text-5xl mb-6">🛡️</div>
+              <h3 className="text-2xl font-bold font-display text-gray-900 mb-4">For Insurance Buyers</h3>
+              <ul className="text-gray-600 text-left space-y-3">
+                <li className="flex items-start">
+                  <span className="text-[#86D99C] mr-2">•</span>
+                  <span>Browse available insurance products</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-[#86D99C] mr-2">•</span>
+                  <span>Select coverage amount and duration</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-[#86D99C] mr-2">•</span>
+                  <span>Pay premium to secure protection</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-[#86D99C] mr-2">•</span>
+                  <span>Receive automatic payouts when triggered</span>
+                </li>
               </ul>
             </div>
 
-            <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
-              <div className="text-4xl mb-4">💰</div>
-              <h3 className="text-xl font-bold text-white mb-4">For Liquidity Providers</h3>
-              <ul className="text-gray-400 text-left space-y-2">
-                <li>• Deposit USDT into insurance pools</li>
-                <li>• Earn premiums from insurance sales</li>
-                <li>• Receive additional staking rewards</li>
-                <li>• Withdraw funds after pool periods</li>
+            <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
+              <div className="text-5xl mb-6">💰</div>
+              <h3 className="text-2xl font-bold font-display text-gray-900 mb-4">For Liquidity Providers</h3>
+              <ul className="text-gray-600 text-left space-y-3">
+                <li className="flex items-start">
+                  <span className="text-[#00B1B8] mr-2">•</span>
+                  <span>Deposit USDT into insurance pools</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-[#00B1B8] mr-2">•</span>
+                  <span>Earn premiums from insurance sales</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-[#00B1B8] mr-2">•</span>
+                  <span>Receive additional staking rewards</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-[#00B1B8] mr-2">•</span>
+                  <span>Withdraw funds after pool periods</span>
+                </li>
               </ul>
             </div>
           </div>
@@ -354,12 +517,12 @@ export default function HomePage() {
         {/* Connection Status */}
         {!isConnected && (
           <div className="mt-16 text-center">
-            <div className="bg-blue-900 border border-blue-600 rounded-lg p-6">
-              <h3 className="text-xl font-bold text-blue-400 mb-2">Get Started</h3>
-              <p className="text-blue-300 mb-4">
+            <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 border border-gray-100 shadow-sm">
+              <h3 className="text-2xl font-bold font-display text-gray-900 mb-3">Get Started</h3>
+              <p className="text-gray-600 mb-4">
                 Connect your wallet to start using DIN insurance platform
               </p>
-              <p className="text-blue-400 text-sm">
+              <p className="text-gray-500 text-sm">
                 Supports MetaMask, Kaikas, and other Web3 wallets
               </p>
             </div>

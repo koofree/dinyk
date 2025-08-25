@@ -50,14 +50,14 @@ export default function RootLayout(props: { children: React.ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          "min-h-screen bg-gray-900 text-white antialiased",
+          "min-h-screen bg-white text-gray-900 antialiased",
           inter.variable,
           spaceMono.variable,
         )}
         suppressHydrationWarning
       >
         <AppProviders>
-          <div className="min-h-screen flex flex-col">
+          <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-blue-50">
             <Navbar />
             <main className="flex-1">
               {props.children}

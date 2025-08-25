@@ -26,14 +26,14 @@ export default function DebugPage() {
   }, [web3Context, contractsContext]);
 
   return (
-    <div className="min-h-screen bg-gray-900 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 p-8">
       <div className="mx-auto max-w-4xl">
-        <h1 className="mb-8 text-3xl font-bold text-white">Debug Information</h1>
+        <h1 className="mb-8 text-3xl font-bold font-display text-gray-900">Debug Information</h1>
         
         <div className="space-y-6">
-          <div className="rounded-lg bg-gray-800 p-6">
-            <h2 className="mb-4 text-xl font-semibold text-blue-400">Web3 Context</h2>
-            <pre className="text-sm text-gray-300">
+          <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-6">
+            <h2 className="mb-4 text-xl font-semibold text-[#00B1B8]">Web3 Context</h2>
+            <pre className="text-sm text-gray-700 bg-gray-50 rounded-lg p-4 overflow-auto">
               {JSON.stringify(
                 {
                   provider: !!web3Context?.provider,
