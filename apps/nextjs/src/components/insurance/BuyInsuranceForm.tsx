@@ -1,21 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@dinsure/ui/card";
+import { calculatePremium } from "@/lib/utils/insurance";
+import { useBuyerOperations, useContracts, useWeb3 } from "@dinsure/contracts";
+import { Alert, AlertDescription } from "@dinsure/ui/alert";
 import { Button } from "@dinsure/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@dinsure/ui/card";
 import { Input } from "@dinsure/ui/input";
 import { Label } from "@dinsure/ui/label";
-import { Alert, AlertDescription } from "@dinsure/ui/alert";
 import { Slider } from "@dinsure/ui/slider";
-import { Badge } from "@dinsure/ui/badge";
-import { Shield, AlertCircle, CheckCircle, Loader2, Calculator } from "lucide-react";
-import { useWeb3, useBuyerOperations, useContracts } from "@dinsure/contracts";
 import { formatUnits, parseUnits } from "ethers";
-import { calculatePremium } from "@/lib/utils/insurance";
+import { AlertCircle, Calculator, CheckCircle, Loader2, Shield } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface BuyInsuranceFormProps {
   productId: bigint;
-  trancheIndex: number;
+  trancheId: number;
   roundId: bigint;
   tranche: {
     trigger: bigint;
@@ -27,7 +26,7 @@ interface BuyInsuranceFormProps {
 
 export function BuyInsuranceForm({
   productId,
-  trancheIndex,
+  trancheId,
   roundId,
   tranche,
   onSuccess
@@ -82,7 +81,7 @@ export function BuyInsuranceForm({
       
       const tx = await buyInsurance({
         productId,
-        trancheIndex,
+        trancheId,
         roundId,
         coverageAmount: coverageAmountWei
       });

@@ -1,7 +1,5 @@
 "use client";
 
-import React from "react";
-import Link from "next/link";
 import { formatPercentage, formatUSDT } from "@/utils/calculations";
 import { getTrancheName, getTrancheShortName } from "@/utils/productHelpers";
 import {
@@ -10,6 +8,8 @@ import {
   getRoundStateLabel,
   getRoundStateTextColor,
 } from "@/utils/statusMappings";
+import Link from "next/link";
+import React from "react";
 
 import type { Product, Tranche } from "@dinsure/contracts";
 
@@ -26,9 +26,6 @@ export const TrancheCard: React.FC<TrancheCardProps> = ({
   const trancheName = getTrancheName(tranche, product);
   const shortName = getTrancheShortName(tranche, product);
   const riskLevel = getRiskLevel(Number(tranche.threshold) / 100);
-  
-  // Calculate tranche index from trancheId (assuming encoding is productId * 10 + index)
-  const trancheIndex = tranche.trancheId % 10;
 
   // Use actual data from tranche/round
   const currentRound = tranche.currentRound;
@@ -65,7 +62,7 @@ export const TrancheCard: React.FC<TrancheCardProps> = ({
     <div className="hover:bg-gray-750 rounded-lg bg-gray-800 p-6 transition-colors relative">
       {/* View Details Link */}
       <Link 
-        href={`/insurance/tranches/${product.productId}/${trancheIndex}`}
+        href={`/tranches/${product.productId}/${tranche.trancheId}`}
         className="absolute top-4 right-4 text-sm text-blue-400 hover:text-blue-300 underline"
       >
         View Details →
@@ -151,7 +148,7 @@ export const TrancheCard: React.FC<TrancheCardProps> = ({
 
       {/* Action Button */}
       <Link 
-        href={`/insurance/tranches/${product.productId}/${trancheIndex}`}
+        href={`/tranches/${product.productId}/${tranche.trancheId}`}
         className="block w-full text-center rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700"
       >
         View Details

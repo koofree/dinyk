@@ -107,39 +107,20 @@ function TrancheContent() {
           setProducts(fetchedProducts);
         }
         
-        // Build list of potential tranche IDs to check
-        console.log("[Tranche Page] Building tranche IDs to check...");
+        // Get active tranche IDs from contract
+        console.log("[Tranche Page] Getting active tranche IDs from contract...");
         let activeTrancheIds: number[] = [];
         
-        // First, try the getActiveTranches function if available
         try {
-          const activeTranches = await getActiveTranches();
+          const activeTranches = await (productCatalog as any).getActiveTranches();
           if (activeTranches && activeTranches.length > 0) {
             console.log("[Tranche Page] Got active tranches from contract:", activeTranches);
             activeTrancheIds = activeTranches;
+          } else {
+            console.log("[Tranche Page] No active tranches found in contract");
           }
         } catch (err) {
-          console.log("[Tranche Page] getActiveTranches failed, falling back to product-based generation:", err);
-          // Don't throw here, just log and continue with fallback
-        }
-        
-        // If no active tranches found, generate IDs based on products
-        if (activeTrancheIds.length === 0 && fetchedProducts.length > 0) {
-          console.log("[Tranche Page] Generating tranche IDs from products...");
-          for (const product of fetchedProducts) {
-            // Check first 5 tranches for each product (0-4)
-            for (let i = 0; i < 5; i++) {
-              const trancheId = product.productId * 10 + i;
-              activeTrancheIds.push(trancheId);
-            }
-          }
-        }
-        
-        // If still no IDs and no products, use configured tranche IDs from constants
-        if (activeTrancheIds.length === 0) {
-          console.log("[Tranche Page] No products found, using configured tranche IDs from constants...");
-          // Product 1 (BTC) has 4 tranches (indices 0-3)
-          activeTrancheIds = [10, 11, 12, 13]; // Product 1, tranches 0-3
+          console.log("[Tranche Page] getActiveTranches failed:", err);
         }
         
         console.log("[Tranche Page] Will check tranche IDs:", activeTrancheIds);
@@ -177,14 +158,12 @@ function TrancheContent() {
             
             console.log(`[Tranche Page] Tranche ${id} fetched:`, tranche);
             
-            // Extract product ID and tranche index from the ID
-            const productId = Math.floor(id / 10);
-            const trancheIndex = id % 10;
+            
             
             // Convert BigInt values to regular numbers for display
             return {
-              trancheId: id,
-              productId: productId,
+              trancheId: Number(tranche.trancheId || id), // Use actual trancheId from contract
+              productId: Number(tranche.productId || 0),
               triggerType: Number(tranche.triggerType || 0),
               threshold: tranche.threshold ? BigInt(tranche.threshold.toString()) : BigInt(0),
               premiumRateBps: Number(tranche.premiumRateBps || 0),
@@ -199,7 +178,7 @@ function TrancheContent() {
               isExpired: false,
               availableCapacity: BigInt(0),
               utilizationRate: 0,
-              name: tranche.name || `Tranche ${String.fromCharCode(65 + trancheIndex)}`,
+              name: tranche.name || `Tranche ${tranche.trancheId || id}`,
             } as Tranche;
           } catch (err) {
             console.error(`[Tranche Page] Error fetching tranche ${id}:`, err);
@@ -218,7 +197,7 @@ function TrancheContent() {
           for (const product of INSURANCE_PRODUCTS) {
             for (let i = 0; i < product.tranches.length && i < 4; i++) {
               const configTranche = product.tranches[i];
-              const trancheId = product.productId * 10 + i;
+              const trancheId = configTranche.id; // Use actual tranche ID from config
               
               configuredTranches.push({
                 trancheId: trancheId,
@@ -391,7 +370,6 @@ function TrancheContent() {
               
               // Show tranche even without product
               if (!product) {
-                const trancheIndex = tranche.trancheId % 10;
                 return (
                   <div key={tranche.trancheId} className="bg-gray-800 rounded-lg p-6 border border-gray-700 relative">
                     <h3 className="text-lg font-semibold text-white mb-4">
@@ -415,7 +393,7 @@ function TrancheContent() {
                     </div>
                     <div className="mt-4">
                       <Link 
-                        href={`/insurance/tranches/${tranche.productId}/${trancheIndex}`}
+                        href={`/tranches/${tranche.productId}/${tranche.trancheId}`}
                         className="block w-full text-center rounded bg-blue-600 px-4 py-3 text-white font-medium transition-colors hover:bg-blue-700"
                       >
                         View Details

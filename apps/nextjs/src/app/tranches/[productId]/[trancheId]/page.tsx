@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
 
 interface TrancheData {
   productId: bigint;
-  index: number;
+  trancheId: number;
   trigger: bigint;
   premiumBps: bigint;
   poolAddress: string;
@@ -87,7 +87,7 @@ export default function TrancheDetailPage() {
       
       setTranche({
         productId: BigInt(productId),
-        index: Number(trancheId),
+        trancheId: Number(trancheId),
         trigger: trancheData?.threshold || trancheData?.triggerThreshold || 0n,
         premiumBps: trancheData?.premiumRateBps || trancheData?.premiumBps || 0n,
         poolAddress: trancheData?.poolAddress || "0x0000000000000000000000000000000000000000"
@@ -424,7 +424,7 @@ export default function TrancheDetailPage() {
           {selectedRound && selectedRound.state === 1 ? (
             <BuyInsuranceForm
               productId={BigInt(productId)}
-              trancheIndex={tranche.index}
+              trancheId={tranche.trancheId}
               roundId={selectedRound.id}
               tranche={tranche}
               onSuccess={() => loadData()}

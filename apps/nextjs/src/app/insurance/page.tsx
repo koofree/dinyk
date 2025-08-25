@@ -160,9 +160,9 @@ export default function InsurancePage() {
     router.push(`/tranche?productId=${productId}`);
   };
   
-  const handleViewTrancheDetail = (productId: number, trancheIndex: number) => {
+  const handleViewTrancheDetail = (productId: number, tranchId: number) => {
     // Navigate to specific tranche detail page
-    router.push(`/insurance/tranches/${productId}/${trancheIndex}`);
+    router.push(`/tranches/${productId}/${tranchId}`);
   };
   
 
