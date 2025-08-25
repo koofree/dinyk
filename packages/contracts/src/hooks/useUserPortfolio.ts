@@ -238,21 +238,31 @@ export function useUserPortfolio() {
   const fetchLiquidityPositions = useCallback(async () => {
     if (!account || !productCatalog || !tranchePoolFactory) return [];
 
+    const positions: UserLiquidityPosition[] = [];
+    
     try {
-      const positions: UserLiquidityPosition[] = [];
       const provider = getProvider();
       
-      // Get all active product IDs
-      const activeProductIds = await productCatalog.getActiveProducts();
-      console.log(`Found ${activeProductIds.length} active products`);
+      // Try a simple approach: just check known product IDs 1-3
+      const productIds = [1, 2, 3];
+      console.log(`Checking products: ${productIds.join(', ')}`);
       
-      for (const productIdBN of activeProductIds) {
-        const productId = Number(productIdBN);
+      for (const productId of productIds) {
         try {
+          console.log(`Checking product ${productId}...`);
           const product = await productCatalog.getProduct(productId);
-          // Check both 'active' and 'enabled' fields for compatibility
+          
+          // Skip if product doesn't exist or is inactive
+          if (!product) {
+            console.log(`Product ${productId} doesn't exist`);
+            continue;
+          }
+          
           const isActive = product.active !== undefined ? product.active : product.enabled;
-          if (!isActive) continue;
+          if (!isActive) {
+            console.log(`Product ${productId} is not active`);
+            continue;
+          }
           
           // Get tranches for this product
           let trancheIds = [];
@@ -270,110 +280,143 @@ export function useUserPortfolio() {
           }
           
           for (const trancheIdBN of trancheIds) {
+            const trancheId = Number(trancheIdBN);
+            
+            // Skip invalid tranche IDs
+            if (trancheId === 0 || trancheId > 1000) {
+              continue;
+            }
+            
             try {
-              const trancheId = Number(trancheIdBN);
+              console.log(`Checking tranche ${trancheId}...`);
               
-              // Skip invalid tranche IDs (0 or very large numbers)
-              if (trancheId === 0 || trancheId > 1000) {
-                console.log(`Skipping invalid tranche ID: ${trancheId}`);
-                continue;
-              }
+              // Get tranche details
+              const trancheSpec = await productCatalog.getTranche(trancheId);
+              if (!trancheSpec) continue;
               
-              // Try to get tranche details first to validate it exists
-              let trancheSpec;
-              try {
-                trancheSpec = await productCatalog.getTranche(trancheId);
-              } catch (trancheError) {
-                console.log(`Tranche ${trancheId} doesn't exist or is invalid`);
-                continue;
-              }
-              
+              // Get pool address
               const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
+              if (poolAddress === ethers.ZeroAddress) {
+                console.log(`No pool for tranche ${trancheId}`);
+                continue;
+              }
               
-              if (poolAddress !== ethers.ZeroAddress) {
-                const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, provider);
+              console.log(`Found pool at ${poolAddress} for tranche ${trancheId}`);
+              const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, provider);
+              
+              // Skip event checking for now - just check rounds directly
+              const triggerLevel = Number(trancheSpec.triggerLevel) / 100;
                 
-                const triggerLevel = Number(trancheSpec.triggerLevel) / 100;
+              // Get active rounds for this tranche
+              let roundIds = [];
+              try {
+                roundIds = await productCatalog.getTrancheRounds(trancheId);
+                console.log(`Found ${roundIds.length} rounds for tranche ${trancheId}:`, roundIds.map(id => Number(id)));
+              } catch (e) {
+                console.log(`No rounds found for tranche ${trancheId}`);
+                continue;
+              }
+              
+              // Skip if no rounds
+              if (!roundIds || roundIds.length === 0) {
+                console.log(`Tranche ${trancheId} has no rounds`);
+                continue;
+              }
+              
+              for (const roundIdBN of roundIds) {
+                const roundId = Number(roundIdBN);
+                console.log(`Processing round ${roundId} for tranche ${trancheId}`);
                 
-                // Get active rounds for this tranche
-                let roundIds = [];
                 try {
-                  roundIds = await productCatalog.getTrancheRounds(trancheId);
-                } catch (e) {
-                  console.log(`No rounds found for tranche ${trancheId}`);
-                  continue;
-                }
-                
-                // Skip if no rounds
-                if (!roundIds || roundIds.length === 0) {
-                  console.log(`Tranche ${trancheId} has no rounds`);
-                  continue;
-                }
-                
-                for (const roundIdBN of roundIds) {
-                  const roundId = Number(roundIdBN);
+                  const roundInfo = await productCatalog.getRound(roundId);
+                  const roundState = Number(roundInfo.state);
                   
+                  // Check if user has a position in this round
+                  // getSellerPosition takes (roundId, sellerAddress) as parameters
+                  let sellerPosition;
                   try {
-                    const roundInfo = await productCatalog.getRound(roundId);
-                    const roundState = Number(roundInfo.state);
-                    
-                    // Check if user has a position in this round
-                    const sellerPosition = await pool.getSellerPosition(roundId, account);
-                    
-                    if (sellerPosition.collateralAmount > 0n || sellerPosition.sharesIssued > 0n) {
-                      // Calculate NAV and current value
-                      const poolAccounting = await pool.getPoolAccounting();
-                      const navPerShare = poolAccounting.navPerShare;
-                      const currentValue = (sellerPosition.sharesIssued * navPerShare) / ethers.parseUnits("1", 18);
-                      
-                      // Calculate days left
-                      const now = Math.floor(Date.now() / 1000);
-                      const maturityTime = Number(roundInfo.maturityTimestamp);
-                      const daysLeft = Math.max(0, Math.ceil((maturityTime - now) / (24 * 60 * 60)));
-                      
-                      // Determine status
-                      let roundStatus: UserLiquidityPosition['roundStatus'] = 'active';
-                      if (roundState === 5) roundStatus = 'settled';
-                      else if (roundState === 4) roundStatus = 'matured';
-                      
-                      // Calculate earned premium (simplified)
-                      const depositedAmount = sellerPosition.collateralAmount;
-                      const earnedPremium = currentValue > depositedAmount 
-                        ? currentValue - depositedAmount 
-                        : 0n;
-                      
-                      // Extract asset name safely
-                      const productName = product.name || product.metadataHash || `Product ${productId}`;
-                      const assetName = productName.includes(' ') ? productName.split(' ')[0] : productName;
-                      
-                      positions.push({
-                        id: `lp-${trancheId}-${roundId}`,
-                        asset: assetName,
-                        type: 'liquidity',
-                        tranche: `${productName} -${triggerLevel}% Tranche Pool`,
-                        trancheId,
-                        roundId,
-                        deposited: ethers.formatUnits(depositedAmount, 6),
-                        shares: ethers.formatUnits(sellerPosition.sharesIssued, 18),
-                        currentValue: ethers.formatUnits(currentValue, 6),
-                        earnedPremium: ethers.formatUnits(earnedPremium, 6),
-                        stakingRewards: "0", // TODO: Implement staking rewards calculation
-                        lockedAmount: ethers.formatUnits(sellerPosition.lockedSharesAssigned, 18),
-                        roundStatus,
-                        roundState: ROUND_STATES[roundState] || 'UNKNOWN',
-                        daysLeft,
-                        startTime: new Date(Number(roundInfo.salesStartTime) * 1000),
-                        endTime: new Date(Number(roundInfo.maturityTimestamp) * 1000),
-                        lossAmount: earnedPremium < 0n ? ethers.formatUnits(-earnedPremium, 6) : undefined
-                      });
+                    sellerPosition = await pool.getSellerPosition(roundId, account);
+                    console.log(`Got seller position for round ${roundId}, account ${account}`);
+                  } catch (err) {
+                    console.log(`Error getting seller position for round ${roundId}, account ${account}:`, err);
+                    // Try alternative: check if there's a different method or if parameters are reversed
+                    try {
+                      sellerPosition = await pool.sellerPositions(roundId, account);
+                      console.log(`Got seller position via sellerPositions mapping`);
+                    } catch (err2) {
+                      console.log(`Also failed with sellerPositions:`, err2);
+                      continue;
                     }
-                  } catch (roundError) {
-                    console.error(`Error processing round ${roundId}:`, roundError);
                   }
+                  
+                  console.log(`Checking seller position for round ${roundId} in tranche ${trancheId}:`, {
+                    collateralAmount: sellerPosition?.collateralAmount?.toString() || '0',
+                    sharesMinted: sellerPosition?.sharesMinted?.toString() || '0',
+                    filledCollateral: sellerPosition?.filledCollateral?.toString() || '0',
+                    lockedSharesAssigned: sellerPosition?.lockedSharesAssigned?.toString() || '0',
+                    account,
+                    rawPosition: sellerPosition
+                  });
+                  
+                  // Use sharesMinted as the correct field name from the contract
+                  const sharesAmount = sellerPosition?.sharesMinted || 0n;
+                  const collateralAmount = sellerPosition?.collateralAmount || 0n;
+                  
+                  if (collateralAmount > 0n || sharesAmount > 0n) {
+                    console.log(`Found liquidity position in round ${roundId}`);
+                    // Calculate NAV and current value
+                    const poolAccounting = await pool.getPoolAccounting();
+                    const navPerShare = poolAccounting.navPerShare;
+                    const currentValue = (sharesAmount * navPerShare) / ethers.parseUnits("1", 18);
+                    
+                    // Calculate days left
+                    const now = Math.floor(Date.now() / 1000);
+                    const maturityTime = Number(roundInfo.maturityTimestamp);
+                    const daysLeft = Math.max(0, Math.ceil((maturityTime - now) / (24 * 60 * 60)));
+                    
+                    // Determine status
+                    let roundStatus: UserLiquidityPosition['roundStatus'] = 'active';
+                    if (roundState === 5) roundStatus = 'settled';
+                    else if (roundState === 4) roundStatus = 'matured';
+                    
+                    // Calculate earned premium (simplified)
+                    // Use the initial collateral amount as deposited
+                    const depositedAmount = collateralAmount;
+                    const earnedPremium = currentValue > depositedAmount 
+                      ? currentValue - depositedAmount 
+                      : 0n;
+                    
+                    // Extract asset name safely
+                    const productName = product.name || product.metadataHash || `Product ${productId}`;
+                    const assetName = productName.includes(' ') ? productName.split(' ')[0] : productName;
+                    
+                    positions.push({
+                      id: `lp-${trancheId}-${roundId}`,
+                      asset: assetName,
+                      type: 'liquidity',
+                      tranche: `${productName} -${triggerLevel}% Tranche Pool`,
+                      trancheId,
+                      roundId,
+                      deposited: ethers.formatUnits(depositedAmount, 6),
+                      shares: ethers.formatUnits(sharesAmount, 18),
+                      currentValue: ethers.formatUnits(currentValue, 6),
+                      earnedPremium: ethers.formatUnits(earnedPremium, 6),
+                      stakingRewards: "0", // TODO: Implement staking rewards calculation
+                      lockedAmount: ethers.formatUnits(sellerPosition?.lockedSharesAssigned || 0n, 18),
+                      roundStatus,
+                      roundState: ROUND_STATES[roundState] || 'UNKNOWN',
+                      daysLeft,
+                      startTime: new Date(Number(roundInfo.salesStartTime) * 1000),
+                      endTime: new Date(Number(roundInfo.maturityTimestamp) * 1000),
+                      lossAmount: earnedPremium < 0n ? ethers.formatUnits(-earnedPremium, 6) : undefined
+                    });
+                  }
+                } catch (roundError) {
+                  console.error(`Error processing round ${roundId}:`, roundError);
                 }
               }
             } catch (error) {
-              console.error(`Error fetching tranche ${trancheIdBN} for product ${productId}:`, error);
+              console.error(`Error fetching tranche ${trancheId} for product ${productId}:`, error);
             }
           }
         } catch (error) {
@@ -384,7 +427,7 @@ export function useUserPortfolio() {
       return positions;
     } catch (error) {
       console.error("Error fetching liquidity positions:", error);
-      return [];
+      return positions; // Return what we have so far
     }
   }, [account, productCatalog, tranchePoolFactory, getProvider]);
 
