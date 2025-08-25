@@ -114,10 +114,11 @@ export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps
             continue;
           }
           
-          console.log(`Tranche ${trancheId}:`, {
-            tranche,
-            rounds: tranche.rounds
-          });
+          // Reduce console logging to avoid spam
+          // console.log(`Tranche ${trancheId}:`, {
+          //   tranche,
+          //   rounds: tranche.rounds
+          // });
 
           const rounds: RoundDetails[] = [];
 
@@ -175,9 +176,11 @@ export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps
                 salesEndTime: roundInfo.salesEndTime,
                 stateName: roundState,
                 economics,
-                isTriggered,
-                triggerPrice,
-                triggerDirection,
+                ...(isTriggered !== undefined && {
+                  isTriggered,
+                  triggerPrice,
+                  triggerDirection
+                }),
                 timeToMaturity: {
                   days,
                   hours,
@@ -222,7 +225,42 @@ export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps
     if (service) {
       fetchTrancheData();
     }
-  }, [service, currentBTCPrice]);
+  }, [service]); // Only refetch when service changes, not on every BTC price update
+
+  // Update trigger status when BTC price changes (without refetching all data)
+  useEffect(() => {
+    if (!currentBTCPrice || tranches.length === 0) return;
+    
+    // Update trigger status for existing tranches
+    setTranches(prevTranches => 
+      prevTranches.map(tranche => ({
+        ...tranche,
+        rounds: tranche.rounds.map(round => {
+          // Only update trigger status for active/matured rounds
+          if (round.state < 2 || round.state > 3) return round;
+          
+          const triggerPrice = Number(ethers.formatEther(tranche.threshold));
+          let isTriggered: boolean | undefined;
+          let triggerDirection: string | undefined;
+          
+          if (tranche.triggerType === 0) { // PRICE_BELOW
+            isTriggered = currentBTCPrice <= triggerPrice;
+            triggerDirection = "BELOW";
+          } else if (tranche.triggerType === 1) { // PRICE_ABOVE
+            isTriggered = currentBTCPrice >= triggerPrice;
+            triggerDirection = "ABOVE";
+          }
+          
+          return {
+            ...round,
+            isTriggered,
+            triggerPrice,
+            triggerDirection
+          };
+        })
+      }))
+    );
+  }, [currentBTCPrice]); // Only update trigger status when BTC price changes
 
   return {
     tranches,

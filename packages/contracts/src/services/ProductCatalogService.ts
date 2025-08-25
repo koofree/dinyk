@@ -268,7 +268,8 @@ export class ProductCatalogService {
         ? Number(lockedAssets * 10000n / totalAssets) / 100 // Convert to percentage with 2 decimal precision
         : 0;
 
-      console.log(`Pool ${trancheId}: Total=${ethers.formatUnits(totalAssets, 6)} USDT, Locked=${ethers.formatUnits(lockedAssets, 6)} USDT, Available=${ethers.formatUnits(availableCapacity, 6)} USDT, Utilization=${utilizationRate.toFixed(2)}%`);
+      // Only log pool data in debug mode or remove entirely to reduce console spam
+      // console.log(`Pool ${trancheId}: Total=${ethers.formatUnits(totalAssets, 6)} USDT, Locked=${ethers.formatUnits(lockedAssets, 6)} USDT, Available=${ethers.formatUnits(availableCapacity, 6)} USDT, Utilization=${utilizationRate.toFixed(2)}%`);
 
       return {
         poolAddress,

@@ -21,16 +21,20 @@ DIN enables users to:
 
 ### Technical Features
 - **Web3 Integration**: Direct blockchain interaction with no backend
-- **Multi-wallet Support**: MetaMask and Kaia Wallet compatibility
+- **Multi-wallet Support**: MetaMask, Kaikas, and WalletConnect compatibility
 - **Session Persistence**: Maintains wallet state across refreshes
 - **Responsive Design**: Mobile-friendly dark theme interface
 - **Real-time Updates**: Live price feeds and position tracking
+- **Yield Generation**: Automated yield strategies via YieldRouter
+- **NFT Positions**: ERC-721 tokens representing insurance coverage
 
 ## Tech Stack
 
-- **Blockchain**: Kaia Mainnet (Chain ID: 8217)
+- **Blockchain**: Kaia Testnet (Chain ID: 1001) / Mainnet (Chain ID: 8217)
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **Web3**: @kaiachain/ethers-ext v1.1.1, ethers.js v6
+- **Smart Contracts**: Solidity, Hardhat, OpenZeppelin
+- **Oracles**: Orakl Network, DINO (Optimistic Oracle)
 - **Styling**: Tailwind CSS, shadcn/ui components
 - **Build**: Turborepo monorepo orchestration
 
@@ -66,13 +70,22 @@ Create a `.env` file with:
 
 ```bash
 # Kaia Network Configuration
-NEXT_PUBLIC_CHAIN_ID=8217
-NEXT_PUBLIC_RPC_URL=https://public-en.node.kaia.io
+NEXT_PUBLIC_CHAIN_ID=1001  # Testnet (use 8217 for Mainnet)
+NEXT_PUBLIC_RPC_URL=https://public-en-kairos.node.kaia.io
 
-# Smart Contract Addresses (Deploy your own or use mocks)
-NEXT_PUBLIC_INSURANCE_CONTRACT=0x...
-NEXT_PUBLIC_TREASURY_CONTRACT=0x...
-NEXT_PUBLIC_TRANCHE_POOL_CONTRACT=0x...
+# Core Smart Contract Addresses (Testnet deployed)
+NEXT_PUBLIC_REGISTRY_ADDRESS=0xCD2B28186b257869B3C2946ababB56683F4304C3
+NEXT_PUBLIC_PRODUCT_CATALOG_ADDRESS=0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D
+NEXT_PUBLIC_INSURANCE_TOKEN_ADDRESS=0x3bEDE5f043E8D0597F9F0b60eCfc52B134d8E934
+NEXT_PUBLIC_SETTLEMENT_ENGINE_ADDRESS=0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8
+NEXT_PUBLIC_FEE_TREASURY_ADDRESS=0xb96D484cB71A5d5C3C3AB1Ac18dF587cC6AC6914
+NEXT_PUBLIC_POOL_FACTORY_ADDRESS=0x3810066EfEAc98F18cF6A1E62FF3f089CC30Fb01
+NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS=0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72
+NEXT_PUBLIC_YIELD_ROUTER_ADDRESS=0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11
+
+# Token Addresses
+NEXT_PUBLIC_USDT_ADDRESS=0x8C034f0DBA8664DA4242Cb4CF7fCD7e0a3aa5c90
+NEXT_PUBLIC_DIN_TOKEN_ADDRESS=0x7126Dbd15e6888AeDd606A7242C998DBED7530Fd
 
 # Development Flags
 NEXT_PUBLIC_ENABLE_TESTNETS=true
@@ -109,18 +122,38 @@ pnpm ui-add          # Add new shadcn/ui component
 ```
 dinyk/
 ├── apps/
-│   └── nextjs/          # Main web application
-│       ├── src/
-│       │   ├── app/     # Next.js app router pages
-│       │   ├── components/ # React components
-│       │   ├── context/ # Web3Provider and other contexts
-│       │   └── lib/     # Utilities and constants
-│       └── public/      # Static assets
+│   ├── nextjs/          # Main web application
+│   │   ├── src/
+│   │   │   ├── app/     # Next.js app router pages
+│   │   │   │   ├── insurance/    # Insurance marketplace
+│   │   │   │   ├── portfolio/    # User portfolio dashboard
+│   │   │   │   ├── tranche/      # Tranche listing
+│   │   │   │   └── tranches/     # Tranche details
+│   │   │   ├── components/       # React components
+│   │   │   │   ├── insurance/    # Insurance-specific components
+│   │   │   │   ├── liquidity/    # Liquidity provision components
+│   │   │   │   ├── tranche/      # Tranche display components
+│   │   │   │   └── web3/         # Web3 integration components
+│   │   │   ├── context/          # Web3Provider and other contexts
+│   │   │   └── lib/              # Utilities and constants
+│   │   └── public/               # Static assets
+│   └── expo/            # React Native app (deprecated)
 ├── packages/
-│   ├── ui/             # Shared UI components
+│   ├── contracts/       # Smart contract interfaces and hooks
+│   │   ├── src/
+│   │   │   ├── config/  # Contract addresses and network config
+│   │   │   ├── hooks/   # React hooks for contract interaction
+│   │   │   ├── services/# Contract service layer
+│   │   │   ├── types/   # TypeScript type definitions
+│   │   │   └── utils/   # Helper functions and formatters
+│   │   └── abis/        # Contract ABIs
+│   ├── ui/              # Shared UI components
 │   ├── tailwind-config/ # Shared Tailwind configuration
-│   └── tsconfig/       # Shared TypeScript configs
-└── docs/               # Documentation and specifications
+│   └── tsconfig/        # Shared TypeScript configs
+└── docs/                # Documentation and specifications
+    ├── whitepaper.md    # Protocol specification
+    ├── ui-architecture.md # UI/UX flows
+    └── din-architecture.md # Technical architecture
 ```
 
 ## Insurance Products
@@ -147,41 +180,74 @@ dinyk/
 
 ## Smart Contracts
 
-### Core Contracts (To be deployed)
+### Core Contracts (Deployed on Testnet)
 
-- **Insurance.sol**: Main insurance logic and product management
-- **TranchePool.sol**: Liquidity pool for each risk tranche
-- **Treasury.sol**: Protocol fee collection and distribution
-- **OracleRouter.sol**: Price feed aggregation from multiple oracles
+- **DinRegistry** (`0xCD2B28186b257869B3C2946ababB56683F4304C3`): Central registry for all contracts
+- **ProductCatalog** (`0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D`): Product and round management
+- **TranchePoolCore**: Per-tranche pool for economics (deployed via factory)
+- **InsuranceToken** (`0x3bEDE5f043E8D0597F9F0b60eCfc52B134d8E934`): NFT insurance positions
+- **SettlementEngine** (`0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8`): Claim processing
+- **YieldRouter** (`0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11`): Yield generation
+- **OracleRouter** (`0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72`): Price aggregation
 
-### Deployment
+### Contract Repository
+
+The smart contracts are maintained in a separate repository:
+- Location: `../din-contract/`
+- Deployment: Hardhat with Ignition modules
+- Testing: Comprehensive test suite with coverage
+
+### Contract Operations
 
 ```bash
-# Deploy contracts (coming soon)
-pnpm contracts:deploy
+# From din-contract directory
 
-# Verify contracts
-pnpm contracts:verify
+# Compile contracts
+npm run compile
+
+# Run tests
+npm test
+
+# Deploy to testnet
+npm run deploy:basic
+npm run deploy:registry-dependent
+npm run configure:final
+
+# Monitor operations
+npm run monitor:insurances
+npm run monitor:pools
+npm run monitor:yield
 ```
 
 ## Wallet Configuration
 
 ### Adding Kaia Network to MetaMask
 
+#### Testnet (Development)
 1. Open MetaMask
 2. Click "Add Network"
 3. Enter the following details:
-   - Network Name: Kaia
-   - RPC URL: https://public-en.node.kaia.io
+   - Network Name: Kaia Testnet
+   - RPC URL: https://public-en-kairos.node.kaia.io
+   - Chain ID: 1001
+   - Currency Symbol: KLAY
+   - Block Explorer: https://kairos.kaiascope.com
+
+#### Mainnet (Production)
+1. Open MetaMask
+2. Click "Add Network"
+3. Enter the following details:
+   - Network Name: Kaia Mainnet
+   - RPC URL: https://public-en-cypress.klaytn.net
    - Chain ID: 8217
-   - Currency Symbol: KAIA
-   - Block Explorer: https://kaiascan.io
+   - Currency Symbol: KLAY
+   - Block Explorer: https://kaiascope.com
 
 ### Supported Wallets
 
 - MetaMask (recommended)
-- Kaia Wallet (Official Kaia wallet)
-- WalletConnect (coming soon)
+- Kaikas (Official Kaia wallet)
+- WalletConnect (supported)
 
 ## Security
 

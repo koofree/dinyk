@@ -16,6 +16,8 @@ This document provides a comprehensive guide for the DIN Protocol UI architectur
 8. [State Management Architecture](#state-management-architecture)
 9. [Design System](#design-system)
 10. [Implementation Guide](#implementation-guide)
+11. [Implemented Components](#implemented-components)
+12. [Contract Integration Hooks](#contract-integration-hooks)
 
 ## Platform Overview
 
@@ -49,17 +51,25 @@ DIN is a decentralized insurance platform on Kaia blockchain providing parametri
 └──────────────┴──────────────┴──────────────────┘
 ```
 
-#### Contract Functions
+#### Contract Functions (Updated Addresses)
 ```solidity
-// DinRegistry.sol
+// DinRegistry.sol (0xCD2B28186b257869B3C2946ababB56683F4304C3)
 - getParameter(PROTOCOL_FEE_BPS) → protocolFee
+- getProductCatalog() → address
+- getTranchePoolFactory() → address
 
-// ProductCatalog.sol  
+// ProductCatalog.sol (0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D)  
 - getActiveProducts() → Product[]
 - getActiveTranches() → Tranche[]
+- getRoundInfo(roundId) → RoundInfo
 
-// TranchePoolCore.sol (multiple pools)
+// TranchePoolCore.sol (deployed per tranche via factory)
 - poolAccounting() → PoolAccounting (TVL, shares, etc.)
+- getNetAssetValue() → uint256
+
+// YieldRouter.sol (0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11)
+- getYieldPosition(poolAddress) → YieldPosition
+- getCurrentAPY() → uint256
 ```
 
 #### Components & State
@@ -1030,6 +1040,153 @@ analytics.track('InsurancePurchased', {
 });
 ```
 
+## Implemented Components
+
+### Current Implementation Status
+
+The following components have been fully implemented in the Next.js application:
+
+#### Page Components
+- **HomePage** (`/`) - Landing page with product showcase
+- **InsurancePage** (`/insurance`) - Insurance product marketplace
+- **TranchePage** (`/tranche`) - All tranches with filtering
+- **TrancheDetailPage** (`/tranches/[productId]/[trancheId]`) - Detailed tranche view
+- **PortfolioPage** (`/portfolio`) - User positions dashboard
+- **DebugPage** (`/debug`) - Development tools (dev mode only)
+
+#### Insurance Components
+```typescript
+// components/insurance/ProductCard.tsx
+- Displays insurance product with APY, TVL, risk metrics
+- Integration: useProductManagement(), ProductCatalogService
+
+// components/insurance/TrancheCard.tsx  
+- Shows tranche with trigger level, premium rate, status
+- Integration: useRoundManagement(), real-time round status
+
+// components/insurance/BuyInsuranceForm.tsx
+- Premium calculation, amount input, approval flow
+- Integration: useBuyerOperations(), USDT approval
+
+// components/insurance/ProvideLiquidityForm.tsx
+- Collateral deposit interface with yield projection
+- Integration: useSellerOperations(), calculateYield()
+
+// components/insurance/EnhancedPurchaseModal.tsx
+- Multi-step purchase flow with confirmations
+- Integration: Transaction management, error handling
+
+// components/insurance/PositionCard.tsx
+- Displays user's active insurance/liquidity positions
+- Integration: useUserPortfolio(), real-time updates
+```
+
+#### Web3 Components
+```typescript
+// components/web3/WalletButton.tsx
+- Wallet connection with network switching
+- Support: MetaMask, Kaikas, WalletConnect
+- Features: Balance display, network indicator
+
+// components/providers/AppProviders.tsx
+- Web3Context provider with session persistence
+- Contract instances initialization
+- Network change handling
+```
+
+## Contract Integration Hooks
+
+### Implemented Hooks in @dinsure/contracts
+
+#### Core Hooks
+```typescript
+// hooks/useContracts.ts
+- Provides typed contract instances
+- Automatic ABI loading and initialization
+- Network-aware contract addresses
+
+// hooks/useProductManagement.ts
+- getActiveProducts()
+- getProductWithTranches(productId)
+- registerProduct() (admin only)
+- registerTranche() (admin only)
+
+// hooks/useRoundManagement.ts  
+- getRoundInfo(roundId)
+- announceRound(params)
+- openRound(roundId)
+- closeAndMatchRound(roundId)
+- settleRound(roundId)
+
+// hooks/useBuyerOperations.ts
+- buyInsurance(params)
+- calculatePremium(roundId, amount)
+- getBuyerOrder(roundId, buyer)
+- getInsuranceTokens(owner)
+- checkClaimStatus(roundId)
+
+// hooks/useSellerOperations.ts
+- depositCollateral(params)
+- withdrawCollateral(roundId, amount)
+- getSellerPosition(roundId)
+- calculateYield(trancheId, amount)
+- getPoolMetrics(trancheId)
+
+// hooks/useUserPortfolio.ts
+- insurancePositions: UserInsurancePosition[]
+- liquidityPositions: UserLiquidityPosition[]
+- totalPortfolioValue: BigNumber
+- refetchPositions()
+
+// hooks/useMonitoring.ts
+- getPoolHealth(trancheId)
+- getTrancheRiskMetrics(trancheId)
+- getRoundMonitoring(roundId)
+- getSystemMetrics()
+
+// hooks/useSettlement.ts
+- triggerSettlement(roundId)
+- getSettlementStatus(roundId)
+- processEmergencySettlement(roundId)
+```
+
+### Service Layer
+```typescript
+// services/ProductCatalogService.ts
+export class ProductCatalogService {
+  // Centralized data fetching with caching
+  getActiveProducts(): Promise<Product[]>
+  getProductWithTranches(productId): Promise<ProductWithTranches>
+  getActiveRoundsForTranche(trancheId): Promise<Round[]>
+  getFullCatalog(): Promise<CatalogData>
+  
+  // 5-minute TTL cache for performance
+  private cache: Map<string, CachedData>
+}
+```
+
+### State Management Pattern
+```typescript
+// Example: Portfolio state management
+interface PortfolioState {
+  // Data
+  insurancePositions: UserInsurancePosition[];
+  liquidityPositions: UserLiquidityPosition[];
+  
+  // Computed values
+  totalCoverage: BigNumber;
+  totalLiquidity: BigNumber;
+  totalEarnings: BigNumber;
+  
+  // Actions
+  refetchPositions: () => Promise<void>;
+  
+  // Status
+  isLoading: boolean;
+  error: Error | null;
+}
+```
+
 ## Conclusion
 
 This unified architecture document provides:
@@ -1037,6 +1194,8 @@ This unified architecture document provides:
 2. **Smart contract integration** for every user action
 3. **Component architecture** with TypeScript interfaces
 4. **State management** patterns with real-time updates
+5. **Implemented components** with contract integration
+6. **Comprehensive hooks** for all platform operations
 5. **Implementation guide** with code examples
 
 The architecture ensures seamless integration between the frontend UI and blockchain smart contracts, providing users with a smooth, transparent, and trustworthy decentralized insurance experience.

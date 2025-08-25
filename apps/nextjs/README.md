@@ -1,28 +1,214 @@
-# Create T3 App
+# DIN Insurance Platform - Next.js Application
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+The main web application for the DIN decentralized insurance platform, built with Next.js 15 and React 19.
 
-## What's next? How do I make an app with this?
+## Features
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+### Core Functionality
+- **Insurance Marketplace**: Browse and purchase parametric insurance products
+- **Liquidity Provision**: Provide collateral to earn premiums and yields
+- **Portfolio Management**: Track insurance positions and liquidity investments
+- **Real-time Monitoring**: Live price feeds and position updates via oracles
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+### Technical Features
+- **Web3 Integration**: Direct interaction with Kaia blockchain
+- **Multi-wallet Support**: MetaMask, Kaikas, and WalletConnect
+- **Session Persistence**: Maintains wallet state across page refreshes
+- **Responsive Design**: Mobile-friendly dark theme interface
+- **Type-safe Contracts**: Full TypeScript support for smart contract interactions
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+## Tech Stack
 
-## Learn More
+- **Framework**: Next.js 15 with App Router
+- **UI Library**: React 19
+- **Language**: TypeScript
+- **Web3**: @kaiachain/ethers-ext v1.1.1, ethers.js v6
+- **Styling**: Tailwind CSS with shadcn/ui components
+- **State Management**: React Context API
+- **Contract Package**: @dinsure/contracts (local package)
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+## Project Structure
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+```
+src/
+├── app/                    # Next.js app router pages
+│   ├── page.tsx           # Home page
+│   ├── insurance/         # Insurance marketplace
+│   ├── portfolio/         # User portfolio dashboard
+│   ├── tranche/          # Tranche listing
+│   ├── tranches/         # Tranche detail pages
+│   └── debug/            # Development tools
+├── components/            # React components
+│   ├── insurance/        # Insurance-specific components
+│   │   ├── ProductCard.tsx
+│   │   ├── BuyInsuranceForm.tsx
+│   │   ├── EnhancedPurchaseModal.tsx
+│   │   └── PositionCard.tsx
+│   ├── liquidity/        # Liquidity provision components
+│   │   └── LiquidityModal.tsx
+│   ├── tranche/          # Tranche display components
+│   │   ├── TrancheCard.tsx
+│   │   └── EnhancedTrancheCard.tsx
+│   ├── web3/             # Web3 integration
+│   │   └── WalletButton.tsx
+│   └── providers/        # Context providers
+│       └── AppProviders.tsx
+├── context/              # React contexts
+│   └── Web3Provider.tsx # Wallet connection management
+└── lib/                  # Utilities and constants
+    ├── constants.ts      # App-wide constants
+    └── utils.ts         # Helper functions
+```
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+## Available Pages
 
-## How do I deploy this?
+### `/` - Home
+Landing page with platform overview and featured products
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+### `/insurance` - Insurance Marketplace
+Browse all available insurance products and tranches
+
+### `/tranche` - Tranche Listing
+View and filter all tranches across products
+
+### `/tranches/[productId]/[trancheId]` - Tranche Details
+Detailed view with buy/sell forms for specific tranche
+
+### `/portfolio` - User Portfolio
+Dashboard showing user's insurance positions and liquidity provisions
+
+### `/debug` - Debug Tools
+Development tools for contract state inspection (dev mode only)
+
+## Key Components
+
+### Insurance Components
+- **ProductCard**: Displays insurance product with key metrics
+- **TrancheCard**: Shows tranche details with risk/reward information
+- **BuyInsuranceForm**: Purchase interface with premium calculation
+- **ProvideLiquidityForm**: Deposit interface for liquidity providers
+- **EnhancedPurchaseModal**: Complete purchase flow with confirmations
+- **PositionCard**: Displays user's active positions
+
+### Web3 Components
+- **WalletButton**: Wallet connection with network switching
+- **AppProviders**: Web3 context and session persistence
+
+## Development
+
+### Prerequisites
+- Node.js 20+
+- pnpm 9.6.0+
+- MetaMask or Kaikas wallet
+
+### Setup
+```bash
+# Install dependencies (from root)
+pnpm install
+
+# Start development server
+pnpm dev:next
+
+# Or start all apps
+pnpm dev
+```
+
+### Environment Variables
+Create `.env` file with:
+```bash
+# Kaia Network
+NEXT_PUBLIC_CHAIN_ID=1001  # Testnet
+NEXT_PUBLIC_RPC_URL=https://public-en-kairos.node.kaia.io
+
+# Contract Addresses (see CLAUDE.md for full list)
+NEXT_PUBLIC_REGISTRY_ADDRESS=0xCD2B28186b257869B3C2946ababB56683F4304C3
+# ... (add other contract addresses)
+
+# Development
+NEXT_PUBLIC_ENABLE_TESTNETS=true
+NEXT_PUBLIC_SHOW_DEBUG_INFO=true
+```
+
+### Commands
+```bash
+# Development
+pnpm dev              # Start in dev mode
+
+# Code Quality
+pnpm lint            # Run ESLint
+pnpm typecheck       # TypeScript checking
+pnpm format          # Check formatting
+
+# Build
+pnpm build           # Production build
+```
+
+## Contract Integration
+
+The app uses the `@dinsure/contracts` package for smart contract interaction:
+
+### Available Hooks
+- `useContracts()` - Contract instances
+- `useProductManagement()` - Product/tranche operations
+- `useRoundManagement()` - Round lifecycle
+- `useBuyerOperations()` - Insurance purchases
+- `useSellerOperations()` - Liquidity provision
+- `useMonitoring()` - System monitoring
+- `useSettlement()` - Claim processing
+- `useUserPortfolio()` - User positions
+
+### Example Usage
+```typescript
+import { useBuyerOperations } from '@dinsure/contracts';
+
+function BuyInsurance() {
+  const { buyInsurance, calculatePremium } = useBuyerOperations();
+  
+  // Calculate premium for coverage
+  const premium = await calculatePremium(roundId, coverageAmount);
+  
+  // Purchase insurance
+  const tx = await buyInsurance({
+    roundId,
+    amount: coverageAmount,
+    maxPremium: premium
+  });
+}
+```
+
+## Deployment
+
+### Production Build
+```bash
+# Build the application
+pnpm build
+
+# Start production server
+pnpm start
+```
+
+### Deployment Platforms
+- **Vercel**: Recommended for Next.js apps
+- **AWS Amplify**: Alternative with CI/CD
+- **Docker**: Self-hosted deployment
+
+## Testing
+
+```bash
+# Run tests (when available)
+pnpm test
+
+# E2E tests
+pnpm test:e2e
+```
+
+## Contributing
+
+1. Create feature branch
+2. Make changes
+3. Run `pnpm lint` and `pnpm typecheck`
+4. Submit pull request
+
+## License
+
+See root LICENSE file for details.

@@ -45,17 +45,18 @@ All contracts are deployed and verified on Kaia Kairos testnet (Chain ID: 1001).
 
 | Contract | Address | Purpose |
 |----------|---------|---------|
-| **DinRegistry** | `0x0000760e713fed5b6F866d3Bad87927337DF61c0` | Central registry and configuration |
-| **ProductCatalog** | `0x5c251A3561E47700a9bcbD6ec91e61fB52Eb50d2` | Products, tranches, and rounds |
-| **InsuranceToken** | `0x147f4660515aE91c81FdB43Cf743C6faCACa9903` | ERC721 NFT positions |
-| **TranchePoolFactory** | `0x563e95673d4210148eD59eDb6310AC7d488F5Ec0` | Pool deployment |
-| **SettlementEngine** | `0xAE3FA73652499Bf0aB0b79B8C309DD62137f142D` | Claims processing |
-| **OracleRouter** | `0x5d83444EBa6899f1B7abD34eF04dDF7Dd7b38a37` | Oracle aggregation |
-| **OraklPriceFeed** | `0x1320682DCe0b0A52A09937d19b404901d32D5f68` | Primary oracle |
-| **DinoOracle** | `0x2480108C0dA6F7563a887D7d9d969630529340dD` | Fallback oracle |
-| **DinUSDT** | `0x53232164780a589dfAe08fB16D1962bD78591Aa0` | Test USDT (6 decimals) |
-| **DinToken** | `0x01200e08D6C522C288bE660eb7E8c82d5f095a42` | Governance token |
-| **FeeTreasury** | `0x9C20316Ba669e762Fb43dbb6d3Ff63062b89945D` | Fee collection |
+| **DinRegistry** | `0xCD2B28186b257869B3C2946ababB56683F4304C3` | Central registry and configuration |
+| **ProductCatalog** | `0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D` | Products, tranches, and rounds |
+| **InsuranceToken** | `0x3bEDE5f043E8D0597F9F0b60eCfc52B134d8E934` | ERC721 NFT positions |
+| **TranchePoolFactory** | `0x3810066EfEAc98F18cF6A1E62FF3f089CC30Fb01` | Pool deployment |
+| **SettlementEngine** | `0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8` | Claims processing |
+| **OracleRouter** | `0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72` | Oracle aggregation |
+| **OraklPriceFeed** | `0xFa2f0063BAC2e5BA304f50eC54b6EA07aCC534fF` | Primary oracle |
+| **DinoOracle** | `0x6317f2f9271d484548871915DDDff95aD4c45aC3` | Fallback oracle |
+| **DinUSDT** | `0x8C034f0DBA8664DA4242Cb4CF7fCD7e0a3aa5c90` | Test USDT (6 decimals) |
+| **DinToken** | `0x7126Dbd15e6888AeDd606A7242C998DBED7530Fd` | Governance token |
+| **FeeTreasury** | `0xb96D484cB71A5d5C3C3AB1Ac18dF587cC6AC6914` | Fee collection |
+| **YieldRouter** | `0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11` | Yield generation strategies |
 
 ### Contract Interaction Flow
 
@@ -448,6 +449,54 @@ if (status.canSettle) {
 }
 ```
 
+### 8. useUserPortfolio - User Position Management
+```typescript
+const {
+  insurancePositions,
+  liquidityPositions,
+  totalPortfolioValue,
+  totalCoverage,
+  totalLiquidity,
+  totalEarnings,
+  refetchPositions,
+  isLoading,
+  error
+} = useUserPortfolio();
+
+// Example: Display user positions
+insurancePositions.forEach(position => {
+  console.log(`Product: ${position.productName}`);
+  console.log(`Coverage: ${position.coverageAmount} USDT`);
+  console.log(`Status: ${position.status}`);
+});
+
+liquidityPositions.forEach(position => {
+  console.log(`Tranche: ${position.trancheName}`);
+  console.log(`Liquidity: ${position.collateralAmount} USDT`);
+  console.log(`Earnings: ${position.earnedPremiums} USDT`);
+});
+```
+
+### 9. ProductCatalogService - Centralized Data Service
+```typescript
+import { ProductCatalogService } from '@dinsure/contracts/services';
+
+// Initialize service
+const service = new ProductCatalogService(provider, chainId);
+
+// Fetch active products
+const products = await service.getActiveProducts();
+
+// Get product with tranches
+const productDetails = await service.getProductWithTranches(productId);
+
+// Get active rounds for tranche
+const rounds = await service.getActiveRoundsForTranche(trancheId);
+
+// Fetch all data in one call
+const catalog = await service.getFullCatalog();
+```
+
 ---
 
 ## 🌐 Web3 Provider Implementation
@@ -544,6 +593,62 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
 ```
 
 ---
+
+## 🎯 Implemented Features & Components
+
+### Contract Package Structure (@dinsure/contracts)
+
+```
+packages/contracts/
+├── src/
+│   ├── config/
+│   │   ├── addresses.ts      # Contract addresses by network
+│   │   ├── constants.ts      # Protocol constants
+│   │   └── networks.ts       # Network configurations
+│   ├── hooks/
+│   │   ├── useContracts.ts   # Contract instances
+│   │   ├── useProductManagement.ts
+│   │   ├── useRoundManagement.ts
+│   │   ├── useBuyerOperations.ts
+│   │   ├── useSellerOperations.ts
+│   │   ├── useMonitoring.ts
+│   │   ├── useSettlement.ts
+│   │   ├── useUserPortfolio.ts
+│   │   └── index.ts
+│   ├── services/
+│   │   └── ProductCatalogService.ts  # Centralized data fetching
+│   ├── types/
+│   │   ├── common.ts         # Common types
+│   │   ├── contracts.ts      # Contract types
+│   │   ├── products.ts       # Product/tranche types
+│   │   ├── pools.ts          # Pool types
+│   │   └── oracles.ts        # Oracle types
+│   └── utils/
+│       ├── cache.ts          # 5-minute TTL cache
+│       ├── errors.ts         # Error handling
+│       └── formatters.ts     # Amount formatting
+└── abis/                     # Contract ABIs
+```
+
+### UI Components Implementation
+
+#### Insurance Components
+- **ProductCard**: Displays product with APY, TVL, risk metrics
+- **TrancheCard**: Shows trigger level, premium rate, round status
+- **EnhancedTrancheCard**: Advanced display with real-time updates
+- **BuyInsuranceForm**: Premium calculation, amount input, transaction flow
+- **ProvideLiquidityForm**: Collateral deposit, yield projection
+- **EnhancedPurchaseModal**: Multi-step purchase with confirmations
+- **LiquidityModal**: Deposit/withdraw with earnings display
+- **PositionCard**: User's active positions with status tracking
+
+#### Page Implementation
+- **HomePage (`/`)**: Product showcase, platform stats
+- **InsurancePage (`/insurance`)**: Product grid with filtering
+- **TranchePage (`/tranche`)**: All tranches with sorting
+- **TrancheDetailPage (`/tranches/[productId]/[trancheId]`)**: Buy/sell forms
+- **PortfolioPage (`/portfolio`)**: User positions and earnings
+- **DebugPage (`/debug`)**: Contract state inspection (dev only)
 
 ## 🏦 Insurance Product Structure
 
@@ -850,6 +955,59 @@ Located in `../din-contract/scripts/`:
 
 ---
 
+## 🌱 Yield Generation System
+
+### YieldRouter Architecture
+
+The YieldRouter contract manages idle collateral to generate additional returns for liquidity providers:
+
+```
+┌───────────────────────────────────────────────┐
+│                YieldRouter                     │
+├───────────────────────────────────────────────┤
+│                                                │
+│  ┌────────────────────────────────────────┐   │
+│  │         Capital Management              │   │
+│  ├────────────────────────────────────────┤   │
+│  │ • Receive idle funds from pools        │   │
+│  │ • Track deposits per pool              │   │
+│  │ • Calculate yield earned               │   │
+│  │ • Return principal + yield on demand  │   │
+│  └────────────────┬───────────────────────┘   │
+│                    │                           │
+│  ┌────────────────▼───────────────────────┐   │
+│  │        DeFi Protocol Integration       │   │
+│  ├────────────────────────────────────────┤   │
+│  │ • Lending protocols (Aave, Compound)  │   │
+│  │ • Stablecoin farming                   │   │
+│  │ • Conservative strategies only         │   │
+│  │ • Risk-adjusted returns                │   │
+│  └────────────────────────────────────────┘   │
+└───────────────────────────────────────────────┘
+```
+
+### Yield Operations
+
+```typescript
+// Move funds to yield generation
+await yieldRouter.moveToYield(poolAddress, amount);
+
+// Track yield performance
+const position = await yieldRouter.getYieldPosition(poolAddress);
+console.log(`Principal: ${position.principal}`);
+console.log(`Yield earned: ${position.yieldEarned}`);
+console.log(`APY: ${position.currentAPY}%`);
+
+// Return funds before settlement
+await yieldRouter.returnFromYield(poolAddress, amount);
+```
+
+### Safety Features
+- **Conservative Strategies**: Only low-risk DeFi protocols
+- **Emergency Withdrawal**: Admin can force return of funds
+- **Audit Trail**: All movements tracked on-chain
+- **Buffer Maintenance**: Keep minimum liquidity for claims
+
 ## 🔄 Future Roadmap
 
 ### Phase 2 (Q2 2025)
@@ -860,7 +1018,7 @@ Located in `../din-contract/scripts/`:
 
 ### Phase 3 (Q3 2025)
 - Decentralized governance (DAO)
-- Yield optimization strategies
+- Enhanced yield optimization strategies
 - Social insurance features
 - AI-powered risk assessment
 

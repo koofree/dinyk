@@ -30,6 +30,7 @@ This project is transitioning from a T3 Turbo monorepo to a Web3-focused archite
 - **Web3 Integration**: @kaiachain/ethers-ext for Kaia blockchain interaction
 - **Wallet Support**: MetaMask (primary), Kaikas, WalletConnect
 - **State Management**: React Context with session persistence
+- **Contract Package**: `@dinsure/contracts` - TypeScript interfaces and hooks for smart contract interaction
 
 #### Smart Contracts (Deployed on Kaia Testnet - Chain ID: 1001)
 
@@ -40,6 +41,7 @@ This project is transitioning from a T3 Turbo monorepo to a Web3-focused archite
 - **`InsuranceToken`** (`0x3bEDE5f043E8D0597F9F0b60eCfc52B134d8E934`): ERC-721 NFT representing buyer insurance positions with metadata for coverage amount and round details.
 - **`SettlementEngine`** (`0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8`): Handles oracle-based claim processing, dispute resolution, and automatic payout distribution.
 - **`FeeTreasury`** (`0xb96D484cB71A5d5C3C3AB1Ac18dF587cC6AC6914`): Protocol fee collection, distribution to stakers, and treasury management.
+- **`YieldRouter`** (`0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11`): Manages yield generation strategies for idle collateral, integrating with DeFi protocols for conservative returns.
 
 ##### Infrastructure Contracts
 - **`TranchePoolFactory`** (`0x3810066EfEAc98F18cF6A1E62FF3f089CC30Fb01`): Deploys isolated pool contracts for each tranche with proper integration.
@@ -178,6 +180,7 @@ pnpm turbo gen init
    # Infrastructure
    NEXT_PUBLIC_POOL_FACTORY_ADDRESS=0x3810066EfEAc98F18cF6A1E62FF3f089CC30Fb01
    NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS=0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72
+   NEXT_PUBLIC_YIELD_ROUTER_ADDRESS=0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11
    
    # Oracles
    NEXT_PUBLIC_ORAKL_PRICE_FEED_ADDRESS=0xFa2f0063BAC2e5BA304f50eC54b6EA07aCC534fF
@@ -215,22 +218,22 @@ pnpm turbo gen init
 - [ ] Implement wallet connection (MetaMask, Kaikas)
 
 ### Phase 2: Frontend Integration (Current)
-- [ ] Create `@dinsure/contracts` package with TypeScript interfaces
-- [ ] Implement contract service layer (Registry, Products, Pools, Settlement)
-- [ ] Build insurance catalog UI with live contract data
-- [ ] Add wallet connection with session persistence
-- [ ] Implement transaction builders with gas optimization
+- [x] Create `@dinsure/contracts` package with TypeScript interfaces
+- [x] Implement contract service layer (Registry, Products, Pools, Settlement)
+- [x] Build insurance catalog UI with live contract data
+- [x] Add wallet connection with session persistence
+- [x] Implement transaction builders with gas optimization
 
 ### Phase 3: Core Features
-- [ ] Insurance purchase flow
-- [ ] Liquidity provision interface
-- [ ] Portfolio management dashboard
-- [ ] Automatic claim processing
+- [x] Insurance purchase flow (BuyInsuranceForm, EnhancedPurchaseModal)
+- [x] Liquidity provision interface (ProvideLiquidityForm, LiquidityModal)
+- [x] Portfolio management dashboard (PortfolioPage with useUserPortfolio)
+- [ ] Automatic claim processing (partially implemented via SettlementEngine)
 
 ### Phase 4: Production
 - [ ] Security audit
 - [ ] Mainnet deployment
-- [ ] Re-staking integration
+- [x] Yield integration via YieldRouter
 - [ ] Analytics dashboard
 
 ## UI/UX Guidelines
@@ -317,6 +320,7 @@ The contracts are deployed using Hardhat Ignition modules in a phased approach:
 #### Insurance Product Management
 - **`RegisterInsuranceProduct.js`**: JSON-driven product registration
 - **`CreateTranchePools.js`**: Deploy pools for each tranche
+- **`SyncPoolsWithCatalog.js`**: Sync pool addresses with ProductCatalog
 - **Configuration**: `insurances.json` defines products and tranches
 
 #### Round Management
@@ -324,10 +328,18 @@ The contracts are deployed using Hardhat Ignition modules in a phased approach:
 - **`CloseAndMatchRounds.js`**: Close sales and match buyers/sellers
 - **`TriggerSettlement.js`**: Process claims and settlements
 
+#### Yield Operations
+- **`move-to-yield`**: Transfer idle funds to YieldRouter
+- **`return-from-yield`**: Withdraw funds plus yield
+- **`yield-admin-withdraw`**: Emergency withdrawal by admin
+- **`yield-admin-deposit`**: Manual deposit for testing
+
 #### Monitoring
 - **`MonitorActiveInsurances.js`**: Track active insurance positions
 - **`MonitorPools.js`**: Monitor pool health and NAV
 - **`MonitorTranches.js`**: View tranche status and rounds
+- **`MonitorYield.js`**: Track yield positions and APY
+- **`MonitorOracles.js`**: Oracle price feeds and status
 
 ### Contract Interaction Patterns
 
@@ -346,11 +358,62 @@ ANNOUNCED → OPEN → MATCHED → ACTIVE → MATURED → SETTLED/CANCELED
 - ProductCatalog owns the lifecycle state
 - TranchePoolCore handles economics
 - SettlementEngine processes claims
+- YieldRouter manages idle capital during active periods
 
 #### Order Flow
 1. **Buyer**: Deposit USDT → Pay premium → Receive NFT
 2. **Seller**: Provide collateral → Mint shares → Earn premiums
-3. **Settlement**: Oracle trigger → Payout calculation → Distribution
+3. **Yield**: Idle collateral → YieldRouter → DeFi protocols → Returns
+4. **Settlement**: Oracle trigger → Payout calculation → Distribution
+
+#### Yield Management
+The YieldRouter enables conservative yield strategies:
+- Deposits idle collateral to vetted DeFi protocols
+- Tracks yield performance and APY
+- Returns principal + yield before settlement
+- Admin controls for emergency withdrawals
+
+## Implemented Components & Hooks
+
+### Contract Package (@dinsure/contracts)
+The package provides comprehensive TypeScript interfaces and React hooks for all smart contract interactions:
+
+#### Core Hooks
+- **`useContracts`**: Provides contract instances with proper typing
+- **`useProductManagement`**: Product and tranche registration and management
+- **`useRoundManagement`**: Round lifecycle operations (announce, open, close, settle)
+- **`useBuyerOperations`**: Insurance purchase calculations and order placement
+- **`useSellerOperations`**: Liquidity provision, NAV tracking, and yield analysis
+- **`useMonitoring`**: System health, pool metrics, and risk analysis
+- **`useSettlement`**: Claim processing and payout distribution
+- **`useUserPortfolio`**: User's insurance and liquidity positions
+
+#### Services
+- **`ProductCatalogService`**: Centralized service for product/tranche/round data fetching
+
+### UI Components
+
+#### Pages
+- **`/`**: Home page with product showcase
+- **`/insurance`**: Insurance marketplace with product cards
+- **`/tranche`**: Tranche listing with filtering and sorting
+- **`/tranches/[productId]/[trancheId]`**: Detailed tranche view with buy/sell forms
+- **`/portfolio`**: User's positions and earnings dashboard
+- **`/debug`**: Development tools and contract state viewer
+
+#### Insurance Components
+- **`ProductCard`**: Display insurance product with key metrics
+- **`TrancheCard`**: Show tranche details with risk/reward info
+- **`EnhancedTrancheCard`**: Advanced tranche display with round status
+- **`BuyInsuranceForm`**: Purchase interface with amount calculation
+- **`ProvideLiquidityForm`**: Deposit interface for liquidity providers
+- **`EnhancedPurchaseModal`**: Complete purchase flow with confirmations
+- **`LiquidityModal`**: Liquidity provision with yield projections
+- **`PositionCard`**: Display user's insurance/liquidity positions
+
+#### Web3 Components
+- **`WalletButton`**: Wallet connection with network switching
+- **`AppProviders`**: Web3 context and session persistence
 
 ## Common Patterns
 
@@ -363,6 +426,8 @@ ANNOUNCED → OPEN → MATCHED → ACTIVE → MATURED → SETTLED/CANCELED
 - All amounts handle BigNumber/BigInt properly
 - Contract calls use typed interfaces from ABIs
 - Gas estimation with 10% buffer for safety
+- Error handling with ContractError type and user-friendly messages
+- Caching layer for frequently accessed data (5-minute TTL)
 
 ## Contract Testing & Development
 
