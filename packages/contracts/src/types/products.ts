@@ -1,3 +1,53 @@
+// Contract return type interfaces - These match on-chain structs
+export interface ProductContractData {
+  productId: bigint;
+  metadataHash: string;
+  active: boolean;
+  createdAt: bigint;
+  updatedAt: bigint;
+  trancheIds: bigint[];
+}
+
+export interface TrancheContractData {
+  trancheId: bigint;
+  productId: bigint;
+  triggerType: bigint;
+  threshold: bigint;
+  maturityTimestamp: bigint;
+  premiumRateBps: bigint;
+  perAccountMin: bigint;
+  perAccountMax: bigint;
+  trancheCap: bigint;
+  oracleRouteId: bigint;
+  active: boolean;
+  createdAt: bigint;
+  updatedAt: bigint;
+  roundIds: bigint[];
+}
+
+export interface RoundContractData {
+  roundId: bigint;
+  trancheId: bigint;
+  state: bigint;
+  maturityTimestamp: bigint;
+  salesStartTime: bigint;
+  salesEndTime: bigint;
+  coverageStartTime: bigint;
+  coverageEndTime: bigint;
+  totalPurchased: bigint;
+  totalCollateral: bigint;
+  matchedAmount: bigint;
+  createdAt: bigint;
+  updatedAt: bigint;
+}
+
+export interface PoolAccountingData {
+  totalAssets: bigint;
+  lockedAssets: bigint;
+  totalSupply: bigint;
+  availableAssets: bigint;
+}
+
 // Enums matching smart contract enums
 export enum TriggerType {
   PRICE_BELOW = 0,

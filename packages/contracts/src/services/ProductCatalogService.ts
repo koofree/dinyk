@@ -1,6 +1,16 @@
 import { ethers } from "ethers";
 
-import type { Product, Round, Tranche, TriggerType } from "../types/products";
+import type { 
+  Product, 
+  Round, 
+  Tranche, 
+  TriggerType,
+  ProductContractData,
+  TrancheContractData,
+  RoundContractData,
+  PoolAccountingData,
+  ProductMetadata
+} from "../types/products";
 import ProductCatalogABI from "../config/abis/ProductCatalog.json";
 import TranchePoolCoreABI from "../config/abis/TranchePoolCore.json";
 import TranchePoolFactoryABI from "../config/abis/TranchePoolFactory.json";
@@ -64,7 +74,7 @@ export class ProductCatalogService {
     try {
       const getProduct = this.contract.getProduct as (
         id: number,
-      ) => Promise<any>;
+      ) => Promise<ProductContractData>;
       const productData = await getProduct(productId);
 
       // Check if the product data is valid (productId should match and not be 0)
@@ -97,17 +107,18 @@ export class ProductCatalogService {
           Number(productData.productId),
         ),
       };
-    } catch (error: any) {
+    } catch (error) {
       // Check if it's a contract revert error (product doesn't exist)
+      const errorWithCode = error as { code?: string; message?: string };
       if (
-        error?.code === "CALL_EXCEPTION" ||
-        error?.message?.includes("revert")
+        errorWithCode.code === "CALL_EXCEPTION" ||
+        errorWithCode.message?.includes("revert")
       ) {
         console.warn(`Product ${productId} does not exist on contract`);
       } else {
         console.error(
           `Error fetching product ${productId}:`,
-          error.message || error,
+          errorWithCode.message || error,
         );
       }
       return null;
@@ -119,7 +130,7 @@ export class ProductCatalogService {
     try {
       const getTranche = this.contract.getTranche as (
         id: number,
-      ) => Promise<any>;
+      ) => Promise<TrancheContractData>;
       const trancheData = await getTranche(trancheId);
 
       // Get current round for this tranche if it has rounds
@@ -132,7 +143,7 @@ export class ProductCatalogService {
         try {
           const getRound = this.contract.getRound as (
             id: number,
-          ) => Promise<any>;
+          ) => Promise<RoundContractData>;
           const roundData = await getRound(Number(latestRoundId));
           currentRound = this.parseRound(roundData);
         } catch (e) {
@@ -186,7 +197,7 @@ export class ProductCatalogService {
   // Get round details
   async getRound(roundId: number): Promise<Round | null> {
     try {
-      const getRound = this.contract.getRound as (id: number) => Promise<any>;
+      const getRound = this.contract.getRound as (id: number) => Promise<RoundContractData>;
       const roundData = await getRound(roundId);
       return this.parseRound(roundData);
     } catch (error) {
@@ -214,15 +225,16 @@ export class ProductCatalogService {
         const knownProducts = await Promise.all(
           knownProductIds.map((id) => this.getProduct(id)),
         );
-
-        if (knownProducts.length > 0) {
-          console.log(`Found ${knownProducts.length} known products`);
-          return knownProducts;
+        
+        const validKnownProducts = knownProducts.filter((p): p is Product => p !== null);
+        if (validKnownProducts.length > 0) {
+          console.log(`Found ${validKnownProducts.length} known products`);
+          return validKnownProducts;
         }
       }
 
       // Fetch products in parallel with error handling for each
-      const products = await Promise.all(
+      const productResults = await Promise.all(
         productIds.map(async (id) => {
           try {
             return await this.getProduct(id);
@@ -232,6 +244,8 @@ export class ProductCatalogService {
           }
         }),
       );
+      
+      const products = productResults.filter((p): p is Product => p !== null);
 
       console.log(`Successfully fetched ${products.length} products`);
 
@@ -241,9 +255,10 @@ export class ProductCatalogService {
           "No products found through active IDs, trying known product IDs as fallback",
         );
         const fallbackIds = [1, 2, 3, 4, 5];
-        const fallbackProducts = await Promise.all(
+        const fallbackProductResults = await Promise.all(
           fallbackIds.map((id) => this.getProduct(id)),
         );
+        const fallbackProducts = fallbackProductResults.filter((p): p is Product => p !== null);
         return fallbackProducts;
       }
 
@@ -285,12 +300,12 @@ export class ProductCatalogService {
       );
 
       // Get pool accounting data
-      const getPoolAccounting = pool.poolAccounting as () => Promise<any>;
+      const getPoolAccounting = pool.poolAccounting as () => Promise<PoolAccountingData>;
       const poolAccounting = await getPoolAccounting();
 
       // Calculate metrics
-      const totalAssets = BigInt(poolAccounting.totalAssets);
-      const lockedAssets = BigInt(poolAccounting.lockedAssets);
+      const totalAssets = poolAccounting.totalAssets;
+      const lockedAssets = poolAccounting.lockedAssets;
       const availableCapacity = totalAssets - lockedAssets;
 
       const utilizationRate =
@@ -317,7 +332,7 @@ export class ProductCatalogService {
   }
 
   // Parse round data from contract
-  private parseRound(roundData: any): Round {
+  private parseRound(roundData: RoundContractData): Round {
     const now = Math.floor(Date.now() / 1000);
     const state = Number(roundData.state) as RoundState;
     const salesEndTime = Number(roundData.salesEndTime);
@@ -329,12 +344,12 @@ export class ProductCatalogService {
       salesStartTime: salesStartTime,
       salesEndTime: salesEndTime,
       state,
-      totalBuyerPurchases: BigInt(roundData.totalBuyerPurchases),
-      totalSellerCollateral: BigInt(roundData.totalSellerCollateral),
-      totalBuyerOrders: BigInt(roundData.totalBuyerPurchases),
-      matchedAmount: BigInt(roundData.matchedAmount),
+      totalBuyerPurchases: roundData.totalPurchased,
+      totalSellerCollateral: roundData.totalCollateral,
+      totalBuyerOrders: roundData.totalPurchased,
+      matchedAmount: roundData.matchedAmount,
       createdAt: Number(roundData.createdAt),
-      stateChangedAt: Number(roundData.stateChangedAt),
+      stateChangedAt: Number(roundData.updatedAt),
       isOpen:
         state === RoundState.OPEN &&
         salesEndTime > now &&
@@ -345,7 +360,7 @@ export class ProductCatalogService {
   }
 
   // Parse metadata hash to readable format
-  private parseMetadata(metadataHash: string, productId?: number): any {
+  private parseMetadata(metadataHash: string, productId?: number): ProductMetadata {
     try {
       // Remove 0x prefix and trailing zeros
       const cleanHash = metadataHash.replace(/^0x/, "").replace(/0+$/, "");
@@ -395,7 +410,7 @@ export class ProductCatalogService {
       }
 
       // Product ID based defaults for common insurance types
-      const productDefaults: Record<number, any> = {
+      const productDefaults: Record<number, ProductMetadata> = {
         3: {
           name: "Solana Price Protection",
           description: "Parametric insurance for SOL price movements",

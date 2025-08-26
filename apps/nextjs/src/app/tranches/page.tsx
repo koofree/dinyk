@@ -1,15 +1,15 @@
 "use client";
 
-import type { TrancheDetails } from "@/hooks/useTrancheData";
-import { Suspense, useEffect, useState } from "react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { EnhancedPurchaseModal } from "@/components/insurance/EnhancedPurchaseModal";
 import { LiquidityPoolCard } from "@/components/insurance/LiquidityPoolCard";
 import { LiquidityModal } from "@/components/liquidity/LiquidityModal";
 import { TrancheFilters } from "@/components/tranche/TrancheFilters";
 import { useBTCPrice } from "@/hooks/useBTCPrice";
+import type { TrancheDetails } from "@/hooks/useTrancheData";
 import { useTrancheData } from "@/hooks/useTrancheData";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 import {
   INSURANCE_PRODUCTS,
@@ -550,15 +550,6 @@ function TrancheContent() {
     }
   };
 
-  const handleWithdraw = (pool: any) => {
-    // TODO: Implement withdrawal logic
-    console.log("Withdraw from pool:", pool);
-  };
-
-  const handleAddMore = (pool: any) => {
-    handleDeposit(pool); // Same as deposit for now
-  };
-
   // Get unique products for filter options
   const uniqueProducts = Array.from(
     new Set(products.map((p) => p.productId)),
@@ -714,8 +705,6 @@ function TrancheContent() {
                     key={pool.id}
                     pool={pool}
                     onDeposit={handleDeposit}
-                    onWithdraw={handleWithdraw}
-                    onAddMore={handleAddMore}
                   />
                 ))}
               </div>

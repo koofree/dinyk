@@ -41,15 +41,11 @@ interface LiquidityPool {
 interface LiquidityPoolCardProps {
   pool: LiquidityPool;
   onDeposit: (pool: LiquidityPool) => void;
-  onWithdraw?: (pool: LiquidityPool) => void;
-  onAddMore?: (pool: LiquidityPool) => void;
 }
 
 export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
   pool,
   onDeposit,
-  onWithdraw,
-  onAddMore,
 }) => {
   const hasUserShare = parseFloat(pool.userShare) > 0;
 

@@ -173,9 +173,10 @@ export const switchToKaiaNetwork = async () => {
       method: 'wallet_switchEthereumChain',
       params: [{ chainId: targetNetwork.chainIdHex }],
     });
-  } catch (switchError: any) {
+  } catch (switchError) {
     // Network not added, add it
-    if (switchError.code === 4902) {
+    const errorWithCode = switchError as { code?: number };
+    if (errorWithCode.code === 4902) {
       await window.ethereum.request({
         method: 'wallet_addEthereumChain',
         params: [{

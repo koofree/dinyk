@@ -1,4 +1,4 @@
-export interface CacheEntry<T = any> {
+export interface CacheEntry<T = unknown> {
   data: T;
   timestamp: number;
 }
@@ -28,7 +28,7 @@ export class CacheManager {
     return data;
   }
   
-  set(key: string, data: any): void {
+  set<T = unknown>(key: string, data: T): void {
     if (this.cache.size >= (this.options.maxSize || 100)) {
       const firstKey = this.cache.keys().next().value;
       if (firstKey) this.cache.delete(firstKey);

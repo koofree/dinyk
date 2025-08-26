@@ -13,7 +13,7 @@ export interface TransactionResult {
 export interface ValidationResult {
   valid: boolean;
   error?: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 // PremiumCalculation moved to products.ts to avoid duplication
@@ -41,7 +41,7 @@ export interface ContractState {
 }
 
 // Cache types
-export interface CacheEntry<T = any> {
+export interface CacheEntry<T = unknown> {
   data: T;
   timestamp: number;
 }
@@ -57,7 +57,7 @@ export interface ContractEvent {
   transactionHash: string;
   logIndex: number;
   event: string;
-  args: any[];
+  args: unknown[];
 }
 
 // Gas estimation

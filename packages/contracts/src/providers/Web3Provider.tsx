@@ -14,11 +14,20 @@ import React, {
 import DinUSDTABI from "../config/abis/DinUSDT.json";
 import { ACTIVE_NETWORK, KAIA_RPC_ENDPOINTS, ProviderType, STORAGE_KEYS, switchToKaiaNetwork } from "../config/constants";
 
+// Ethereum provider interface
+interface EthereumProvider {
+  isMetaMask?: boolean;
+  isKaikas?: boolean;
+  request: (request: { method: string; params?: unknown[] }) => Promise<unknown>;
+  on?: (event: string, handler: (...args: unknown[]) => void) => void;
+  removeListener?: (event: string, handler: (...args: unknown[]) => void) => void;
+}
+
 // Global window type extensions
 declare global {
   interface Window {
-    ethereum?: any;
-    klaytn?: any;
+    ethereum?: EthereumProvider;
+    klaytn?: EthereumProvider;
   }
 }
 
@@ -132,7 +141,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
     const storedProviderType = sessionStorage.getItem(
       STORAGE_KEYS.PROVIDER_TYPE,
     ) as ProviderType;
-    let targetProvider: any;
+    let targetProvider: EthereumProvider | undefined;
 
     if (storedProviderType === ProviderType.KAIA && window.klaytn) {
       targetProvider = window.klaytn;
@@ -158,7 +167,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
     }
   }, [account, provider]);
 
-  const detectProvider = (type?: ProviderType): any => {
+  const detectProvider = (type?: ProviderType): EthereumProvider | null => {
     if (typeof window === "undefined") return null;
 
     // If specific type is requested
@@ -334,10 +343,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
       sessionStorage.setItem(STORAGE_KEYS.ACCOUNT, accounts[0]);
       sessionStorage.setItem(STORAGE_KEYS.CONNECTED, "true");
       sessionStorage.setItem(STORAGE_KEYS.PROVIDER_TYPE, type);
-    } catch (err: any) {
-      setError(err);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Failed to connect wallet");
+      setError(error);
       console.error("Failed to connect wallet:", err);
-      throw err;
+      throw error;
     } finally {
       setIsConnecting(false);
     }

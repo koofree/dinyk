@@ -161,10 +161,11 @@ export function useSellerOperations() {
         try {
           catalogCode = await signer.provider?.getCode(catalogAddress);
           console.log("ProductCatalog has code:", catalogCode && catalogCode !== "0x" ? "Yes" : "No");
-        } catch (codeError: any) {
+        } catch (codeError) {
           console.error("Error checking contract code:", codeError);
           // If we get a trie node error, it's an RPC issue
-          if (codeError.message?.includes("missing trie node") || codeError.code === -32603) {
+          const errorWithCode = codeError as { message?: string; code?: number };
+          if (errorWithCode.message?.includes("missing trie node") || errorWithCode.code === -32603) {
             console.warn("RPC node error detected. The Kaia testnet node might be experiencing issues.");
             console.warn("You may need to wait a moment and try again, or switch to a different RPC endpoint.");
             // Continue anyway - the contract likely exists
@@ -198,14 +199,15 @@ export function useSellerOperations() {
             roundInfo = await (currentProductCatalog as any).getRound(params.roundId);
             console.log("Round info retrieved successfully");
             break; // Success, exit loop
-          } catch (roundError: any) {
+          } catch (roundError) {
             retries--;
+            const errorDetails = roundError as { code?: string; message?: string; data?: unknown; transaction?: unknown };
             console.error("Failed to get round info:", roundError);
             console.error("Error details:", {
-              code: roundError.code,
-              message: roundError.message,
-              data: roundError.data,
-              transaction: roundError.transaction,
+              code: errorDetails.code,
+              message: errorDetails.message,
+              data: errorDetails.data,
+              transaction: errorDetails.transaction,
               retriesLeft: retries
             });
             
@@ -440,9 +442,10 @@ export function useSellerOperations() {
         }
 
         return receipt;
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error depositing collateral:", error);
-        toast.error(error.message);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        toast.error(errorMessage);
         throw error;
       } finally {
         setIsLoading(false);
@@ -610,9 +613,10 @@ export function useSellerOperations() {
 
         const receipt = await tx.wait();
         return receipt;
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error withdrawing collateral:", error);
-        toast.error(error.message);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        toast.error(errorMessage);
         throw error;
       } finally {
         setIsLoading(false);
@@ -673,11 +677,12 @@ export function useSellerOperations() {
               totalShares: accounting.totalShares,
               navPerShare: accounting.navPerShare,
             };
-          } catch (poolError: any) {
+          } catch (poolError) {
             // If RPC error, try fallback
-            if (poolError.message?.includes("missing trie node") || 
-                poolError.code === -32603 || 
-                poolError.code === 'NETWORK_ERROR') {
+            const errorWithCode = poolError as { message?: string; code?: number | string };
+            if (errorWithCode.message?.includes("missing trie node") || 
+                errorWithCode.code === -32603 || 
+                errorWithCode.code === 'NETWORK_ERROR') {
               retries--;
               if (retries > 0) {
                 console.log(`RPC error in getPoolAccounting, trying fallback... (${retries} attempts left)`);
@@ -756,9 +761,10 @@ export function useSellerOperations() {
 
         const receipt = await tx.wait();
         return receipt;
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error claiming premiums:", error);
-        toast.error(error.message);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        toast.error(errorMessage);
         throw error;
       } finally {
         setIsLoading(false);

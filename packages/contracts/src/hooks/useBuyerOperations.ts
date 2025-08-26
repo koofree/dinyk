@@ -237,9 +237,10 @@ export function useBuyerOperations() {
         }
 
         return receipt;
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error buying insurance:", error);
-        toast.error(error.message);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        toast.error(errorMessage);
         throw error;
       } finally {
         setIsLoading(false);
@@ -443,9 +444,10 @@ export function useBuyerOperations() {
 
         const receipt = await tx.wait();
         return receipt;
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error claiming payout:", error);
-        toast.error(error.message);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        toast.error(errorMessage);
         throw error;
       } finally {
         setIsLoading(false);

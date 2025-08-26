@@ -68,5 +68,12 @@
   },
   "biome.enabled": false,
   "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
-  "editor.formatOnSave": false
+  "editor.formatOnSave": false,
+  "cSpell.words": [
+    "Dinyk",
+    "prettiercache",
+    "topo",
+    "Vercel",
+    "WALLETCONNECT"
+  ]
 }

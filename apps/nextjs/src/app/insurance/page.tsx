@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { SimpleProductCard } from "@/components/insurance/SimpleProductCard";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import {
   ACTIVE_NETWORK,
@@ -46,7 +46,6 @@ export default function InsurancePage() {
         console.log("Starting data fetch...");
 
         // Fetch products
-        console.log("Fetching products...");
         try {
           const fetchedProducts = await getProducts();
           console.log("Raw products fetched:", fetchedProducts);
