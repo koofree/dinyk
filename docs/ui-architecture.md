@@ -1127,7 +1127,6 @@ The following components have been fully implemented in the Next.js application:
 
 // hooks/useSellerOperations.ts
 - depositCollateral(params)
-- withdrawCollateral(roundId, amount)
 - getSellerPosition(roundId)
 - calculateYield(trancheId, amount)
 - getPoolMetrics(trancheId)

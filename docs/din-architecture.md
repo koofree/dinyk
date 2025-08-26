@@ -400,7 +400,6 @@ if (status.canClaim) {
 ```typescript
 const {
   depositCollateral,
-  withdrawCollateral,
   getSellerPosition,
   calculateYield,
   getPoolMetrics,
@@ -418,9 +417,6 @@ await depositCollateral({
 const position = await getSellerPosition(roundId);
 console.log(`Shares: ${position.shareTokens}`);
 console.log(`Earned: ${position.earnedPremiums}`);
-
-// Withdraw after settlement
-await withdrawCollateral(roundId, "5000");
 ```
 
 ### 6. useMonitoring - Analytics & Monitoring
@@ -800,10 +796,6 @@ await depositCollateral({
 // 4. Monitor earnings
 const { getSellerPosition } = useSellerOperations();
 const position = await getSellerPosition(roundId);
-
-// 5. Withdraw after settlement
-const { withdrawCollateral } = useSellerOperations();
-await withdrawCollateral(roundId, withdrawAmount);
 ```
 
 ---

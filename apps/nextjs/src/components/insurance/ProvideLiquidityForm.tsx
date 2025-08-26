@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { formatUnits, parseUnits } from "ethers";
 import {
   AlertCircle,
   ArrowDownToLine,
-  ArrowUpFromLine,
   CheckCircle,
   Loader2,
   TrendingUp,
-  Wallet,
+  Wallet
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { useContracts, useSellerOperations, useWeb3 } from "@dinsure/contracts";
 import { Alert, AlertDescription } from "@dinsure/ui/alert";
@@ -25,7 +24,6 @@ import {
 import { Input } from "@dinsure/ui/input";
 import { Label } from "@dinsure/ui/label";
 import { Slider } from "@dinsure/ui/slider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@dinsure/ui/tabs";
 
 interface ProvideLiquidityFormProps {
   poolAddress: string;
@@ -50,7 +48,6 @@ export function ProvideLiquidityForm({
   } = web3Context;
   const {
     depositCollateral,
-    withdrawCollateral,
     getPoolAccounting,
     getShareBalance,
   } = useSellerOperations();
@@ -220,79 +217,6 @@ export function ProvideLiquidityForm({
     }
   };
 
-  const handleWithdraw = async () => {
-    if (!isConnected || !account) {
-      setError("Please connect your wallet");
-      return;
-    }
-
-    if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
-      setError("Please enter a valid USDT amount");
-      return;
-    }
-
-    if (!isInitialized) {
-      setError("Contracts are still initializing. Please wait a moment.");
-      return;
-    }
-
-    if (!navInfo?.sharePrice || navInfo.sharePrice === 0n) {
-      setError("Unable to calculate shares. Share price not available.");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-    setSuccess(false);
-
-    try {
-      // Convert USDT amount to shares
-      // shares = usdtAmount * 1e18 / sharePrice
-      // sharePrice is in 18 decimals (price per share in USDT with 6 decimals)
-      const usdtAmountWei = parseUnits(withdrawAmount, 6); // Convert USDT to 6 decimals
-      const sharesToWithdraw =
-        (usdtAmountWei * parseUnits("1", 18)) / navInfo.sharePrice;
-      const sharesToWithdrawStr = formatUnits(sharesToWithdraw, 18);
-
-      console.log("Withdrawal calculation:", {
-        requestedUSDT: withdrawAmount,
-        usdtAmountWei: formatUnits(usdtAmountWei, 6),
-        sharePrice: formatUnits(navInfo.sharePrice, 18),
-        sharesToWithdraw: sharesToWithdrawStr,
-      });
-
-      // withdrawCollateral accepts shares as a string
-      const receipt = await withdrawCollateral(trancheId, sharesToWithdrawStr);
-
-      setTxHash(receipt?.hash ?? "");
-      setSuccess(true);
-      setWithdrawAmount("");
-
-      if (onSuccess) {
-        onSuccess();
-      }
-
-      // Update pool accounting and user shares after withdrawal
-      const poolAccounting = await getPoolAccounting(trancheId);
-      if (poolAccounting) {
-        setNavInfo({
-          totalAssets: poolAccounting.totalAssets ?? 0n,
-          sharePrice: poolAccounting.navPerShare ?? 0n,
-        });
-      }
-
-      // Get updated user shares
-      const updatedShares = await getShareBalance(trancheId);
-      setUserShares(updatedShares);
-    } catch (err) {
-      console.error("Error withdrawing:", err);
-      const error = err as Error;
-      setError(error.message || "Failed to withdraw");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSliderChange = (value: number[]) => {
     if (activeTab === "deposit") {
       setAmount(value[0]?.toString() ?? "0");
@@ -375,159 +299,70 @@ export function ProvideLiquidityForm({
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="deposit" disabled={!roundId}>
-              <ArrowDownToLine className="mr-2 h-4 w-4" />
-              Deposit {!roundId && "(No Round)"}
-            </TabsTrigger>
-            <TabsTrigger value="withdraw">
-              <ArrowUpFromLine className="mr-2 h-4 w-4" />
-              Withdraw
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="deposit" className="space-y-4">
-            {!roundId ? (
-              <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
-                <AlertCircle className="h-4 w-4 text-amber-600" />
-                <AlertDescription className="text-amber-800 dark:text-amber-200">
-                  Deposits require an OPEN round. Please select a round with
-                  "OPEN" status from the rounds list below to provide liquidity.
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="deposit-amount">Deposit Amount (USDT)</Label>
-                  <Input
-                    id="deposit-amount"
-                    type="number"
-                    placeholder="Enter amount to deposit"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    disabled={loading}
-                  />
-                  <Slider
-                    value={[parseFloat(amount) || 0]}
-                    onValueChange={handleSliderChange}
-                    max={maxDeposit}
-                    step={10}
-                    className="mt-2"
-                    disabled={loading}
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Available: $
-                    {usdtBalance
-                      ? Number(formatUnits(usdtBalance, 6)).toLocaleString()
-                      : "0"}{" "}
-                    USDT
-                  </p>
-                </div>
-
-                <div className="space-y-2 rounded-lg bg-muted p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      You will deposit:
-                    </span>
-                    <span className="font-medium">
-                      {parseFloat(amount || "0").toLocaleString()} USDT
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      Estimated shares:
-                    </span>
-                    <span className="font-medium text-green-600">
-                      {estimatedShares} shares
-                    </span>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handleDeposit}
-                  disabled={
-                    loading ||
-                    !isConnected ||
-                    !isInitialized ||
-                    !amount ||
-                    !signer
-                  }
-                  className="w-full"
-                  size="lg"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <ArrowDownToLine className="mr-2 h-4 w-4" />
-                      Deposit USDT
-                    </>
-                  )}
-                </Button>
-              </>
-            )}
-          </TabsContent>
-
-          <TabsContent value="withdraw" className="space-y-4">
+        {/* Only show deposit component, no tabs */}
+        {!roundId ? (
+          <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800 dark:text-amber-200">
+              Deposits require an OPEN round. Please select a round with
+              "OPEN" status from the rounds list below to provide liquidity.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <>
             <div className="space-y-2">
-              <Label htmlFor="withdraw-amount">Withdraw Amount (USDT)</Label>
+              <Label htmlFor="deposit-amount">Deposit Amount (USDT)</Label>
               <Input
-                id="withdraw-amount"
+                id="deposit-amount"
                 type="number"
-                placeholder="Enter USDT amount to withdraw"
-                value={withdrawAmount}
-                onChange={(e) => setWithdrawAmount(e.target.value)}
+                placeholder="Enter amount to deposit"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
                 disabled={loading}
               />
               <Slider
-                value={[parseFloat(withdrawAmount) || 0]}
+                value={[parseFloat(amount) || 0]}
                 onValueChange={handleSliderChange}
-                max={maxWithdraw}
-                step={1}
+                max={maxDeposit}
+                step={10}
                 className="mt-2"
                 disabled={loading}
               />
               <p className="text-sm text-muted-foreground">
-                Available: ${maxWithdraw.toFixed(2)} USDT
-                {userShares > 0n && (
-                  <span className="mt-1 block text-xs">
-                    ({Number(formatUnits(userShares, 18)).toFixed(4)} shares)
-                  </span>
-                )}
+                Available: $
+                {usdtBalance
+                  ? Number(formatUnits(usdtBalance, 6)).toLocaleString()
+                  : "0"}{" "}
+                USDT
               </p>
             </div>
 
             <div className="space-y-2 rounded-lg bg-muted p-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
-                  You will withdraw:
+                  You will deposit:
                 </span>
                 <span className="font-medium">
-                  ${parseFloat(withdrawAmount || "0").toFixed(2)} USDT
+                  {parseFloat(amount || "0").toLocaleString()} USDT
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
-                  Shares to burn:
+                  Estimated shares:
                 </span>
-                <span className="font-medium text-orange-600">
-                  {estimatedSharesForWithdrawal} shares
+                <span className="font-medium text-green-600">
+                  {estimatedShares} shares
                 </span>
               </div>
             </div>
 
             <Button
-              onClick={handleWithdraw}
+              onClick={handleDeposit}
               disabled={
                 loading ||
                 !isConnected ||
                 !isInitialized ||
-                !withdrawAmount ||
-                userShares === 0n ||
+                !amount ||
                 !signer
               }
               className="w-full"
@@ -540,13 +375,13 @@ export function ProvideLiquidityForm({
                 </>
               ) : (
                 <>
-                  <ArrowUpFromLine className="mr-2 h-4 w-4" />
-                  Withdraw
+                  <ArrowDownToLine className="mr-2 h-4 w-4" />
+                  Deposit USDT
                 </>
               )}
             </Button>
-          </TabsContent>
-        </Tabs>
+          </>
+        )}
 
         {error && (
           <Alert variant="destructive">

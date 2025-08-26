@@ -1,8 +1,8 @@
-import { Contract, ethers } from "ethers";
 import { useCallback, useState } from "react";
+import { Contract, ethers } from "ethers";
 import { toast } from "sonner";
 
-import TranchePoolCoreABI from '../config/abis/TranchePoolCore.json';
+import TranchePoolCoreABI from "../config/abis/TranchePoolCore.json";
 import { KAIA_RPC_ENDPOINTS } from "../config/constants";
 import { useWeb3 } from "../providers/Web3Provider";
 import { useContracts } from "./useContracts";
@@ -35,7 +35,8 @@ export interface YieldAnalysis {
 
 export function useSellerOperations() {
   const { signer, account } = useWeb3();
-  const { productCatalog, tranchePoolFactory, usdt, isInitialized } = useContracts();
+  const { productCatalog, tranchePoolFactory, usdt, isInitialized } =
+    useContracts();
   const [isLoading, setIsLoading] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
 
@@ -45,39 +46,40 @@ export function useSellerOperations() {
     if (signer?.provider) {
       return signer.provider;
     }
-    
+
     // Otherwise, create a read-only provider with the first RPC endpoint
     return new ethers.JsonRpcProvider(KAIA_RPC_ENDPOINTS[0], {
       chainId: 1001,
-      name: 'Kaia Kairos'
+      name: "Kaia Kairos",
     });
   }, [signer]);
 
   // Create a provider with fallback RPC endpoints
-  const createProviderWithFallback = useCallback(async (): Promise<ethers.JsonRpcProvider> => {
-    for (const rpcUrl of KAIA_RPC_ENDPOINTS) {
-      try {
-        const provider = new ethers.JsonRpcProvider(rpcUrl, {
-          chainId: 1001,
-          name: 'Kaia Kairos'
-        });
-        
-        // Test the connection
-        const blockNumberPromise = provider.getBlockNumber();
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Connection timeout")), 3000)
-        );
-        
-        await Promise.race([blockNumberPromise, timeoutPromise]);
-        console.log(`Successfully connected to RPC: ${rpcUrl}`);
-        return provider;
-      } catch (error) {
-        console.warn(`RPC endpoint ${rpcUrl} failed, trying next...`);
+  const createProviderWithFallback =
+    useCallback(async (): Promise<ethers.JsonRpcProvider> => {
+      for (const rpcUrl of KAIA_RPC_ENDPOINTS) {
+        try {
+          const provider = new ethers.JsonRpcProvider(rpcUrl, {
+            chainId: 1001,
+            name: "Kaia Kairos",
+          });
+
+          // Test the connection
+          const blockNumberPromise = provider.getBlockNumber();
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Connection timeout")), 3000),
+          );
+
+          await Promise.race([blockNumberPromise, timeoutPromise]);
+          console.log(`Successfully connected to RPC: ${rpcUrl}`);
+          return provider;
+        } catch (error) {
+          console.warn(`RPC endpoint ${rpcUrl} failed, trying next...`);
+        }
       }
-    }
-    
-    throw new Error("All RPC endpoints failed. Please try again later.");
-  }, []);
+
+      throw new Error("All RPC endpoints failed. Please try again later.");
+    }, []);
 
   // Calculate potential yield for a collateral amount
   const calculateYield = useCallback(
@@ -124,9 +126,9 @@ export function useSellerOperations() {
         hasProductCatalog: !!productCatalog,
         hasTranchePoolFactory: !!tranchePoolFactory,
         hasUsdt: !!usdt,
-        isInitialized
+        isInitialized,
       });
-      
+
       if (!signer) {
         throw new Error("Signer not available. Please connect your wallet.");
       }
@@ -149,39 +151,54 @@ export function useSellerOperations() {
         const network = await signer.provider?.getNetwork();
         console.log("Current network:", {
           chainId: network?.chainId.toString(),
-          name: network?.name
+          name: network?.name,
         });
-        
+
         // First verify the ProductCatalog contract is accessible
         const catalogAddress = await productCatalog.getAddress();
         console.log("ProductCatalog contract address:", catalogAddress);
-        
+
         // Check if the contract has code
         let catalogCode;
         try {
           catalogCode = await signer.provider?.getCode(catalogAddress);
-          console.log("ProductCatalog has code:", catalogCode && catalogCode !== "0x" ? "Yes" : "No");
+          console.log(
+            "ProductCatalog has code:",
+            catalogCode && catalogCode !== "0x" ? "Yes" : "No",
+          );
         } catch (codeError) {
           console.error("Error checking contract code:", codeError);
           // If we get a trie node error, it's an RPC issue
-          const errorWithCode = codeError as { message?: string; code?: number };
-          if (errorWithCode.message?.includes("missing trie node") || errorWithCode.code === -32603) {
-            console.warn("RPC node error detected. The Kaia testnet node might be experiencing issues.");
-            console.warn("You may need to wait a moment and try again, or switch to a different RPC endpoint.");
+          const errorWithCode = codeError as {
+            message?: string;
+            code?: number;
+          };
+          if (
+            errorWithCode.message?.includes("missing trie node") ||
+            errorWithCode.code === -32603
+          ) {
+            console.warn(
+              "RPC node error detected. The Kaia testnet node might be experiencing issues.",
+            );
+            console.warn(
+              "You may need to wait a moment and try again, or switch to a different RPC endpoint.",
+            );
             // Continue anyway - the contract likely exists
             catalogCode = "0x1"; // Assume it exists
           } else {
             throw codeError;
           }
         }
-        
+
         if (!catalogCode || catalogCode === "0x") {
-          throw new Error(`ProductCatalog contract not deployed at ${catalogAddress} on chain ${network?.chainId}`);
+          throw new Error(
+            `ProductCatalog contract not deployed at ${catalogAddress} on chain ${network?.chainId}`,
+          );
         }
-        
+
         // Get round info
         console.log("Getting round info for roundId:", params.roundId);
-        
+
         // First, let's check what rounds exist
         try {
           // Try to get the round count or check if the round exists
@@ -189,70 +206,90 @@ export function useSellerOperations() {
         } catch (checkError) {
           console.error("Error checking rounds:", checkError);
         }
-        
+
         let roundInfo;
         let retries = 3;
         let currentProductCatalog = productCatalog;
-        
+
         while (retries > 0) {
           try {
-            roundInfo = await (currentProductCatalog as any).getRound(params.roundId);
+            roundInfo = await (currentProductCatalog as any).getRound(
+              params.roundId,
+            );
             console.log("Round info retrieved successfully");
             break; // Success, exit loop
           } catch (roundError) {
             retries--;
-            const errorDetails = roundError as { code?: string; message?: string; data?: unknown; transaction?: unknown };
+            const errorDetails = roundError as {
+              code?: string;
+              message?: string;
+              data?: unknown;
+              transaction?: unknown;
+            };
             console.error("Failed to get round info:", roundError);
             console.error("Error details:", {
               code: errorDetails.code,
               message: errorDetails.message,
               data: errorDetails.data,
               transaction: errorDetails.transaction,
-              retriesLeft: retries
+              retriesLeft: retries,
             });
-            
+
             // Check for RPC errors that might be temporary
-            if (roundError.message?.includes("missing trie node") || 
-                roundError.code === -32603 || 
-                roundError.code === 'NETWORK_ERROR') {
+            if (
+              roundError.message?.includes("missing trie node") ||
+              roundError.code === -32603 ||
+              roundError.code === "NETWORK_ERROR"
+            ) {
               if (retries > 0) {
-                console.log(`RPC error detected, trying fallback RPC... (${retries} attempts left)`);
-                
+                console.log(
+                  `RPC error detected, trying fallback RPC... (${retries} attempts left)`,
+                );
+
                 // Try to use a fallback provider
                 try {
                   const fallbackProvider = await createProviderWithFallback();
-                  const { Contract: EthersContract } = await import('ethers');
-                  const ProductCatalogABI = (await import('../config/abis/ProductCatalog.json')).default;
+                  const { Contract: EthersContract } = await import("ethers");
+                  const ProductCatalogABI = (
+                    await import("../config/abis/ProductCatalog.json")
+                  ).default;
                   currentProductCatalog = new EthersContract(
                     await productCatalog.getAddress(),
                     ProductCatalogABI.abi,
-                    fallbackProvider
+                    fallbackProvider,
                   );
                   console.log("Switched to fallback RPC provider");
                 } catch (fallbackError) {
-                  console.error("Failed to create fallback provider:", fallbackError);
+                  console.error(
+                    "Failed to create fallback provider:",
+                    fallbackError,
+                  );
                 }
-                
+
                 // Wait a bit before retrying
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                await new Promise((resolve) => setTimeout(resolve, 2000));
                 continue;
               } else {
-                throw new Error("RPC node is experiencing issues. Please try again in a few moments.");
+                throw new Error(
+                  "RPC node is experiencing issues. Please try again in a few moments.",
+                );
               }
             }
-            
+
             // Check if it's a revert error (round doesn't exist)
-            if (roundError.code === 'CALL_EXCEPTION') {
+            if (roundError.code === "CALL_EXCEPTION") {
               // The round might not exist or the contract call failed
-              throw new Error(`Round ${params.roundId} does not exist. Please ensure you're on the correct network (should be Kaia Testnet, chain ID 1001) and the round ID is valid.`);
+              throw new Error(
+                `Round ${params.roundId} does not exist. Please ensure you're on the correct network (should be Kaia Testnet, chain ID 1001) and the round ID is valid.`,
+              );
             }
             throw roundError;
           }
         }
-        
+
         const trancheId = Number(roundInfo.trancheId);
         const roundState = Number(roundInfo.state);
-        
+
         console.log("Round info:", {
           roundId: params.roundId,
           trancheId,
@@ -260,7 +297,7 @@ export function useSellerOperations() {
           salesStartTime: Number(roundInfo.salesStartTime),
           salesEndTime: Number(roundInfo.salesEndTime),
           coverageStartTime: Number(roundInfo.coverageStartTime),
-          coverageEndTime: Number(roundInfo.coverageEndTime)
+          coverageEndTime: Number(roundInfo.coverageEndTime),
         });
 
         // Validate round state
@@ -321,13 +358,15 @@ export function useSellerOperations() {
 
         // Get pool address
         console.log("Getting pool address for tranche:", trancheId);
-        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
+        const poolAddress = await (tranchePoolFactory as any).getTranchePool(
+          trancheId,
+        );
         console.log("Pool address:", poolAddress);
-        
+
         if (poolAddress === ethers.ZeroAddress) {
           throw new Error(`No pool found for tranche ${trancheId}`);
         }
-        
+
         // Verify pool contract exists, but handle RPC errors gracefully
         try {
           const poolCode = await signer.provider?.getCode(poolAddress);
@@ -337,23 +376,21 @@ export function useSellerOperations() {
         } catch (codeError) {
           // If getCode fails (e.g., RPC error), throw a more specific error
           console.error("Error checking pool contract:", codeError);
-          throw new Error(`Cannot verify pool contract at ${poolAddress}: RPC error`);
+          throw new Error(
+            `Cannot verify pool contract at ${poolAddress}: RPC error`,
+          );
         }
 
         // Get pool contract
-        const pool = new Contract(
-          poolAddress,
-          TranchePoolCoreABI.abi,
-          signer,
-        );
-        
+        const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, signer);
+
         // Try to call a view function to verify the pool is working
         try {
           const poolAccounting = await (pool as any).getPoolAccounting();
           console.log("Pool is accessible, accounting:", {
             totalAssets: ethers.formatUnits(poolAccounting.totalAssets, 6),
             totalShares: ethers.formatEther(poolAccounting.totalShares),
-            navPerShare: ethers.formatEther(poolAccounting.navPerShare)
+            navPerShare: ethers.formatEther(poolAccounting.navPerShare),
           });
         } catch (poolError) {
           console.error("Failed to access pool contract:", poolError);
@@ -368,41 +405,72 @@ export function useSellerOperations() {
         console.log("Checking USDT allowance:", {
           account,
           poolAddress,
-          usdtAddress: await usdt.getAddress()
+          usdtAddress: await usdt.getAddress(),
         });
-        
-        const currentAllowance = await (usdt as any).allowance(account, poolAddress);
-        console.log("Current allowance:", ethers.formatUnits(currentAllowance, 6), "USDT");
-        
+
+        const currentAllowance = await (usdt as any).allowance(
+          account,
+          poolAddress,
+        );
+        console.log(
+          "Current allowance:",
+          ethers.formatUnits(currentAllowance, 6),
+          "USDT",
+        );
+
         if (currentAllowance < collateralAmountWei) {
-          console.log("Need to approve USDT. Current:", ethers.formatUnits(currentAllowance, 6), "Need:", ethers.formatUnits(collateralAmountWei, 6));
+          console.log(
+            "Need to approve USDT. Current:",
+            ethers.formatUnits(currentAllowance, 6),
+            "Need:",
+            ethers.formatUnits(collateralAmountWei, 6),
+          );
 
           // Reset to zero first if needed
           if (currentAllowance > 0n) {
             console.log("Resetting allowance to 0 first...");
-            const resetTx = await (usdt as any).connect(signer).approve(poolAddress, 0);
+            const resetTx = await (usdt as any)
+              .connect(signer)
+              .approve(poolAddress, 0);
             await resetTx.wait();
             console.log("Allowance reset to 0");
           }
 
-          console.log("Approving", ethers.formatUnits(collateralAmountWei, 6), "USDT for pool", poolAddress);
+          console.log(
+            "Approving",
+            ethers.formatUnits(collateralAmountWei, 6),
+            "USDT for pool",
+            poolAddress,
+          );
           const approveTx = await (usdt as any)
             .connect(signer)
             .approve(poolAddress, collateralAmountWei);
           const approveReceipt = await approveTx.wait();
           console.log("Approval transaction:", approveReceipt.hash);
-          
+
           // Verify the approval worked
-          const newAllowance = await (usdt as any).allowance(account, poolAddress);
-          console.log("New allowance after approval:", ethers.formatUnits(newAllowance, 6), "USDT");
-          
+          const newAllowance = await (usdt as any).allowance(
+            account,
+            poolAddress,
+          );
+          console.log(
+            "New allowance after approval:",
+            ethers.formatUnits(newAllowance, 6),
+            "USDT",
+          );
+
           if (newAllowance < collateralAmountWei) {
-            throw new Error("USDT approval failed - allowance not set correctly");
+            throw new Error(
+              "USDT approval failed - allowance not set correctly",
+            );
           }
-          
+
           toast.success("USDT approved");
         } else {
-          console.log("USDT already approved, current allowance:", ethers.formatUnits(currentAllowance, 6));
+          console.log(
+            "USDT already approved, current allowance:",
+            ethers.formatUnits(currentAllowance, 6),
+          );
         }
         setIsPreparing(false);
 
@@ -412,17 +480,17 @@ export function useSellerOperations() {
           roundId: params.roundId,
           amount: ethers.formatUnits(collateralAmountWei, 6),
           allowance: ethers.formatUnits(currentAllowance, 6),
-          userBalance: ethers.formatUnits(balance, 6)
+          userBalance: ethers.formatUnits(balance, 6),
         });
-        
+
         // Manually set gas limit instead of estimating
         const gasLimit = 500000n; // Set a reasonable gas limit
         console.log("Using manual gas limit:", gasLimit.toString());
-        
+
         const tx = await (pool as any).depositCollateral(
           params.roundId,
           collateralAmountWei,
-          { gasLimit }
+          { gasLimit },
         );
 
         toast.promise(tx.wait(), {
@@ -444,7 +512,8 @@ export function useSellerOperations() {
         return receipt;
       } catch (error) {
         console.error("Error depositing collateral:", error);
-        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
         toast.error(errorMessage);
         throw error;
       } finally {
@@ -452,7 +521,15 @@ export function useSellerOperations() {
         setIsPreparing(false);
       }
     },
-    [signer, account, productCatalog, tranchePoolFactory, usdt, calculateYield, isInitialized],
+    [
+      signer,
+      account,
+      productCatalog,
+      tranchePoolFactory,
+      usdt,
+      calculateYield,
+      isInitialized,
+    ],
   );
 
   // Get seller's position for a round
@@ -474,11 +551,16 @@ export function useSellerOperations() {
         const trancheId = Number(roundInfo.trancheId);
 
         // Get pool
-        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
+        const poolAddress = await (tranchePoolFactory as any).getTranchePool(
+          trancheId,
+        );
         if (poolAddress === ethers.ZeroAddress) return null;
 
         const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, signer);
-        const position = await (pool as any).getSellerPosition(roundId, sellerAddress);
+        const position = await (pool as any).getSellerPosition(
+          roundId,
+          sellerAddress,
+        );
 
         return {
           collateralAmount: position.collateralAmount,
@@ -501,7 +583,9 @@ export function useSellerOperations() {
       if (!sellerAddress || !tranchePoolFactory) return 0n;
 
       try {
-        const poolAddress = await (tranchePoolFactory as any).getTranchePool(Number(trancheId));
+        const poolAddress = await (tranchePoolFactory as any).getTranchePool(
+          Number(trancheId),
+        );
         if (!poolAddress || poolAddress === ethers.ZeroAddress) {
           // No pool exists for this tranche (no round)
           return 0n;
@@ -510,24 +594,33 @@ export function useSellerOperations() {
         // Try to check if the pool contract exists, but handle RPC errors gracefully
         try {
           const code = await getProvider().getCode(poolAddress);
-          if (code === '0x' || code === '0x0') {
+          if (code === "0x" || code === "0x0") {
             // Contract doesn't exist at this address
             return 0n;
           }
         } catch (codeError) {
           // If getCode fails (e.g., RPC error), assume no contract exists
-          console.warn(`Could not verify contract at ${poolAddress}, assuming no pool exists`);
+          console.warn(
+            `Could not verify contract at ${poolAddress}, assuming no pool exists`,
+          );
           return 0n;
         }
 
-        const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, getProvider());
+        const pool = new Contract(
+          poolAddress,
+          TranchePoolCoreABI.abi,
+          getProvider(),
+        );
 
         // Get share balance using shareBalances mapping
         const balance = await (pool as any).shareBalances(sellerAddress);
         return balance;
       } catch (error) {
         // Only log error if it's not an expected "no pool" scenario
-        if (error instanceof Error && !error.message.includes('missing revert data')) {
+        if (
+          error instanceof Error &&
+          !error.message.includes("missing revert data")
+        ) {
           console.error("Error fetching seller share balance:", error);
         }
         return 0n;
@@ -536,104 +629,20 @@ export function useSellerOperations() {
     [tranchePoolFactory, account, getProvider],
   );
 
-  // Withdraw available collateral (now accepts shares instead of USDT amount)
-  const withdrawCollateral = useCallback(
-    async (trancheId: number, sharesAmount: string) => {
-      if (!tranchePoolFactory || !signer || !account) {
-        throw new Error("Not initialized");
-      }
-
-      setIsLoading(true);
-      try {
-        // Get pool
-        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
-        if (!poolAddress || poolAddress === ethers.ZeroAddress) {
-          throw new Error(`No pool found for tranche ${trancheId}`);
-        }
-
-        // Try to check if the pool contract exists, but handle RPC errors gracefully
-        try {
-          const code = await getProvider().getCode(poolAddress);
-          if (code === '0x' || code === '0x0') {
-            throw new Error(`No contract deployed at pool address for tranche ${trancheId}`);
-          }
-        } catch (codeError) {
-          // If getCode fails (e.g., RPC error), throw a more specific error
-          throw new Error(`Cannot verify pool contract for tranche ${trancheId}: RPC error`);
-        }
-
-        const pool = new Contract(
-          poolAddress,
-          TranchePoolCoreABI.abi,
-          signer,
-        );
-
-        // Get user's share balance
-        const userShareBalance = await (pool as any).shareBalances(account);
-        const sharesToBurn = ethers.parseEther(sharesAmount);
-        
-        console.log("Withdrawal request:", {
-          requestedShares: sharesAmount,
-          userShareBalance: ethers.formatEther(userShareBalance),
-          sharesToBurn: ethers.formatEther(sharesToBurn)
-        });
-        
-        if (sharesToBurn > userShareBalance) {
-          throw new Error(
-            `Insufficient shares. You have ${ethers.formatEther(userShareBalance)} shares`,
-          );
-        }
-
-        // Get pool accounting to calculate expected USDT
-        const accounting = await (pool as any).getPoolAccounting();
-        const expectedUSDT = (sharesToBurn * accounting.navPerShare) / ethers.parseEther("1");
-        
-        // Check available collateral
-        const available = await (pool as any).getAvailableCollateral(account);
-        
-        console.log("Withdrawal calculation:", {
-          shares: ethers.formatEther(sharesToBurn),
-          navPerShare: ethers.formatEther(accounting.navPerShare),
-          expectedUSDT: ethers.formatUnits(expectedUSDT, 6),
-          availableCollateral: ethers.formatUnits(available, 6)
-        });
-        
-        if (expectedUSDT > available) {
-          console.warn("Expected USDT exceeds available collateral, some funds may be locked in active rounds");
-        }
-
-        // Withdraw using shares
-        const tx = await (pool as any).withdrawCollateral(sharesToBurn);
-
-        toast.promise(tx.wait(), {
-          loading: `Withdrawing ${sharesAmount} shares...`,
-          success: `Successfully withdrawn ${sharesAmount} shares (≈ ${ethers.formatUnits(expectedUSDT, 6)} USDT)`,
-          error: "Failed to withdraw collateral",
-        });
-
-        const receipt = await tx.wait();
-        return receipt;
-      } catch (error) {
-        console.error("Error withdrawing collateral:", error);
-        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-        toast.error(errorMessage);
-        throw error;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [tranchePoolFactory, signer, account],
-  );
-
   // Get pool accounting info
   const getPoolAccounting = useCallback(
     async (trancheId: number): Promise<PoolAccounting | null> => {
       console.log("getPoolAccounting called with trancheId:", trancheId);
       console.log("tranchePoolFactory available:", !!tranchePoolFactory);
       console.log("provider available:", !!getProvider());
-      
+
       if (!tranchePoolFactory || !getProvider()) {
-        console.error("Contracts not initialized - tranchePoolFactory:", !!tranchePoolFactory, "provider:", !!getProvider());
+        console.error(
+          "Contracts not initialized - tranchePoolFactory:",
+          !!tranchePoolFactory,
+          "provider:",
+          !!getProvider(),
+        );
         return null; // Return null instead of throwing when not initialized
       }
 
@@ -641,9 +650,11 @@ export function useSellerOperations() {
       while (retries > 0) {
         try {
           console.log("Getting pool address for tranche:", trancheId);
-          const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
+          const poolAddress = await (tranchePoolFactory as any).getTranchePool(
+            trancheId,
+          );
           console.log("Pool address:", poolAddress);
-          
+
           if (!poolAddress || poolAddress === ethers.ZeroAddress) {
             console.log("No pool found for tranche:", trancheId);
             return null;
@@ -651,21 +662,27 @@ export function useSellerOperations() {
 
           // Try with current provider first, then fallback if needed
           let provider = getProvider();
-          
+
           // Try to check if the pool contract exists, but handle RPC errors gracefully
           try {
             const code = await provider.getCode(poolAddress);
-            if (code === '0x' || code === '0x0') {
+            if (code === "0x" || code === "0x0") {
               console.log("No contract deployed at pool address");
               return null;
             }
           } catch (codeError) {
-            console.warn(`Could not verify contract at ${poolAddress}, assuming no pool exists`);
+            console.warn(
+              `Could not verify contract at ${poolAddress}, assuming no pool exists`,
+            );
             return null;
           }
-          
-          let pool = new Contract(poolAddress, TranchePoolCoreABI.abi, provider);
-          
+
+          let pool = new Contract(
+            poolAddress,
+            TranchePoolCoreABI.abi,
+            provider,
+          );
+
           try {
             console.log("Calling pool.getPoolAccounting()");
             const accounting = await (pool as any).getPoolAccounting();
@@ -679,21 +696,35 @@ export function useSellerOperations() {
             };
           } catch (poolError) {
             // If RPC error, try fallback
-            const errorWithCode = poolError as { message?: string; code?: number | string };
-            if (errorWithCode.message?.includes("missing trie node") || 
-                errorWithCode.code === -32603 || 
-                errorWithCode.code === 'NETWORK_ERROR') {
+            const errorWithCode = poolError as {
+              message?: string;
+              code?: number | string;
+            };
+            if (
+              errorWithCode.message?.includes("missing trie node") ||
+              errorWithCode.code === -32603 ||
+              errorWithCode.code === "NETWORK_ERROR"
+            ) {
               retries--;
               if (retries > 0) {
-                console.log(`RPC error in getPoolAccounting, trying fallback... (${retries} attempts left)`);
+                console.log(
+                  `RPC error in getPoolAccounting, trying fallback... (${retries} attempts left)`,
+                );
                 try {
                   provider = await createProviderWithFallback();
-                  pool = new Contract(poolAddress, TranchePoolCoreABI.abi, provider);
+                  pool = new Contract(
+                    poolAddress,
+                    TranchePoolCoreABI.abi,
+                    provider,
+                  );
                   // Loop will retry with new provider
-                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  await new Promise((resolve) => setTimeout(resolve, 1000));
                   continue;
                 } catch (fallbackError) {
-                  console.error("Failed to create fallback provider:", fallbackError);
+                  console.error(
+                    "Failed to create fallback provider:",
+                    fallbackError,
+                  );
                 }
               }
             }
@@ -702,13 +733,16 @@ export function useSellerOperations() {
         } catch (error) {
           retries--;
           if (retries === 0) {
-            console.error("Error fetching pool accounting after all retries:", error);
+            console.error(
+              "Error fetching pool accounting after all retries:",
+              error,
+            );
             return null;
           }
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
-      
+
       return null;
     },
     [tranchePoolFactory, getProvider, createProviderWithFallback],
@@ -735,15 +769,16 @@ export function useSellerOperations() {
         }
 
         // Get pool
-        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
-        const pool = new Contract(
-          poolAddress,
-          TranchePoolCoreABI.abi,
-          signer,
+        const poolAddress = await (tranchePoolFactory as any).getTranchePool(
+          trancheId,
         );
+        const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, signer);
 
         // Get seller position
-        const position = await (pool as any).getSellerPosition(roundId, account);
+        const position = await (pool as any).getSellerPosition(
+          roundId,
+          account,
+        );
 
         if (position.filledCollateral === 0n) {
           throw new Error("No filled collateral to claim");
@@ -763,7 +798,8 @@ export function useSellerOperations() {
         return receipt;
       } catch (error) {
         console.error("Error claiming premiums:", error);
-        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
         toast.error(errorMessage);
         throw error;
       } finally {
@@ -781,11 +817,15 @@ export function useSellerOperations() {
 
       try {
         // Get all active tranches
-        const activeTranches = await (productCatalog as any).getActiveTranches();
+        const activeTranches = await (
+          productCatalog as any
+        ).getActiveTranches();
         const positions = [];
 
         for (const trancheId of activeTranches) {
-          const rounds = await (productCatalog as any).getTrancheRounds(trancheId);
+          const rounds = await (productCatalog as any).getTrancheRounds(
+            trancheId,
+          );
 
           for (const roundId of rounds) {
             const roundInfo = await (productCatalog as any).getRound(roundId);
@@ -835,7 +875,9 @@ export function useSellerOperations() {
       if (!sellerAddress || !tranchePoolFactory) return 0n;
 
       try {
-        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
+        const poolAddress = await (tranchePoolFactory as any).getTranchePool(
+          trancheId,
+        );
         if (!poolAddress || poolAddress === ethers.ZeroAddress) {
           // No pool exists for this tranche
           return 0n;
@@ -844,22 +886,33 @@ export function useSellerOperations() {
         // Try to check if the pool contract exists, but handle RPC errors gracefully
         try {
           const code = await getProvider().getCode(poolAddress);
-          if (code === '0x' || code === '0x0') {
+          if (code === "0x" || code === "0x0") {
             // Contract doesn't exist at this address
             return 0n;
           }
         } catch (codeError) {
           // If getCode fails (e.g., RPC error), assume no contract exists
-          console.warn(`Could not verify contract at ${poolAddress}, assuming no pool exists`);
+          console.warn(
+            `Could not verify contract at ${poolAddress}, assuming no pool exists`,
+          );
           return 0n;
         }
 
-        const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, getProvider());
-        const available = await (pool as any).getAvailableCollateral(sellerAddress);
+        const pool = new Contract(
+          poolAddress,
+          TranchePoolCoreABI.abi,
+          getProvider(),
+        );
+        const available = await (pool as any).getAvailableCollateral(
+          sellerAddress,
+        );
         return available;
       } catch (error) {
         // Only log error if it's not an expected "no pool" scenario
-        if (error instanceof Error && !error.message.includes('missing revert data')) {
+        if (
+          error instanceof Error &&
+          !error.message.includes("missing revert data")
+        ) {
           console.error("Error fetching available collateral:", error);
         }
         return 0n;
@@ -881,7 +934,6 @@ export function useSellerOperations() {
     getAvailableCollateral,
 
     // Withdrawal functions
-    withdrawCollateral,
     claimPremiums,
 
     // State
