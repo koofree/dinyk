@@ -84,7 +84,7 @@ function TrancheContent() {
     price: btcPrice,
     loading: priceLoading,
     error: priceError,
-  } = useBTCPrice({ factory });
+  } = useBTCPrice();
 
   // Get user's liquidity positions
   const {
@@ -129,7 +129,7 @@ function TrancheContent() {
     refetch,
   } = useTrancheData({
     factory,
-    currentBTCPrice: btcPrice ?? undefined,
+    currentBTCPrice: btcPrice,
   });
 
   // Fetch products and tranches - optimized to fetch all tranches first
@@ -407,7 +407,7 @@ function TrancheContent() {
 
     // Calculate trigger price based on threshold
     const triggerLevel = tranche ? Number(tranche.threshold) : 5;
-    const currentPrice = btcPrice && btcPrice < 1 ? 110000 : btcPrice ?? 110000;
+    const currentPrice = btcPrice && btcPrice < 1 ? 110000 : btcPrice;
     console.log("currentPrice", currentPrice);
     console.log("triggerLevel", triggerLevel);
     const triggerRate = ((currentPrice - triggerLevel) / currentPrice) * 100;

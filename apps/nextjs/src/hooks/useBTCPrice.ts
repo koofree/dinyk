@@ -1,12 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 
-import { ACTIVE_NETWORK } from "@dinsure/contracts";
-
-interface UseBTCPriceProps {
-  factory: any;
-  refreshInterval?: number; // in milliseconds
-}
+import { ACTIVE_NETWORK, OracleRouter__factory } from "@dinsure/contracts";
 
 // Create a default provider for Kaia Testnet
 const createDefaultProvider = () => {
@@ -16,14 +14,12 @@ const createDefaultProvider = () => {
   });
 };
 
-export function useBTCPrice({
-  factory,
-  refreshInterval = 60000,
-}: UseBTCPriceProps) {
-  const [price, setPrice] = useState<number | null>(null);
+export function useBTCPrice() {
+  const [price, setPrice] = useState<number>(100000);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [lastUpdate, setLastUpdate] = useState<number | null>(null);
+  const refreshInterval = 5000; // 60000;
 
   const fetchBTCPrice = async () => {
     try {
@@ -31,17 +27,11 @@ export function useBTCPrice({
       setError(null);
 
       // Use factory provider if available, otherwise create default
-      const provider = factory?.provider || createDefaultProvider();
-
-      // Simple oracle router ABI for getPrice function
-      const oracleRouterABI = [
-        "function getPrice(bytes32 identifier) external view returns (tuple(uint256 price, uint256 timestamp))",
-      ];
+      const provider = createDefaultProvider();
 
       // Create oracle router contract
-      const oracleRouter = new ethers.Contract(
+      const oracleRouter = OracleRouter__factory.connect(
         ACTIVE_NETWORK.contracts.OracleRouter,
-        oracleRouterABI,
         provider,
       );
 
@@ -49,7 +39,17 @@ export function useBTCPrice({
       const btcIdentifier = ethers.keccak256(ethers.toUtf8Bytes("BTC-USDT"));
       const priceResult = await oracleRouter.getPrice(btcIdentifier);
 
-      const btcPrice = Number(ethers.formatUnits(priceResult.price, 8)); // Oracle uses 8 decimals
+      // Validate the price result
+      if (!priceResult.valid) {
+        throw new Error(
+          `Invalid price data: ${priceResult.error ?? "Unknown error"}`,
+        );
+      }
+
+      // Extract the price from the PriceResult struct
+      const btcPrice = Number(
+        ethers.formatUnits(priceResult.price as bigint, 8),
+      ); // Oracle uses 8 decimals
 
       setPrice(btcPrice);
       setLastUpdate(Date.now());
@@ -66,13 +66,13 @@ export function useBTCPrice({
   };
 
   useEffect(() => {
-    fetchBTCPrice();
+    void fetchBTCPrice();
 
-    if (refreshInterval > 0) {
-      const interval = setInterval(fetchBTCPrice, refreshInterval);
-      return () => clearInterval(interval);
-    }
-  }, [factory, refreshInterval]);
+    const interval = setInterval(() => {
+      void fetchBTCPrice();
+    }, refreshInterval);
+    return () => clearInterval(interval);
+  }, []);
 
   return {
     price,

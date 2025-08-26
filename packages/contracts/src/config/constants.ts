@@ -97,6 +97,9 @@ export const KAIA_MAINNET = {
     YieldRouter: "",
     OracleRouter: "",
     SettlementEngine: "",
+    oraklBtcUsdtFeedProxy: "",
+    oraklEthUsdtFeedProxy: "",
+    oraklKaiaUsdtFeedProxy: "",
   },
 } as const;
 
@@ -127,6 +130,9 @@ export const KAIA_TESTNET = {
     YieldRouter: "0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11",
     OracleRouter: "0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72",
     SettlementEngine: "0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8",
+    oraklBtcUsdtFeedProxy: "0x43add670a0e1948c90386d2b972fcaec6ce1be90",
+    oraklEthUsdtFeedProxy: "0x22be5ff1ef09ebf06995da9050d44d23070c2142",
+    oraklKaiaUsdtFeedProxy: "0xc2caa26226585f666ec79f8ecdb0aec17893af1d",
   },
 } as const;
 

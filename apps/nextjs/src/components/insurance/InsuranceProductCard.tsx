@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { useContractFactory } from "@dinsure/contracts";
 
 interface InsuranceProductCardProps {
   product: {
@@ -18,8 +17,7 @@ interface InsuranceProductCardProps {
 
 export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
   const [mounted, setMounted] = useState(false);
-  const factory = useContractFactory();
-  const { price: btcPrice } = useBTCPrice({ factory });
+  const { price: btcPrice } = useBTCPrice();
 
   useEffect(() => {
     setMounted(true);
@@ -31,7 +29,7 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
     const thresholdPrice = Number(product.threshold) / 1e18;
 
     // Use actual BTC price if available, otherwise use a default
-    const basePrice = (btcPrice ?? 100000) < 1 ? 100000 : (btcPrice ?? 100000);
+    const basePrice = btcPrice;
 
     const percentageChange = ((basePrice - thresholdPrice) / basePrice) * 100;
 
@@ -108,7 +106,7 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
 
       {/* 
         TODO: Add buyer and provider counts I don't know how to get this data from the contract
-        
+
         <div className="mb-6 grid grid-cols-2 gap-4">
         <div className="rounded-lg bg-gray-50 p-3">
           <div className="mb-1 text-2xl font-bold text-gray-900">
