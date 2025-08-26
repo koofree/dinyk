@@ -154,9 +154,8 @@ export function useUserPortfolio() {
           }
 
           // Get round and tranche details with error handling
-          let roundInfo,
-            trancheSpec,
-            product: ProductCatalog.ProductStructOutput | undefined;
+          let roundInfo: ProductCatalog.RoundStructOutput | undefined;
+          let trancheSpec: ProductCatalog.TrancheSpecStructOutput | undefined;
           try {
             roundInfo = await productCatalog.getRound(roundId);
           } catch {
@@ -168,14 +167,6 @@ export function useUserPortfolio() {
             trancheSpec = await productCatalog.getTranche(trancheId);
           } catch {
             console.log(`Tranche ${trancheId} not found for token ${tokenId}`);
-            continue;
-          }
-
-          const productId = Number(trancheSpec.productId);
-          try {
-            product = await productCatalog.getProduct(productId);
-          } catch {
-            console.log(`Product ${productId} not found for token ${tokenId}`);
             continue;
           }
 

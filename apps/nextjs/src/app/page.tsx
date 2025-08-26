@@ -163,6 +163,7 @@ export default function HomePage() {
                 // Create aggregated product entry
                 fetchedProducts.push({
                   productId: Number(productId),
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                   name: ORACLE_ROUTE_ID_TO_TYPE[oracleRouteId],
                   triggerType: triggerType,
                   threshold: avgThreshold,

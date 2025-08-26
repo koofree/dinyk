@@ -18,13 +18,14 @@ const ROUND_STATE_BADGES = {
   CANCELED: { color: "bg-red-600 text-red-100", label: "Canceled" },
 };
 
-interface LiquidityPool {
+export interface LiquidityPool {
   id: number;
   productId: number;
   asset: string;
   trancheName: string;
   triggerPrice: number;
-  triggerType: string;
+  triggerRate: number;
+  triggerType: "PRICE_BELOW" | "PRICE_ABOVE";
   expectedPremium: number;
   premiumRateBps: number;
   stakingAPY: number;
@@ -34,6 +35,7 @@ interface LiquidityPool {
   userShare: string;
   utilization: number;
   roundState: string;
+  roundStatus: string;
   roundEndsIn: number;
   navPerShare?: string;
 }
@@ -54,12 +56,8 @@ export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h3 className="text-xl font-bold text-white">
-            {pool.asset} 
+            {pool.asset} {pool.triggerType === "PRICE_BELOW" ? "-" : "+"}{pool.triggerRate.toFixed(2)}%
           </h3>
-          <p className="text-sm text-gray-400">
-            Trigger: {pool.triggerType === "PRICE_BELOW" ? "<" : ">"} $
-            {pool.triggerPrice.toLocaleString()}
-          </p>
           <p className="mt-1 text-xs text-gray-500">
             Tranche #{pool.id} • Product #{pool.productId}
           </p>

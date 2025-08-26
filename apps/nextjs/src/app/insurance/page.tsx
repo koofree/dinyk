@@ -9,14 +9,16 @@ import type {
 } from "@dinsure/contracts";
 import {
   ACTIVE_NETWORK,
+  ORACLE_ROUTE_ID_TO_TYPE,
   useContracts,
   useProductManagement,
   useWeb3
 } from "@dinsure/contracts";
 
 // Using any types to avoid TypeScript conflicts
-interface Product {
+export interface Product {
   productId: number;
+  asset: "BTC" | "ETH" | "KAIA";
   tranches: Tranche[];
   metadata: ProductMetadata;
   active: boolean;  
@@ -25,7 +27,7 @@ interface Product {
   trancheIds: number[];
 }
 
-interface Tranche {
+export interface Tranche {
   trancheId: number;
   productId: number;
   triggerType?: number;
@@ -42,6 +44,7 @@ interface Tranche {
   oracleRouteId?: number;
   createdAt?: number;
   updatedAt?: number;
+  pairType?: 'BTC-USDT' | 'ETH-USDT' | 'KAIA-USDT';
 }
 
 export default function InsurancePage() {
@@ -113,8 +116,8 @@ export default function InsurancePage() {
                 isExpired: false,
                 availableCapacity: BigInt(0),
                 utilizationRate: 0,
-                createdAt: Date.now(),
-                updatedAt: Date.now(),
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                pairType: ORACLE_ROUTE_ID_TO_TYPE[tranche.oracleRouteId as unknown as keyof typeof ORACLE_ROUTE_ID_TO_TYPE] as unknown as 'BTC-USDT' | 'ETH-USDT' | 'KAIA-USDT',
               } as Tranche;
             } catch (err) {
               console.error(`Error fetching tranche ${id}:`, err);
@@ -149,8 +152,10 @@ export default function InsurancePage() {
           // Map products to their tranches using the grouped data
           const productsWithTranches: Product[] = fetchedProducts.map((product) => {
             const productTranches = tranchesByProduct[product.productId] ?? [];
+            const asset = productTranches.map(t => t.pairType)[0]?.split("-")[0] as "BTC" | "ETH" | "KAIA";
             return {
               ...product,
+              asset,
               tranches: productTranches,
               trancheIds: productTranches.map(t => t.trancheId),
               metadata: {} as ProductMetadata,
@@ -164,6 +169,8 @@ export default function InsurancePage() {
           const productIds = [...new Set(fetchedTranches.map(t => t.productId))];
           const productsFromTranches: Product[] = productIds.map(productId => ({
             productId,
+             
+            asset: tranchesByProduct[productId]?.map(t => t.pairType)[0]?.split("-")[0] as "BTC" | "ETH" | "KAIA",
             tranches: tranchesByProduct[productId] ?? [],
             metadata: {} as ProductMetadata,
             active: true,

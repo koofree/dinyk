@@ -13,6 +13,7 @@ import { Suspense, useEffect, useState } from "react";
 
 import {
   INSURANCE_PRODUCTS,
+  ORACLE_ROUTE_ID_TO_TYPE,
   useContractFactory,
   useContracts,
   useProductManagement,
@@ -56,6 +57,7 @@ interface Tranche {
   availableCapacity: bigint;
   utilizationRate: number;
   name: string;
+  asset: string;
 }
 
 interface TrancheFilters {
@@ -130,7 +132,7 @@ function TrancheContent() {
     currentBTCPrice: btcPrice ?? undefined,
   });
 
-  // Fetch products and tranches
+  // Fetch products and tranches - optimized to fetch all tranches first
   useEffect(() => {
     const fetchData = async () => {
       if (!isInitialized || !productCatalog) {
@@ -147,249 +149,178 @@ function TrancheContent() {
       try {
         console.log("[Tranche Page] Starting data fetch...");
 
-        // Fetch products - only get valid ones from contract
-        console.log("[Tranche Page] Fetching products from contract...");
-        const fetchedProducts: Product[] = [];
-
-        try {
-          // Get active products from contract
-          const activeProductIds = await (
-            productCatalog as any
-          ).getActiveProducts();
-          console.log(
-            "[Tranche Page] Active product IDs from contract:",
-            activeProductIds.map((id) => Number(id)),
-          );
-
-          // Fetch each product
-          for (const productId of activeProductIds) {
-            try {
-              const productInfo = await (productCatalog as any).getProduct(
-                Number(productId),
-              );
-
-              if (productInfo && Number(productInfo.productId) !== 0) {
-                console.log(
-                  `[Tranche Page] Product ${productId} from contract:`,
-                  {
-                    exists: !!productInfo,
-                    productId: productInfo?.productId,
-                    active: productInfo?.active,
-                    metadataHash: productInfo?.metadataHash,
-                  },
-                );
-
-                // Get tranches for this product
-                const trancheIds = productInfo.trancheIds || [];
-                const productTranches: any[] = [];
-
-                for (const trancheId of trancheIds) {
-                  try {
-                    const tranche = await (productCatalog as any).getTranche(
-                      Number(trancheId),
-                    );
-                    if (tranche && Number(tranche.productId) > 0) {
-                      productTranches.push({
-                        trancheId: Number(trancheId),
-                        productId: Number(tranche.productId),
-                        triggerType: Number(tranche.triggerType || 0),
-                        threshold: tranche.threshold
-                          ? BigInt(tranche.threshold.toString())
-                          : BigInt(0),
-                        premiumRateBps: Number(tranche.premiumRateBps || 0),
-                        maturityDays: Number(tranche.maturityDays || 30),
-                        maturityTimestamp: Number(
-                          tranche.maturityTimestamp || 0,
-                        ),
-                        trancheCap: tranche.trancheCap
-                          ? BigInt(tranche.trancheCap.toString())
-                          : BigInt(0),
-                        perAccountMin: tranche.perAccountMin
-                          ? BigInt(tranche.perAccountMin.toString())
-                          : BigInt(0),
-                        perAccountMax: tranche.perAccountMax
-                          ? BigInt(tranche.perAccountMax.toString())
-                          : BigInt(0),
-                        oracleRouteId: Number(tranche.oracleRouteId || 0),
-                        poolAddress: tranche.poolAddress || "",
-                        active: true,
-                        isExpired: false,
-                        availableCapacity: BigInt(0),
-                        utilizationRate: 0,
-                        name: `Tranche ${trancheId}`,
-                      });
-                    }
-                  } catch (err) {
-                    console.log(
-                      `[Tranche Page] Could not fetch tranche ${trancheId}`,
-                    );
-                  }
-                }
-
-                // Find matching config for metadata
-                const configProduct = INSURANCE_PRODUCTS.find(
-                  (p) => p.productId === Number(productId),
-                );
-
-                // Create product entry with actual data from contract
-                fetchedProducts.push({
-                  productId: Number(productId),
-                  metadataHash: productInfo?.metadataHash || "",
-                  active: productInfo?.active || false,
-                  createdAt: Number(
-                    productInfo?.createdAt || Date.now() / 1000,
-                  ),
-                  updatedAt: Number(
-                    productInfo?.updatedAt || Date.now() / 1000,
-                  ),
-                  tranches: productTranches,
-                  metadata: {
-                    name: configProduct?.name || `Product ${productId}`,
-                    description:
-                      configProduct?.description ||
-                      `Insurance Product ${productId}`,
-                    category: "Price Protection",
-                    tags: [configProduct?.asset || "BTC"],
-                    riskLevel: "MEDIUM",
-                    underlyingAsset: configProduct?.asset || "BTC",
-                  },
-                } as Product);
-              }
-            } catch (err) {
-              console.log(
-                `[Tranche Page] Could not fetch product ${productId} from contract`,
-              );
-            }
-          }
-        } catch (err) {
-          console.error(
-            "[Tranche Page] Error fetching products from contract:",
-            err,
-          );
-        }
-
-        console.log(
-          "[Tranche Page] Products fetched from contract:",
-          fetchedProducts,
-        );
-        setProducts(fetchedProducts);
-
-        // Use tranches from products we already fetched
-        console.log("[Tranche Page] Extracting tranches from products...");
         const allTranches: Tranche[] = [];
+        const productMap = new Map<number, Product>();
 
-        for (const product of fetchedProducts) {
-          if (product.tranches && product.tranches.length > 0) {
-            allTranches.push(...product.tranches);
+        // Step 1: Fetch all active tranches first
+        console.log("[Tranche Page] Fetching all active tranches from contract...");
+        const activeTrancheIds = await productCatalog.getActiveTranches();
+        console.log(
+          "[Tranche Page] Active tranche IDs from contract:",
+          activeTrancheIds.map((id) => Number(id)),
+        );
+
+        // Step 2: Fetch each tranche data
+        for (const trancheId of activeTrancheIds) {
+          try {
+            const tranche = await productCatalog.getTranche(Number(trancheId));
+
+            // Validate tranche data
+            if (
+              tranche &&
+              Number(tranche.productId) > 0 &&
+              Number(tranche.premiumRateBps) > 0
+            ) {
+              console.log(
+                `[Tranche Page] Found tranche ${trancheId} for product ${tranche.productId}`,
+              );
+
+              const trancheData: Tranche = {
+                trancheId: Number(trancheId),
+                productId: Number(tranche.productId),
+                triggerType: Number(tranche.triggerType || 0),
+                threshold: tranche.threshold
+                  ? BigInt(Math.floor(Number(tranche.threshold) / 1e18).toString())
+                  : BigInt(0),
+                premiumRateBps: Number(tranche.premiumRateBps || 0),
+                maturityDays: 30, // Default to 30 days as maturityDays not in contract
+                maturityTimestamp: Number(tranche.maturityTimestamp || 0),
+                trancheCap: tranche.trancheCap
+                  ? BigInt(tranche.trancheCap.toString())
+                  : BigInt(0),
+                perAccountMin: tranche.perAccountMin
+                  ? BigInt(tranche.perAccountMin.toString())
+                  : BigInt(0),
+                perAccountMax: tranche.perAccountMax
+                  ? BigInt(tranche.perAccountMax.toString())
+                  : BigInt(0),
+                oracleRouteId: Number(tranche.oracleRouteId || 0),
+                poolAddress: "", // poolAddress not in TrancheSpec
+                active: true,
+                isExpired: false,
+                availableCapacity: BigInt(0),
+                utilizationRate: 0,
+                name: `Tranche ${trancheId}`,
+                asset: (ORACLE_ROUTE_ID_TO_TYPE[Number(tranche.oracleRouteId) as keyof typeof ORACLE_ROUTE_ID_TO_TYPE]?.split("-")[0] ?? "BTC") as "BTC" | "ETH" | "KAIA",
+              };
+
+              allTranches.push(trancheData);
+            }
+          } catch {
+            console.log(`[Tranche Page] Could not fetch tranche ${trancheId}`);
           }
         }
 
         console.log(
-          `[Tranche Page] Found ${allTranches.length} tranches from ${fetchedProducts.length} products`,
+          `[Tranche Page] Fetched ${allTranches.length} active tranches`,
         );
 
-        // If no products/tranches found in contract, try direct tranche query as fallback
-        if (allTranches.length === 0) {
-          console.log(
-            "[Tranche Page] No products found, trying direct tranche query...",
-          );
+        // Step 3: Get unique product IDs from tranches
+        const uniqueProductIds = [...new Set(allTranches.map(t => t.productId))];
+        console.log(
+          "[Tranche Page] Unique product IDs from tranches:",
+          uniqueProductIds,
+        );
 
+        // Step 4: Fetch product details for each unique product
+        for (const productId of uniqueProductIds) {
           try {
-            // Get active tranches from contract
-            const activeTrancheIds = await (
-              productCatalog as any
-            ).getActiveTranches();
-            console.log(
-              "[Tranche Page] Active tranche IDs from contract:",
-              activeTrancheIds.map((id) => Number(id)),
-            );
+            const productInfo = await productCatalog.getProduct(productId);
+            
+            if (Number(productInfo.productId) !== 0) {
+              console.log(
+                `[Tranche Page] Product ${productId} from contract:`,
+                {
+                  exists: !!productInfo,
+                  productId: productInfo?.productId,
+                  active: productInfo?.active,
+                  metadataHash: productInfo?.metadataHash,
+                },
+              );
 
-            for (const trancheId of activeTrancheIds) {
-              try {
-                const tranche = await (productCatalog as any).getTranche(
-                  Number(trancheId),
-                );
+              // Find matching config for metadata
+              const configProduct = INSURANCE_PRODUCTS.find(
+                (p) => p.productId === productId,
+              );
 
-                // Validate tranche data
-                if (
-                  tranche &&
-                  Number(tranche.productId) > 0 &&
-                  Number(tranche.premiumRateBps) > 0
-                ) {
-                  console.log(
-                    `[Tranche Page] Found standalone tranche ${trancheId}:`,
-                    tranche,
-                  );
+              // Get tranches belonging to this product
+              const productTranches = allTranches.filter(
+                t => t.productId === productId
+              );
 
-                  allTranches.push({
-                    trancheId: Number(trancheId),
-                    productId: Number(tranche.productId),
-                    triggerType: Number(tranche.triggerType || 0),
-                    threshold: tranche.threshold
-                      ? BigInt(tranche.threshold.toString())
-                      : BigInt(0),
-                    premiumRateBps: Number(tranche.premiumRateBps || 0),
-                    maturityDays: Number(tranche.maturityDays || 30),
-                    maturityTimestamp: Number(tranche.maturityTimestamp || 0),
-                    trancheCap: tranche.trancheCap
-                      ? BigInt(tranche.trancheCap.toString())
-                      : BigInt(0),
-                    perAccountMin: tranche.perAccountMin
-                      ? BigInt(tranche.perAccountMin.toString())
-                      : BigInt(0),
-                    perAccountMax: tranche.perAccountMax
-                      ? BigInt(tranche.perAccountMax.toString())
-                      : BigInt(0),
-                    oracleRouteId: Number(tranche.oracleRouteId || 0),
-                    poolAddress: tranche.poolAddress || "",
-                    active: true,
-                    isExpired: false,
-                    availableCapacity: BigInt(0),
-                    utilizationRate: 0,
-                    name: `Tranche ${trancheId}`,
-                  } as Tranche);
+              // Create product entry
+              const product: Product = {
+                productId: productId,
+                metadataHash: productInfo.metadataHash || "",
+                active: productInfo.active || false,
+                createdAt: Number(productInfo.createdAt ?? Date.now() / 1000),
+                updatedAt: Number(productInfo.updatedAt ?? Date.now() / 1000),
+                tranches: productTranches,
+                metadata: {
+                  name: configProduct?.name ?? `Product ${productId}`,
+                  description:
+                    configProduct?.description ??
+                    `Insurance Product ${productId}`,
+                  category: "Price Protection",
+                  tags: [configProduct?.asset ?? "BTC"],
+                  riskLevel: "MEDIUM" as "LOW" | "MEDIUM" | "HIGH",
+                  underlyingAsset: configProduct?.asset ?? "BTC",
+                },
+              };
 
-                  // Also ensure we have the product for this tranche
-                  const productId = Number(tranche.productId);
-                  if (!fetchedProducts.find((p) => p.productId === productId)) {
-                    const configProduct = INSURANCE_PRODUCTS.find(
-                      (p) => p.productId === productId,
-                    );
-                    fetchedProducts.push({
-                      productId: productId,
-                      metadataHash: "",
-                      active: true,
-                      createdAt: Date.now() / 1000,
-                      updatedAt: Date.now() / 1000,
-                      tranches: [],
-                      metadata: {
-                        name: configProduct?.name || `Product ${productId}`,
-                        description:
-                          configProduct?.description ||
-                          `Insurance Product ${productId}`,
-                        category: "Price Protection",
-                        tags: [configProduct?.asset || "BTC"],
-                        riskLevel: "MEDIUM",
-                        underlyingAsset: configProduct?.asset || "BTC",
-                      },
-                    } as Product);
-                    setProducts([...fetchedProducts]);
-                  }
-                }
-              } catch (err) {
-                // Tranche doesn't exist, continue
-              }
+              productMap.set(productId, product);
             }
-          } catch (err) {
-            console.error(
-              "[Tranche Page] Error fetching active tranches:",
-              err,
+          } catch {
+            console.log(
+              `[Tranche Page] Could not fetch product ${productId}, creating placeholder`,
             );
+            
+            // Create placeholder product for orphaned tranches
+            const configProduct = INSURANCE_PRODUCTS.find(
+              (p) => p.productId === productId,
+            );
+            
+            const productTranches = allTranches.filter(
+              t => t.productId === productId
+            );
+
+            const product: Product = {
+              productId: productId,
+              metadataHash: "",
+              active: true,
+              createdAt: Date.now() / 1000,
+              updatedAt: Date.now() / 1000,
+              tranches: productTranches,
+              metadata: {
+                name: configProduct?.name ?? `Product ${productId}`,
+                description:
+                  configProduct?.description ??
+                  `Insurance Product ${productId}`,
+                category: "Price Protection",
+                tags: [configProduct?.asset ?? "BTC"],
+                riskLevel: "MEDIUM" as "LOW" | "MEDIUM" | "HIGH",
+                underlyingAsset: configProduct?.asset ?? "BTC",
+              },
+            };
+
+            productMap.set(productId, product);
           }
         }
 
-        console.log(`[Tranche Page] Final: ${allTranches.length} tranches`);
+        // Step 5: Convert map to array and set state
+        const fetchedProducts = Array.from(productMap.values());
+        
+        console.log(
+          "[Tranche Page] Final results:",
+          {
+            products: fetchedProducts.length,
+            tranches: allTranches.length,
+          }
+        );
+        
+        setProducts(fetchedProducts);
         setTranches(allTranches);
+        
       } catch (error) {
         console.error("[Tranche Page] Error in fetchData:", error);
         setProductsError(error as Error);
@@ -398,14 +329,13 @@ function TrancheContent() {
       }
     };
 
-    fetchData();
+    void fetchData();
   }, [isInitialized, getProducts, getActiveTranches, productCatalog]);
 
   // Open modals based on URL params
   useEffect(() => {
     if (
       trancheIdParam &&
-      tranchesData &&
       !showPurchaseModal &&
       !showLiquidityModal
     ) {
@@ -416,7 +346,7 @@ function TrancheContent() {
         setSelectedTranche(targetTranche);
         if (targetTranche.rounds.length > 0) {
           const openRound = targetTranche.rounds.find(
-            (r: any) => r.state === 1,
+            (r) => r.state === 1,
           );
           if (openRound) {
             setSelectedRoundId(openRound.roundId);
@@ -471,47 +401,39 @@ function TrancheContent() {
   const transformedUserPools = liquidityPositions.map((position) => {
     // Find the corresponding tranche and product data
     const tranche = tranches.find((t) => t.trancheId === position.trancheId);
-    const product = products.find((p) => p.productId === tranche?.productId);
     const trancheData = tranchesData?.find(
       (t) => t.trancheId === position.trancheId,
     );
 
     // Calculate trigger price based on threshold
-    const triggerLevel = tranche ? Number(tranche.threshold) / 1000000 : 5; // Default 5%
-    const currentPrice = btcPrice || 90000;
-    const triggerPrice = (currentPrice * (100 - triggerLevel)) / 100;
+    const triggerLevel = tranche ? Number(tranche.threshold) : 5;
+    const currentPrice = btcPrice && btcPrice < 1 ? 110000 : btcPrice ?? 110000;
+    console.log("currentPrice", currentPrice);
+    console.log("triggerLevel", triggerLevel);
+    const triggerRate = ((currentPrice - triggerLevel) / currentPrice) * 100;
 
     // Get round state
-    const roundState = position.roundState || "OPEN";
-    const daysLeft = position.daysLeft || 7;
+    const roundState = position.roundState;
+    const daysLeft = position.daysLeft;
 
-    // TODO: how to determine the asset type?
-    let asset: "BTC" | "KAIA" | "ETH";
-    if (
-      position.asset === "BTC" ||
-      position.asset === "KAIA" ||
-      position.asset === "ETH"
-    ) {
-      asset = position.asset;
-    } else {
-      asset = "BTC"; // default to KAIA if not one of the types
-    }
+    const asset = tranche?.asset;
 
     return {
       id: position.trancheId,
       productId: tranche?.productId || 0,
       asset: asset,
       trancheName:
-        position.tranche.split(" -")[0] || `Tranche ${position.trancheId}`,
-      triggerPrice: triggerPrice,
-      triggerType: "PRICE_BELOW",
+        position.tranche.split(" -")[0] ?? `Tranche ${position.trancheId}`,
+      triggerPrice: triggerLevel,
+      triggerRate: triggerRate,
+      triggerType: tranche?.triggerType === 0 ? "PRICE_BELOW" : "PRICE_ABOVE",
       expectedPremium: tranche ? Number(tranche.premiumRateBps) / 100 : 5,
-      premiumRateBps: tranche?.premiumRateBps || 500,
+      premiumRateBps: tranche?.premiumRateBps ?? 500,
       stakingAPY: 2.5, // TODO: Get from yield router
       riskLevel:
-        triggerLevel <= 5
+      triggerRate <= 5
           ? "LOW"
-          : triggerLevel <= 10
+          : triggerRate <= 10
             ? "MEDIUM"
             : ("HIGH" as "LOW" | "MEDIUM" | "HIGH"),
       poolSize: trancheData?.poolDetails?.totalCapacity || "10000000",
@@ -519,8 +441,9 @@ function TrancheContent() {
       userShare: position.currentValue,
       utilization: trancheData?.poolDetails?.utilizationRate || 0,
       roundState: roundState,
+      status: position.status,
       roundEndsIn: daysLeft,
-      navPerShare: trancheData?.poolDetails?.navPerShare || "1.00",
+      navPerShare: "1.00", // Default NAV per share
     };
   });
 
@@ -683,7 +606,7 @@ function TrancheContent() {
             Your Liquidity Positions
           </h2>
           {groupedUserPools.map(({ asset, pools }, index) => (
-            <div key={asset} style={{ marginTop: index > 0 ? "60px" : "0" }}>
+            <div key={`${asset}-${index}`} style={{ marginTop: index > 0 ? "60px" : "0" }}>
               <div
                 className={`mb-4 flex items-center ${asset === "KAIA" ? "gap-4" : "gap-2"}`}
               >
@@ -694,7 +617,7 @@ function TrancheContent() {
                   style={{ filter: "brightness(0) invert(0.2)" }}
                 />
                 <h3 className="font-display text-[24px] font-bold text-gray-900">
-                  {asset} Pools
+                  {asset} Tranches
                 </h3>
               </div>
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -827,8 +750,7 @@ function TrancheContent() {
                 className="relative rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg"
               >
                 <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                  {product.metadata?.name || `Product #${product.productId}`} -
-                  Tranche #{tranche.trancheId}
+                  {tranche.asset} Pools
                 </h3>
                 <div className="space-y-2 text-sm">
                   <p className="text-gray-600">
@@ -882,16 +804,16 @@ function TrancheContent() {
           setShowPurchaseModal(false);
           setSelectedTranche(null);
           setSelectedTrancheContract(null);
-          setSelectedProduct(null);
+          setSelectedProduct(null as Product | null);
           setSelectedRoundId(null);
         }}
         onSuccess={() => {
           setShowPurchaseModal(false);
           setSelectedTranche(null);
           setSelectedTrancheContract(null);
-          setSelectedProduct(null);
+          setSelectedProduct(null as Product | null);
           setSelectedRoundId(null);
-          refetch();
+          void refetch();
         }}
       />
 
@@ -904,7 +826,7 @@ function TrancheContent() {
           setShowLiquidityModal(false);
           setSelectedTranche(null);
           setSelectedTrancheContract(null);
-          setSelectedProduct(null);
+          setSelectedProduct(null as Product | null);
           setSelectedRoundId(null);
         }}
       />
