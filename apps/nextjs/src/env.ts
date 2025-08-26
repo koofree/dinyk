@@ -20,11 +20,6 @@ export const env = createEnv({
    * For them to be exposed to the client, prefix them with `NEXT_PUBLIC_`.
    */
   client: {
-    NEXT_PUBLIC_CHAIN_ID: z.coerce.number().default(8217),
-    NEXT_PUBLIC_RPC_URL: z.string().url().default("https://public-en.node.kaia.io"),
-    NEXT_PUBLIC_INSURANCE_CONTRACT: z.string().optional(),
-    NEXT_PUBLIC_TREASURY_CONTRACT: z.string().optional(),
-    NEXT_PUBLIC_TRANCHE_POOL_CONTRACT: z.string().optional(),
     NEXT_PUBLIC_ENABLE_TESTNETS: z.coerce.boolean().default(true),
     NEXT_PUBLIC_SHOW_DEBUG_INFO: z.coerce.boolean().default(true),
   },
@@ -33,11 +28,6 @@ export const env = createEnv({
    */
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
-    NEXT_PUBLIC_CHAIN_ID: process.env.NEXT_PUBLIC_CHAIN_ID,
-    NEXT_PUBLIC_RPC_URL: process.env.NEXT_PUBLIC_RPC_URL,
-    NEXT_PUBLIC_INSURANCE_CONTRACT: process.env.NEXT_PUBLIC_INSURANCE_CONTRACT,
-    NEXT_PUBLIC_TREASURY_CONTRACT: process.env.NEXT_PUBLIC_TREASURY_CONTRACT,
-    NEXT_PUBLIC_TRANCHE_POOL_CONTRACT: process.env.NEXT_PUBLIC_TRANCHE_POOL_CONTRACT,
     NEXT_PUBLIC_ENABLE_TESTNETS: process.env.NEXT_PUBLIC_ENABLE_TESTNETS,
     NEXT_PUBLIC_SHOW_DEBUG_INFO: process.env.NEXT_PUBLIC_SHOW_DEBUG_INFO,
   },

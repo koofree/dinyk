@@ -5,6 +5,7 @@ A decentralized parametric insurance platform built on the Kaia blockchain, prov
 ## Overview
 
 DIN enables users to:
+
 - **Purchase Insurance**: Protect against crypto price drops with automatic payouts
 - **Provide Liquidity**: Earn premiums and staking rewards by backing insurance pools
 - **Automatic Claims**: Oracle-triggered settlements without manual intervention
@@ -13,6 +14,7 @@ DIN enables users to:
 ## Features
 
 ### Core Functionality
+
 - **Parametric Insurance Products**: BTC, ETH, and KAIA price protection
 - **Tranche-based Risk Levels**: -5%, -10%, -15% price drop triggers
 - **100% Collateralization**: Full backing of all insurance payouts
@@ -20,6 +22,7 @@ DIN enables users to:
 - **Re-staking Integration**: Conservative yield generation on locked collateral
 
 ### Technical Features
+
 - **Web3 Integration**: Direct blockchain interaction with no backend
 - **Multi-wallet Support**: MetaMask, Kaikas, and WalletConnect compatibility
 - **Session Persistence**: Maintains wallet state across refreshes
@@ -41,6 +44,7 @@ DIN enables users to:
 ## Quick Start
 
 ### Prerequisites
+
 - Node.js 20+ and pnpm 9.6.0+
 - MetaMask or Kaia Wallet
 - KAIA tokens for transactions
@@ -69,24 +73,6 @@ The application will be available at http://localhost:3000
 Create a `.env` file with:
 
 ```bash
-# Kaia Network Configuration
-NEXT_PUBLIC_CHAIN_ID=1001  # Testnet (use 8217 for Mainnet)
-NEXT_PUBLIC_RPC_URL=https://public-en-kairos.node.kaia.io
-
-# Core Smart Contract Addresses (Testnet deployed)
-NEXT_PUBLIC_REGISTRY_ADDRESS=0xCD2B28186b257869B3C2946ababB56683F4304C3
-NEXT_PUBLIC_PRODUCT_CATALOG_ADDRESS=0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D
-NEXT_PUBLIC_INSURANCE_TOKEN_ADDRESS=0x3bEDE5f043E8D0597F9F0b60eCfc52B134d8E934
-NEXT_PUBLIC_SETTLEMENT_ENGINE_ADDRESS=0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8
-NEXT_PUBLIC_FEE_TREASURY_ADDRESS=0xb96D484cB71A5d5C3C3AB1Ac18dF587cC6AC6914
-NEXT_PUBLIC_POOL_FACTORY_ADDRESS=0x3810066EfEAc98F18cF6A1E62FF3f089CC30Fb01
-NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS=0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72
-NEXT_PUBLIC_YIELD_ROUTER_ADDRESS=0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11
-
-# Token Addresses
-NEXT_PUBLIC_USDT_ADDRESS=0x3372BE45687b2d85F010f6245d3b6284E13327ea
-NEXT_PUBLIC_DIN_TOKEN_ADDRESS=0x2e401e83087E96341E292f6B987cB7440860CE53
-
 # Development Flags
 NEXT_PUBLIC_ENABLE_TESTNETS=true
 NEXT_PUBLIC_SHOW_DEBUG_INFO=true
@@ -161,15 +147,15 @@ dinyk/
 ### Available Tranches
 
 | Asset | Trigger | Premium | Coverage Period |
-|-------|---------|---------|-----------------|
-| BTC   | -5%     | 2%      | 7 days         |
-| BTC   | -10%    | 5%      | 7 days         |
-| BTC   | -15%    | 10%     | 7 days         |
-| ETH   | -5%     | 2.5%    | 14 days        |
-| ETH   | -10%    | 6%      | 14 days        |
-| ETH   | -15%    | 12%     | 14 days        |
-| KAIA  | -10%    | 4%      | 30 days        |
-| KAIA  | -20%    | 12%     | 30 days        |
+| ----- | ------- | ------- | --------------- |
+| BTC   | -5%     | 2%      | 7 days          |
+| BTC   | -10%    | 5%      | 7 days          |
+| BTC   | -15%    | 10%     | 7 days          |
+| ETH   | -5%     | 2.5%    | 14 days         |
+| ETH   | -10%    | 6%      | 14 days         |
+| ETH   | -15%    | 12%     | 14 days         |
+| KAIA  | -10%    | 4%      | 30 days         |
+| KAIA  | -20%    | 12%     | 30 days         |
 
 ### Round Lifecycle
 
@@ -193,6 +179,7 @@ dinyk/
 ### Contract Repository
 
 The smart contracts are maintained in a separate repository:
+
 - Location: `../din-contract/`
 - Deployment: Hardhat with Ignition modules
 - Testing: Comprehensive test suite with coverage
@@ -224,6 +211,7 @@ npm run monitor:yield
 ### Adding Kaia Network to MetaMask
 
 #### Testnet (Development)
+
 1. Open MetaMask
 2. Click "Add Network"
 3. Enter the following details:
@@ -234,6 +222,7 @@ npm run monitor:yield
    - Block Explorer: https://kairos.kaiascope.com
 
 #### Mainnet (Production)
+
 1. Open MetaMask
 2. Click "Add Network"
 3. Enter the following details:
@@ -252,11 +241,13 @@ npm run monitor:yield
 ## Security
 
 ### Audit Status
+
 - Smart contracts: Pending audit
 - Frontend: Security best practices implemented
 - No private keys or sensitive data stored client-side
 
 ### Security Features
+
 - Multi-signature controls for critical functions
 - Emergency pause mechanism
 - Oracle redundancy with fallback options
@@ -277,18 +268,21 @@ Please read our [Contributing Guide](./CONTRIBUTING.md) for details on our code 
 ## Roadmap
 
 ### Phase 1: Foundation ✅
+
 - [x] Web3 integration with Kaia
 - [x] Wallet connection (MetaMask/Kaia Wallet)
 - [x] Insurance catalog UI
 - [x] Portfolio management dashboard
 
 ### Phase 2: Smart Contracts (In Progress)
+
 - [ ] Deploy core insurance contracts
 - [ ] Integrate oracle price feeds
 - [ ] Implement automatic settlements
 - [ ] Security audit
 
 ### Phase 3: Production Launch
+
 - [ ] Mainnet deployment
 - [ ] Re-staking integration
 - [ ] Advanced analytics dashboard
@@ -309,6 +303,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 For support and questions:
+
 - Open an issue on GitHub
 - Join our Discord server
 - Email: support@dinyk.io
