@@ -1,8 +1,7 @@
 "use client";
 
 import { InsuranceProductCard } from "@/components/insurance/InsuranceProductCard";
-import { KAIA_TESTNET } from "@/lib/constants";
-import { useContracts, useProductManagement, useWeb3 } from "@dinsure/contracts";
+import { ACTIVE_NETWORK, useContracts, useProductManagement, useWeb3 } from "@dinsure/contracts";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -222,7 +221,7 @@ export default function HomePage() {
                 ● Live on Testnet
               </span>
               <a 
-                href={`${KAIA_TESTNET.blockExplorer}/address/${KAIA_TESTNET.contracts.productCatalog}`}
+                href={`${ACTIVE_NETWORK.blockExplorer}/address/${ACTIVE_NETWORK.contracts.productCatalog}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
@@ -230,12 +229,12 @@ export default function HomePage() {
                 View Contracts ↗
               </a>
               <a 
-                href={KAIA_TESTNET.faucet}
+                href={ACTIVE_NETWORK.faucet}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
               >
-                Get Test KLAY ↗
+                Get Test KAIA ↗
               </a>
             </div>
             

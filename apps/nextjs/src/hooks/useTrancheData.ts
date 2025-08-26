@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+import { ACTIVE_NETWORK, ProductCatalogService } from "@dinsure/contracts";
 import { ethers } from "ethers";
-import { ProductCatalogService } from "@dinsure/contracts";
-import { KAIA_TESTNET_ADDRESSES } from "@dinsure/contracts";
+import { useEffect, useState } from "react";
 
 export interface RoundEconomics {
   totalBuyerPurchases: bigint;
@@ -65,7 +64,7 @@ export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps
       // Use factory provider if available, otherwise create default
       const provider = factory?.provider || createDefaultProvider();
       const catalogService = new ProductCatalogService(
-        KAIA_TESTNET_ADDRESSES.ProductCatalog,
+        ACTIVE_NETWORK.contracts.ProductCatalog,
         provider
       );
       setService(catalogService);

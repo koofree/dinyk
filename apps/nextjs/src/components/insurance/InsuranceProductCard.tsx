@@ -34,7 +34,6 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
     // Use actual BTC price if available, otherwise use a default
     const basePrice = (btcPrice ?? 100000) < 1 ? 100000 : (btcPrice ?? 100000);
 
-    console.log(basePrice, thresholdPrice);
     const percentageChange = ((basePrice - thresholdPrice) / basePrice * 100);
     
     // For price drop protection (triggerType 0), show as negative percentage

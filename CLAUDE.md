@@ -168,28 +168,7 @@ pnpm turbo gen init
    NEXT_PUBLIC_CHAIN_ID=8217
    NEXT_PUBLIC_RPC_URL=https://public-en-cypress.klaytn.net
    ```
-3. Add contract addresses (Testnet deployed):
-   ```bash
-   # Core Contracts
-   NEXT_PUBLIC_REGISTRY_ADDRESS=0xCD2B28186b257869B3C2946ababB56683F4304C3
-   NEXT_PUBLIC_PRODUCT_CATALOG_ADDRESS=0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D
-   NEXT_PUBLIC_INSURANCE_TOKEN_ADDRESS=0x3bEDE5f043E8D0597F9F0b60eCfc52B134d8E934
-   NEXT_PUBLIC_SETTLEMENT_ENGINE_ADDRESS=0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8
-   NEXT_PUBLIC_FEE_TREASURY_ADDRESS=0xb96D484cB71A5d5C3C3AB1Ac18dF587cC6AC6914
-   
-   # Infrastructure
-   NEXT_PUBLIC_POOL_FACTORY_ADDRESS=0x3810066EfEAc98F18cF6A1E62FF3f089CC30Fb01
-   NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS=0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72
-   NEXT_PUBLIC_YIELD_ROUTER_ADDRESS=0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11
-   
-   # Oracles
-   NEXT_PUBLIC_ORAKL_PRICE_FEED_ADDRESS=0xFa2f0063BAC2e5BA304f50eC54b6EA07aCC534fF
-   NEXT_PUBLIC_DINO_ORACLE_ADDRESS=0x6317f2f9271d484548871915DDDff95aD4c45aC3
-   
-   # Tokens
-   NEXT_PUBLIC_USDT_ADDRESS=0x8C034f0DBA8664DA4242Cb4CF7fCD7e0a3aa5c90
-   NEXT_PUBLIC_DIN_TOKEN_ADDRESS=0x7126Dbd15e6888AeDd606A7242C998DBED7530Fd
-   ```
+3. Add contract addresses (Testnet deployed) (addresses.ts file)
 
 ### Kaia Network Configuration
 
@@ -197,13 +176,13 @@ pnpm turbo gen init
 - **Chain ID**: 8217 (0x2019 in hex)
 - **RPC URL**: https://public-en-cypress.klaytn.net
 - **Block Explorer**: https://kaiascope.com
-- **Native Token**: KLAY
+- **Native Token**: KAIA
 
 #### Testnet (Development)
 - **Chain ID**: 1001 (0x3E9 in hex)
 - **RPC URL**: https://public-en-kairos.node.kaia.io
 - **Block Explorer**: https://kairos.kaiascope.com
-- **Native Token**: Test KLAY
+- **Native Token**: Test KAIA
 - **Faucet**: https://faucet.kaia.io
 
 ## Implementation Roadmap

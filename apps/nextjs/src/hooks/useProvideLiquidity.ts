@@ -1,4 +1,4 @@
-import { KAIA_TESTNET_ADDRESSES, useContracts, useWeb3 } from "@dinsure/contracts";
+import { useContracts, useWeb3 } from "@dinsure/contracts";
 import { ethers } from "ethers";
 import { useCallback, useState } from "react";
 import TranchePoolCoreABI from "../../../../packages/contracts/src/config/abis/TranchePoolCore.json";

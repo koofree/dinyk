@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { Product, Tranche, formatCurrency, formatPercentage, formatTimeRemaining, TriggerType } from "@dinsure/contracts";
-import { useWeb3 } from "@dinsure/contracts";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import type { Product, Tranche } from "@dinsure/contracts";
+import { formatCurrency, formatPercentage, formatTimeRemaining, TriggerType, useWeb3 } from "@dinsure/contracts";
+import React, { useState } from "react";
 
 interface PurchaseModalProps {
   product: Product | null;
@@ -148,7 +148,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                   <span className="absolute right-3 top-3 text-gray-400">USDT</span>
                 </div>
                 <div className="flex justify-between mt-2 text-sm text-gray-400">
-                  <span>Your balance: {parseFloat(balance).toFixed(4)} KLAY</span>
+                  <span>Your balance: {parseFloat(balance).toFixed(4)} KAIA</span>
                   <span>Max: ${maxAmount.toLocaleString()}</span>
                 </div>
               </div>

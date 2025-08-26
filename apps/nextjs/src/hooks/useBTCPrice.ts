@@ -1,4 +1,4 @@
-import { KAIA_TESTNET_ADDRESSES } from "@dinsure/contracts";
+import { ACTIVE_NETWORK } from "@dinsure/contracts";
 import { ethers } from "ethers";
 import { useEffect, useState } from "react";
 
@@ -9,9 +9,9 @@ interface UseBTCPriceProps {
 
 // Create a default provider for Kaia Testnet
 const createDefaultProvider = () => {
-  return new ethers.JsonRpcProvider('https://public-en-kairos.node.kaia.io', {
-    chainId: 1001,
-    name: 'Kaia Kairos'
+  return new ethers.JsonRpcProvider(ACTIVE_NETWORK.rpcUrl, {
+    chainId: ACTIVE_NETWORK.chainId,
+    name: ACTIVE_NETWORK.name
   });
 };
 
@@ -36,7 +36,7 @@ export function useBTCPrice({ factory, refreshInterval = 10000 }: UseBTCPricePro
       
       // Create oracle router contract
       const oracleRouter = new ethers.Contract(
-        KAIA_TESTNET_ADDRESSES.OracleRouter,
+        ACTIVE_NETWORK.contracts.OracleRouter,
         oracleRouterABI,
         provider
       );

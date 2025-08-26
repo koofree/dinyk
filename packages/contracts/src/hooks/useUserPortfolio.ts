@@ -1,7 +1,8 @@
 import { Contract, ethers } from "ethers";
 import { useCallback, useEffect, useState } from "react";
 import TranchePoolCoreABI from '../config/abis/TranchePoolCore.json';
-import { KAIA_RPC_ENDPOINTS, useWeb3 } from "../providers/Web3Provider";
+import { KAIA_RPC_ENDPOINTS } from "../config/constants";
+import { useWeb3 } from "../providers/Web3Provider";
 import { useContracts } from "./useContracts";
 
 export interface UserInsurancePosition {

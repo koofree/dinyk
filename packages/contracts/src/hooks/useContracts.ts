@@ -10,8 +10,8 @@ import ProductCatalogABI from "../config/abis/ProductCatalog.json";
 import SettlementEngineABI from "../config/abis/SettlementEngine.json";
 import TranchePoolCoreABI from "../config/abis/TranchePoolCore.json";
 import TranchePoolFactoryABI from "../config/abis/TranchePoolFactory.json";
-import { CONTRACT_ADDRESSES } from "../config/addresses";
-import { KAIA_RPC_ENDPOINTS, useWeb3 } from "../providers/Web3Provider";
+import { ACTIVE_NETWORK, KAIA_RPC_ENDPOINTS } from "../config/constants";
+import { useWeb3 } from "../providers/Web3Provider";
 
 export interface ContractsState {
   productCatalog: ethers.Contract | null;
@@ -56,10 +56,9 @@ export function useContracts(): ContractsState {
       // Create a read-only provider for contract calls when no wallet is connected
       console.log('[useContracts] Creating read-only provider with RPC:', KAIA_RPC_ENDPOINTS[0]);
       const readOnlyProvider = new ethers.JsonRpcProvider(KAIA_RPC_ENDPOINTS[0], {
-        chainId: 1001,
-        name: 'Kaia Kairos'
+        chainId: ACTIVE_NETWORK.chainId,
+        name: ACTIVE_NETWORK.name
       });
-      console.log('[useContracts] Read-only provider created:', readOnlyProvider);
       
       const initializeReadOnlyContracts = async () => {
         try {
@@ -69,49 +68,49 @@ export function useContracts(): ContractsState {
 
           // Initialize all contracts with read-only provider
           const productCatalog = new ethers.Contract(
-            CONTRACT_ADDRESSES.ProductCatalog,
+            ACTIVE_NETWORK.contracts.ProductCatalog,
             ProductCatalogABI.abi,
             readOnlyProvider,
           );
 
           const tranchePoolFactory = new ethers.Contract(
-            CONTRACT_ADDRESSES.TranchePoolFactory,
+            ACTIVE_NETWORK.contracts.TranchePoolFactory,
             TranchePoolFactoryABI.abi,
             readOnlyProvider,
           );
 
           const insuranceToken = new ethers.Contract(
-            CONTRACT_ADDRESSES.InsuranceToken,
+            ACTIVE_NETWORK.contracts.InsuranceToken,
             InsuranceTokenABI.abi,
             readOnlyProvider,
           );
 
           const settlementEngine = new ethers.Contract(
-            CONTRACT_ADDRESSES.SettlementEngine,
+            ACTIVE_NETWORK.contracts.SettlementEngine,
             SettlementEngineABI.abi,
             readOnlyProvider,
           );
 
           const oracleRouter = new ethers.Contract(
-            CONTRACT_ADDRESSES.OracleRouter,
+            ACTIVE_NETWORK.contracts.OracleRouter,
             OracleRouterABI.abi,
             readOnlyProvider,
           );
 
           const usdt = new ethers.Contract(
-            CONTRACT_ADDRESSES.DinUSDT,
+            ACTIVE_NETWORK.contracts.DinUSDT,
             DinUSDTABI.abi,
             readOnlyProvider,
           );
 
           const registry = new ethers.Contract(
-            CONTRACT_ADDRESSES.DinRegistry,
+            ACTIVE_NETWORK.contracts.DinRegistry,
             DinRegistryABI.abi,
             readOnlyProvider,
           );
 
           const feeTreasury = new ethers.Contract(
-            CONTRACT_ADDRESSES.FeeTreasury,
+            ACTIVE_NETWORK.contracts.FeeTreasury,
             FeeTreasuryABI.abi,
             readOnlyProvider,
           );
@@ -153,49 +152,49 @@ export function useContracts(): ContractsState {
 
         // Initialize all contracts
         const productCatalog = new ethers.Contract(
-          CONTRACT_ADDRESSES.ProductCatalog,
+          ACTIVE_NETWORK.contracts.ProductCatalog,
           ProductCatalogABI.abi,
           signerOrProvider,
         );
 
         const tranchePoolFactory = new ethers.Contract(
-          CONTRACT_ADDRESSES.TranchePoolFactory,
+          ACTIVE_NETWORK.contracts.TranchePoolFactory,
           TranchePoolFactoryABI.abi,
           signerOrProvider,
         );
 
         const insuranceToken = new ethers.Contract(
-          CONTRACT_ADDRESSES.InsuranceToken,
+          ACTIVE_NETWORK.contracts.InsuranceToken,
           InsuranceTokenABI.abi,
           signerOrProvider,
         );
 
         const settlementEngine = new ethers.Contract(
-          CONTRACT_ADDRESSES.SettlementEngine,
+          ACTIVE_NETWORK.contracts.SettlementEngine,
           SettlementEngineABI.abi,
           signerOrProvider,
         );
 
         const oracleRouter = new ethers.Contract(
-          CONTRACT_ADDRESSES.OracleRouter,
+          ACTIVE_NETWORK.contracts.OracleRouter,
           OracleRouterABI.abi,
           signerOrProvider,
         );
 
         const usdt = new ethers.Contract(
-          CONTRACT_ADDRESSES.DinUSDT,
+          ACTIVE_NETWORK.contracts.DinUSDT,
           DinUSDTABI.abi,
           signerOrProvider,
         );
 
         const registry = new ethers.Contract(
-          CONTRACT_ADDRESSES.DinRegistry,
+          ACTIVE_NETWORK.contracts.DinRegistry,
           DinRegistryABI.abi,
           signerOrProvider,
         );
 
         const feeTreasury = new ethers.Contract(
-          CONTRACT_ADDRESSES.FeeTreasury,
+          ACTIVE_NETWORK.contracts.FeeTreasury,
           FeeTreasuryABI.abi,
           signerOrProvider,
         );

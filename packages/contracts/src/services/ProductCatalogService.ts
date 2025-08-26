@@ -2,9 +2,11 @@ import { ethers } from 'ethers';
 import ProductCatalogABI from '../config/abis/ProductCatalog.json';
 import TranchePoolCoreABI from '../config/abis/TranchePoolCore.json';
 import TranchePoolFactoryABI from '../config/abis/TranchePoolFactory.json';
-import { KAIA_TESTNET_ADDRESSES } from '../config/addresses';
+import { ACTIVE_NETWORK } from '../config/constants';
 import type { Product, Round, Tranche, TriggerType } from '../types/products';
 import { RoundState } from '../types/products';
+
+
 
 export class ProductCatalogService {
   public readonly contract: ethers.Contract;
@@ -16,7 +18,7 @@ export class ProductCatalogService {
   ) {
     this.contract = new ethers.Contract(contractAddress, ProductCatalogABI.abi, provider);
     this.poolFactory = new ethers.Contract(
-      KAIA_TESTNET_ADDRESSES.TranchePoolFactory,
+      ACTIVE_NETWORK.contracts.TranchePoolFactory,
       TranchePoolFactoryABI.abi,
       provider
     );

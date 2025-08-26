@@ -84,8 +84,8 @@ NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS=0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72
 NEXT_PUBLIC_YIELD_ROUTER_ADDRESS=0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11
 
 # Token Addresses
-NEXT_PUBLIC_USDT_ADDRESS=0x8C034f0DBA8664DA4242Cb4CF7fCD7e0a3aa5c90
-NEXT_PUBLIC_DIN_TOKEN_ADDRESS=0x7126Dbd15e6888AeDd606A7242C998DBED7530Fd
+NEXT_PUBLIC_USDT_ADDRESS=0x3372BE45687b2d85F010f6245d3b6284E13327ea
+NEXT_PUBLIC_DIN_TOKEN_ADDRESS=0x2e401e83087E96341E292f6B987cB7440860CE53
 
 # Development Flags
 NEXT_PUBLIC_ENABLE_TESTNETS=true
@@ -230,7 +230,7 @@ npm run monitor:yield
    - Network Name: Kaia Testnet
    - RPC URL: https://public-en-kairos.node.kaia.io
    - Chain ID: 1001
-   - Currency Symbol: KLAY
+   - Currency Symbol: KAIA
    - Block Explorer: https://kairos.kaiascope.com
 
 #### Mainnet (Production)
@@ -240,7 +240,7 @@ npm run monitor:yield
    - Network Name: Kaia Mainnet
    - RPC URL: https://public-en-cypress.klaytn.net
    - Chain ID: 8217
-   - Currency Symbol: KLAY
+   - Currency Symbol: KAIA
    - Block Explorer: https://kaiascope.com
 
 ### Supported Wallets

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { useWeb3 } from "@dinsure/contracts";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { useWeb3 } from "@dinsure/contracts";
+import React, { useState } from "react";
 
 interface LiquidityPool {
   id: string;
@@ -138,7 +138,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                   <span className="absolute right-3 top-3 text-gray-400">USDT</span>
                 </div>
                 <div className="flex justify-between mt-2 text-sm text-gray-400">
-                  <span>Available: {parseFloat(balance).toFixed(4)} KLAY</span>
+                  <span>Available: {parseFloat(balance).toFixed(4)} KAIA</span>
                   <span>Max: ${maxAmount.toLocaleString()}</span>
                 </div>
                 <div className="flex gap-2 mt-2">

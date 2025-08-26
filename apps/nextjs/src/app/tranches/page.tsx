@@ -8,8 +8,8 @@ import { TrancheFilters } from "@/components/tranche/TrancheFilters";
 import { useBTCPrice } from "@/hooks/useBTCPrice";
 import type { TrancheDetails } from "@/hooks/useTrancheData";
 import { useTrancheData } from "@/hooks/useTrancheData";
-import { INSURANCE_PRODUCTS } from "@/lib/constants";
-import { useContractFactory, useContracts, useProductManagement, useUserPortfolio, useWeb3 } from "@dinsure/contracts";
+
+import { INSURANCE_PRODUCTS, useContractFactory, useContracts, useProductManagement, useUserPortfolio, useWeb3 } from "@dinsure/contracts";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";

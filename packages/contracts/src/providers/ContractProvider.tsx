@@ -1,7 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { ethers } from 'ethers';
+import type { ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { ACTIVE_NETWORK } from '../config/constants';
 
 interface ContractProviderProps {
   children: ReactNode;
@@ -40,9 +42,9 @@ export function ContractProvider({ children, provider, chainId }: ContractProvid
     
     try {
       // Create default provider for Kaia Testnet if none provided
-      const defaultProvider = new ethers.JsonRpcProvider('https://public-en-kairos.node.kaia.io', {
-        chainId: 1001,
-        name: 'Kaia Kairos'
+      const defaultProvider = new ethers.JsonRpcProvider(ACTIVE_NETWORK.rpcUrl, {
+        chainId: ACTIVE_NETWORK.chainId,
+        name: ACTIVE_NETWORK.name
       });
       
       const contractFactory: ContractFactory = {

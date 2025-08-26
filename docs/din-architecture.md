@@ -1,4 +1,5 @@
 # DIN Protocol - Complete Architecture & Integration Guide
+
 ## Decentralized Insurance Platform on Kaia Blockchain
 
 ---
@@ -8,6 +9,7 @@
 DIN (Dinyk) is a fully decentralized Web3 insurance platform on the Kaia blockchain. This document combines the complete system architecture, smart contract integration, and implementation guide into a single comprehensive reference.
 
 ### Key Technologies
+
 - **Blockchain**: Kaia (Testnet: Chain ID 1001, Mainnet: Chain ID 8217)
 - **Smart Contracts**: Comprehensive insurance protocol with registry-based architecture
 - **Web3 Library**: @kaiachain/ethers-ext v1.1.1 with ethers.js v6
@@ -21,6 +23,7 @@ DIN (Dinyk) is a fully decentralized Web3 insurance platform on the Kaia blockch
 ## 🏗️ Architecture Principles
 
 ### Core Design Philosophy
+
 1. **Decentralization First**: Direct blockchain interactions without intermediary servers
 2. **User Sovereignty**: Users control their funds and data through their wallets
 3. **Transparency**: All insurance operations are verifiable on-chain
@@ -29,6 +32,7 @@ DIN (Dinyk) is a fully decentralized Web3 insurance platform on the Kaia blockch
 6. **Security by Default**: Multiple layers of transaction validation and user confirmation
 
 ### Technical Stack Decisions
+
 - **No Backend API**: Removed tRPC, authentication, and database layers
 - **Client-Side Only**: All logic executes in the browser
 - **Session Persistence**: Maintain wallet state across page refreshes
@@ -43,20 +47,20 @@ DIN (Dinyk) is a fully decentralized Web3 insurance platform on the Kaia blockch
 
 All contracts are deployed and verified on Kaia Kairos testnet (Chain ID: 1001).
 
-| Contract | Address | Purpose |
-|----------|---------|---------|
-| **DinRegistry** | `0xCD2B28186b257869B3C2946ababB56683F4304C3` | Central registry and configuration |
-| **ProductCatalog** | `0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D` | Products, tranches, and rounds |
-| **InsuranceToken** | `0x3bEDE5f043E8D0597F9F0b60eCfc52B134d8E934` | ERC721 NFT positions |
-| **TranchePoolFactory** | `0x3810066EfEAc98F18cF6A1E62FF3f089CC30Fb01` | Pool deployment |
-| **SettlementEngine** | `0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8` | Claims processing |
-| **OracleRouter** | `0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72` | Oracle aggregation |
-| **OraklPriceFeed** | `0xFa2f0063BAC2e5BA304f50eC54b6EA07aCC534fF` | Primary oracle |
-| **DinoOracle** | `0x6317f2f9271d484548871915DDDff95aD4c45aC3` | Fallback oracle |
-| **DinUSDT** | `0x8C034f0DBA8664DA4242Cb4CF7fCD7e0a3aa5c90` | Test USDT (6 decimals) |
-| **DinToken** | `0x7126Dbd15e6888AeDd606A7242C998DBED7530Fd` | Governance token |
-| **FeeTreasury** | `0xb96D484cB71A5d5C3C3AB1Ac18dF587cC6AC6914` | Fee collection |
-| **YieldRouter** | `0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11` | Yield generation strategies |
+| Contract               | Address                                      | Purpose                            |
+| ---------------------- | -------------------------------------------- | ---------------------------------- |
+| **DinRegistry**        | `0xCD2B28186b257869B3C2946ababB56683F4304C3` | Central registry and configuration |
+| **ProductCatalog**     | `0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D` | Products, tranches, and rounds     |
+| **InsuranceToken**     | `0x3bEDE5f043E8D0597F9F0b60eCfc52B134d8E934` | ERC721 NFT positions               |
+| **TranchePoolFactory** | `0x3810066EfEAc98F18cF6A1E62FF3f089CC30Fb01` | Pool deployment                    |
+| **SettlementEngine**   | `0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8` | Claims processing                  |
+| **OracleRouter**       | `0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72` | Oracle aggregation                 |
+| **OraklPriceFeed**     | `0xFa2f0063BAC2e5BA304f50eC54b6EA07aCC534fF` | Primary oracle                     |
+| **DinoOracle**         | `0x6317f2f9271d484548871915DDDff95aD4c45aC3` | Fallback oracle                    |
+| **DinUSDT**            | `0x8C034f0DBA8664DA4242Cb4CF7fCD7e0a3aa5c90` | Test USDT (6 decimals)             |
+| **DinToken**           | `0x7126Dbd15e6888AeDd606A7242C998DBED7530Fd` | Governance token                   |
+| **FeeTreasury**        | `0xb96D484cB71A5d5C3C3AB1Ac18dF587cC6AC6914` | Fee collection                     |
+| **YieldRouter**        | `0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11` | Yield generation strategies        |
 
 ### Contract Interaction Flow
 
@@ -234,14 +238,18 @@ dinyk/
 ### Core Web3 Libraries
 
 #### @kaiachain/ethers-ext (v1.1.1)
+
 Primary library for Kaia blockchain interaction
+
 - **Native Kaia support** with enhanced features
 - **Optimized gas estimation** for Kaia
 - **Compatible** with existing ethers.js patterns
 - **Built-in transaction types** for Kaia
 
 #### Ethers.js (v6.13.4)
+
 Foundation library for Ethereum-compatible operations
+
 - **Comprehensive contract interaction**
 - **BigInt native support**
 - **TypeScript-first design**
@@ -253,21 +261,21 @@ Foundation library for Ethereum-compatible operations
 // Kaia Testnet (Development)
 export const KAIA_TESTNET = {
   chainId: 1001,
-  chainIdHex: '0x3E9',
-  name: 'Kaia Kairos Testnet',
-  currency: { name: 'KLAY', symbol: 'KLAY', decimals: 18 },
-  rpcUrl: 'https://public-en-kairos.node.kaia.io',
-  blockExplorer: 'https://kairos.kaiascope.com'
+  chainIdHex: "0x3E9",
+  name: "Kaia Kairos Testnet",
+  currency: { name: "KAIA", symbol: "KAIA", decimals: 18 },
+  rpcUrl: "https://public-en-kairos.node.kaia.io",
+  blockExplorer: "https://kairos.kaiascope.com",
 };
 
 // Kaia Mainnet (Production)
 export const KAIA_MAINNET = {
   chainId: 8217,
-  chainIdHex: '0x2019',
-  name: 'Kaia Mainnet',
-  currency: { name: 'KLAY', symbol: 'KLAY', decimals: 18 },
-  rpcUrl: 'https://public-en-cypress.klaytn.net',
-  blockExplorer: 'https://kaiascope.com'
+  chainIdHex: "0x2019",
+  name: "Kaia Mainnet",
+  currency: { name: "KAIA", symbol: "KAIA", decimals: 18 },
+  rpcUrl: "https://public-en-cypress.klaytn.net",
+  blockExplorer: "https://kaiascope.com",
 };
 ```
 
@@ -280,8 +288,9 @@ export const KAIA_MAINNET = {
 The `@dinsure/contracts` package provides comprehensive React hooks for all protocol operations:
 
 ### 1. useContracts - Core Contract Management
+
 ```typescript
-const { 
+const {
   productCatalog,
   tranchePoolFactory,
   insuranceToken,
@@ -291,11 +300,12 @@ const {
   registry,
   feeTreasury,
   isInitialized,
-  error
+  error,
 } = useContracts();
 ```
 
 ### 2. useProductManagement - Product & Tranche Operations
+
 ```typescript
 const {
   isLoading,
@@ -304,31 +314,32 @@ const {
   registerTranche,
   createTranchePool,
   updateProductStatus,
-  updateTrancheStatus
+  updateTrancheStatus,
 } = useProductManagement();
 
 // Example: Register new insurance product
 await registerProduct({
-  name: 'BTC Price Protection',
-  description: 'Protects against BTC price drops'
+  name: "BTC Price Protection",
+  description: "Protects against BTC price drops",
 });
 
 // Example: Create tranche with specific risk parameters
 await registerTranche({
   productId: 1,
-  name: 'BTC -10% Protection',
+  name: "BTC -10% Protection",
   triggerType: 0, // PRICE_BELOW
-  threshold: '54000', // $54,000 trigger
+  threshold: "54000", // $54,000 trigger
   premiumRateBps: 500, // 5% premium
-  trancheCap: '100000', // $100k capacity
+  trancheCap: "100000", // $100k capacity
   maturityDays: 7,
-  perAccountMin: '100',
-  perAccountMax: '10000',
-  oracleRouteId: 1
+  perAccountMin: "100",
+  perAccountMax: "10000",
+  oracleRouteId: 1,
 });
 ```
 
 ### 3. useRoundManagement - Round Lifecycle
+
 ```typescript
 const {
   announceRound,
@@ -338,7 +349,7 @@ const {
   getRoundEconomics,
   getActiveRounds,
   cancelRound,
-  isLoading
+  isLoading,
 } = useRoundManagement();
 
 // Example: Complete round lifecycle
@@ -346,7 +357,7 @@ const roundId = await announceRound({
   trancheId: 1,
   durationMinutes: 10080, // 7 days
   startDelayMinutes: 10,
-  openImmediately: false
+  openImmediately: false,
 });
 
 await openRound(roundId);
@@ -355,6 +366,7 @@ await closeAndMatchRound(roundId);
 ```
 
 ### 4. useBuyerOperations - Insurance Purchase
+
 ```typescript
 const {
   buyInsurance,
@@ -364,16 +376,16 @@ const {
   checkClaimStatus,
   claimPayout,
   getActiveInsurances,
-  isLoading
+  isLoading,
 } = useBuyerOperations();
 
 // Example: Purchase insurance with premium calculation
-const calculation = await calculatePremium(trancheId, '1000');
+const calculation = await calculatePremium(trancheId, "1000");
 console.log(`Premium: ${calculation.premiumAmount} USDT`);
 
 const receipt = await buyInsurance({
   roundId: 1,
-  coverageAmount: '1000'
+  coverageAmount: "1000",
 });
 
 // Check claim after maturity
@@ -384,6 +396,7 @@ if (status.canClaim) {
 ```
 
 ### 5. useSellerOperations - Liquidity Provision
+
 ```typescript
 const {
   depositCollateral,
@@ -392,13 +405,13 @@ const {
   calculateYield,
   getPoolMetrics,
   claimSellerRewards,
-  isLoading
+  isLoading,
 } = useSellerOperations();
 
 // Example: Provide liquidity to pool
 await depositCollateral({
   roundId: 1,
-  amount: '10000' // USDT
+  amount: "10000", // USDT
 });
 
 // Monitor position
@@ -407,10 +420,11 @@ console.log(`Shares: ${position.shareTokens}`);
 console.log(`Earned: ${position.earnedPremiums}`);
 
 // Withdraw after settlement
-await withdrawCollateral(roundId, '5000');
+await withdrawCollateral(roundId, "5000");
 ```
 
 ### 6. useMonitoring - Analytics & Monitoring
+
 ```typescript
 const {
   getPoolHealth,
@@ -418,7 +432,7 @@ const {
   getRoundMonitoring,
   getSystemMetrics,
   getHistoricalData,
-  isLoading
+  isLoading,
 } = useMonitoring();
 
 // Example: Monitor system health
@@ -432,6 +446,7 @@ console.log(`Active Insurance: ${metrics.activeInsuranceValue}`);
 ```
 
 ### 7. useSettlement - Settlement & Claims
+
 ```typescript
 const {
   triggerSettlement,
@@ -439,7 +454,7 @@ const {
   processEmergencySettlement,
   disputeSettlement,
   getDisputeStatus,
-  isLoading
+  isLoading,
 } = useSettlement();
 
 // Example: Trigger settlement after maturity
@@ -450,6 +465,7 @@ if (status.canSettle) {
 ```
 
 ### 8. useUserPortfolio - User Position Management
+
 ```typescript
 const {
   insurancePositions,
@@ -460,17 +476,17 @@ const {
   totalEarnings,
   refetchPositions,
   isLoading,
-  error
+  error,
 } = useUserPortfolio();
 
 // Example: Display user positions
-insurancePositions.forEach(position => {
+insurancePositions.forEach((position) => {
   console.log(`Product: ${position.productName}`);
   console.log(`Coverage: ${position.coverageAmount} USDT`);
   console.log(`Status: ${position.status}`);
 });
 
-liquidityPositions.forEach(position => {
+liquidityPositions.forEach((position) => {
   console.log(`Tranche: ${position.trancheName}`);
   console.log(`Liquidity: ${position.collateralAmount} USDT`);
   console.log(`Earnings: ${position.earnedPremiums} USDT`);
@@ -478,8 +494,9 @@ liquidityPositions.forEach(position => {
 ```
 
 ### 9. ProductCatalogService - Centralized Data Service
+
 ```typescript
-import { ProductCatalogService } from '@dinsure/contracts/services';
+import { ProductCatalogService } from "@dinsure/contracts/services";
 
 // Initialize service
 const service = new ProductCatalogService(provider, chainId);
@@ -517,7 +534,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const storedAccount = sessionStorage.getItem(STORAGE_KEYS.ACCOUNT);
     const storedConnected = sessionStorage.getItem(STORAGE_KEYS.CONNECTED);
-    
+
     if (storedAccount && storedConnected === "true") {
       reconnectWallet();
     }
@@ -526,18 +543,18 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const connectWallet = async () => {
     // Detect provider (MetaMask/Kaikas)
     const detectedProvider = detectProvider();
-    
+
     // Create Web3 provider
     const web3Provider = new KaiaWeb3Provider(detectedProvider);
-    
+
     // Request accounts
     const accounts = await web3Provider.send("eth_requestAccounts", []);
-    
+
     // Verify network
     if (chainId !== ACTIVE_NETWORK.chainId) {
       await switchToKaiaNetwork();
     }
-    
+
     // Update state and persist
     setProvider(web3Provider);
     setAccount(accounts[0]);
@@ -633,6 +650,7 @@ packages/contracts/
 ### UI Components Implementation
 
 #### Insurance Components
+
 - **ProductCard**: Displays product with APY, TVL, risk metrics
 - **TrancheCard**: Shows trigger level, premium rate, round status
 - **EnhancedTrancheCard**: Advanced display with real-time updates
@@ -643,6 +661,7 @@ packages/contracts/
 - **PositionCard**: User's active positions with status tracking
 
 #### Page Implementation
+
 - **HomePage (`/`)**: Product showcase, platform stats
 - **InsurancePage (`/insurance`)**: Product grid with filtering
 - **TranchePage (`/tranches`)**: All tranches with sorting
@@ -655,33 +674,33 @@ packages/contracts/
 ### Tranche Configuration
 
 | Tranche | Trigger | Premium | Capacity | Risk Level |
-|---------|---------|---------|----------|------------|
-| A | -5% | 2% | $100,000 | Low |
-| B | -10% | 5% | $50,000 | Medium |
-| C | -15% | 10% | $25,000 | High |
+| ------- | ------- | ------- | -------- | ---------- |
+| A       | -5%     | 2%      | $100,000 | Low        |
+| B       | -10%    | 5%      | $50,000  | Medium     |
+| C       | -15%    | 10%     | $25,000  | High       |
 
 ### Economic Model
 
 ```typescript
 interface TrancheEconomics {
   // Coverage parameters
-  triggerThreshold: number;      // Price drop percentage
-  premiumRateBps: number;        // Premium in basis points
-  trancheCap: BigNumber;         // Maximum capacity
-  
+  triggerThreshold: number; // Price drop percentage
+  premiumRateBps: number; // Premium in basis points
+  trancheCap: BigNumber; // Maximum capacity
+
   // Limits
-  perAccountMin: BigNumber;      // Minimum purchase
-  perAccountMax: BigNumber;      // Maximum purchase
-  
+  perAccountMin: BigNumber; // Minimum purchase
+  perAccountMax: BigNumber; // Maximum purchase
+
   // Timing
-  maturityTimestamp: number;     // Coverage expiry
-  salesWindow: number;           // Sales duration
-  
+  maturityTimestamp: number; // Coverage expiry
+  salesWindow: number; // Sales duration
+
   // Pool metrics
   totalBuyerPurchases: BigNumber;
   totalSellerCollateral: BigNumber;
-  matchedAmount: BigNumber;      // Min(purchases, collateral)
-  utilizationRate: number;       // Matched/Collateral %
+  matchedAmount: BigNumber; // Min(purchases, collateral)
+  utilizationRate: number; // Matched/Collateral %
 }
 ```
 
@@ -692,12 +711,14 @@ interface TrancheEconomics {
 ### Multi-Layer Security
 
 1. **Smart Contract Security**
+
    - Registry-based access control
    - Role-based permissions (ADMIN, OPERATOR, ORACLE)
    - Emergency pause mechanism
    - Bounded parameter validation
 
 2. **Frontend Security**
+
    - Input validation and sanitization
    - Transaction preview and confirmation
    - Gas estimation with buffer
@@ -715,7 +736,7 @@ interface TrancheEconomics {
 contract AccessControl {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR");
-    
+
     modifier onlyRole(bytes32 role) {
         require(hasRole(role, msg.sender), "Access denied");
         _;
@@ -750,7 +771,7 @@ await usdt.approve(poolAddress, premiumAmount);
 const { buyInsurance } = useBuyerOperations();
 const receipt = await buyInsurance({
   roundId: selectedRound,
-  coverageAmount: coverageAmount
+  coverageAmount: coverageAmount,
 });
 
 // 6. Monitor position
@@ -773,7 +794,7 @@ const yield = await calculateYield(trancheId, depositAmount);
 const { depositCollateral } = useSellerOperations();
 await depositCollateral({
   roundId: selectedRound,
-  amount: depositAmount
+  amount: depositAmount,
 });
 
 // 4. Monitor earnings
@@ -790,37 +811,41 @@ await withdrawCollateral(roundId, withdrawAmount);
 ## 🧪 Testing Strategy
 
 ### Unit Testing
+
 ```typescript
-describe('useBuyerOperations', () => {
-  it('should calculate premium correctly', async () => {
+describe("useBuyerOperations", () => {
+  it("should calculate premium correctly", async () => {
     const { calculatePremium } = renderHook(() => useBuyerOperations());
-    const result = await calculatePremium(1, '1000');
-    expect(result.premiumAmount).toBe('50'); // 5% of 1000
+    const result = await calculatePremium(1, "1000");
+    expect(result.premiumAmount).toBe("50"); // 5% of 1000
   });
 });
 ```
 
 ### Integration Testing
+
 ```typescript
-describe('Insurance Purchase Flow', () => {
-  it('should complete purchase end-to-end', async () => {
+describe("Insurance Purchase Flow", () => {
+  it("should complete purchase end-to-end", async () => {
     // Setup
     await connectWallet();
     await approveUSDT();
-    
+
     // Execute
-    const receipt = await buyInsurance({ roundId: 1, coverageAmount: '1000' });
-    
+    const receipt = await buyInsurance({ roundId: 1, coverageAmount: "1000" });
+
     // Verify
     expect(receipt.status).toBe(1);
     const position = await getBuyerOrder(1);
-    expect(position.purchaseAmount).toBe('1000');
+    expect(position.purchaseAmount).toBe("1000");
   });
 });
 ```
 
 ### Testnet Scenarios
+
 The package includes comprehensive test scenarios in `testnet-scenarios.ts`:
+
 - Product registration and configuration
 - Round lifecycle management
 - Insurance purchase flows
@@ -841,12 +866,12 @@ interface ProtocolMetrics {
   totalPremiumsCollected: BigNumber;
   totalClaimsPaid: BigNumber;
   lossRatio: number;
-  
+
   // Operational
   activePositions: number;
   averageCoverageAmount: BigNumber;
   poolUtilization: number;
-  
+
   // Risk
   maxExposurePerEvent: BigNumber;
   concentrationRisk: number;
@@ -878,23 +903,6 @@ contract.on("PoolDepletion", (event) => {
 ### Environment Configuration
 
 ```bash
-# Development (.env.local)
-NEXT_PUBLIC_CHAIN_ID=1001
-NEXT_PUBLIC_RPC_URL=https://public-en-kairos.node.kaia.io
-
-# Testnet Contract Addresses
-NEXT_PUBLIC_REGISTRY_ADDRESS=0x0000760e713fed5b6F866d3Bad87927337DF61c0
-NEXT_PUBLIC_PRODUCT_CATALOG_ADDRESS=0x5c251A3561E47700a9bcbD6ec91e61fB52Eb50d2
-NEXT_PUBLIC_INSURANCE_TOKEN_ADDRESS=0x147f4660515aE91c81FdB43Cf743C6faCACa9903
-NEXT_PUBLIC_POOL_FACTORY_ADDRESS=0x563e95673d4210148eD59eDb6310AC7d488F5Ec0
-NEXT_PUBLIC_SETTLEMENT_ENGINE_ADDRESS=0xAE3FA73652499Bf0aB0b79B8C309DD62137f142D
-NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS=0x5d83444EBa6899f1B7abD34eF04dDF7Dd7b38a37
-NEXT_PUBLIC_USDT_ADDRESS=0x53232164780a589dfAe08fB16D1962bD78591Aa0
-NEXT_PUBLIC_FEE_TREASURY_ADDRESS=0x9C20316Ba669e762Fb43dbb6d3Ff63062b89945D
-
-# Production (.env.production)
-NEXT_PUBLIC_CHAIN_ID=8217
-NEXT_PUBLIC_RPC_URL=https://public-en-cypress.klaytn.net
 # ... mainnet addresses ...
 ```
 
@@ -923,6 +931,7 @@ pnpm build:prod
 ### Operational Scripts
 
 Located in `../din-contract/scripts/`:
+
 - `RegisterInsuranceProduct.js` - Register new products
 - `CreateTranchePools.js` - Deploy tranche pools
 - `AnnounceRounds.js` - Start new rounds
@@ -936,18 +945,21 @@ Located in `../din-contract/scripts/`:
 ## 📊 Success Metrics
 
 ### Technical Metrics
+
 - **Connection Success Rate**: > 95%
 - **Transaction Success Rate**: > 90%
 - **Page Load Time**: < 2 seconds
 - **Gas Optimization**: < $5 per transaction
 
 ### Business Metrics
+
 - **Total Value Locked (TVL)**: Track growth
 - **Active Insurance Positions**: Monitor adoption
 - **Claim Success Rate**: > 99%
 - **Loss Ratio**: < 80%
 
 ### User Experience Metrics
+
 - **Wallet Connection Rate**: > 80%
 - **Purchase Completion**: > 60%
 - **Error Recovery**: > 70%
@@ -1003,6 +1015,7 @@ await yieldRouter.returnFromYield(poolAddress, amount);
 ```
 
 ### Safety Features
+
 - **Conservative Strategies**: Only low-risk DeFi protocols
 - **Emergency Withdrawal**: Admin can force return of funds
 - **Audit Trail**: All movements tracked on-chain
@@ -1011,18 +1024,21 @@ await yieldRouter.returnFromYield(poolAddress, amount);
 ## 🔄 Future Roadmap
 
 ### Phase 2 (Q2 2025)
+
 - Cross-chain support (Ethereum, Polygon)
 - Advanced oracle integrations
 - Automated market making for premiums
 - Mobile app with WalletConnect
 
 ### Phase 3 (Q3 2025)
+
 - Decentralized governance (DAO)
 - Enhanced yield optimization strategies
 - Social insurance features
 - AI-powered risk assessment
 
 ### Phase 4 (Q4 2025)
+
 - Institutional features
 - Reinsurance marketplace
 - Advanced derivatives
@@ -1033,24 +1049,27 @@ await yieldRouter.returnFromYield(poolAddress, amount);
 ## 📚 Resources & References
 
 ### Documentation
+
 - [Kaia Documentation](https://docs.kaia.io)
 - [Ethers.js v6](https://docs.ethers.org/v6/)
 - [@kaiachain/ethers-ext](https://www.npmjs.com/package/@kaiachain/ethers-ext)
 - [Hardhat](https://hardhat.org)
 
 ### Project Files
+
 - **Smart Contracts**: `../din-contract/`
 - **Frontend**: `apps/nextjs/`
 - **Contract Package**: `packages/contracts/`
 - **Documentation**: `docs/`
 
 ### Community
+
 - [Kaia Discord](https://discord.gg/kaia)
 - [GitHub Repository](https://github.com/yourusername/dinyk)
 
 ---
 
-*This document represents the complete architecture and integration guide for the DIN Protocol. It combines system architecture, smart contract design, and implementation details into a single comprehensive reference.*
+_This document represents the complete architecture and integration guide for the DIN Protocol. It combines system architecture, smart contract design, and implementation details into a single comprehensive reference._
 
-*Last Updated: January 2025*
-*Version: 3.0.0 (Unified)*
+_Last Updated: January 2025_
+_Version: 3.0.0 (Unified)_

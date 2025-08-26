@@ -3,7 +3,8 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import TranchePoolCoreABI from '../config/abis/TranchePoolCore.json';
-import { useWeb3, KAIA_RPC_ENDPOINTS } from "../providers/Web3Provider";
+import { KAIA_RPC_ENDPOINTS } from "../config/constants";
+import { useWeb3 } from "../providers/Web3Provider";
 import { useContracts } from "./useContracts";
 
 export interface DepositCollateralParams {

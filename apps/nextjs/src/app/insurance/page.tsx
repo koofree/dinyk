@@ -1,8 +1,9 @@
 "use client";
 
 import { SimpleProductCard } from "@/components/insurance/SimpleProductCard";
-import { KAIA_TESTNET } from "@/lib/constants";
+
 import {
+  ACTIVE_NETWORK,
   useContractFactory,
   useContracts,
   useProductManagement,
@@ -207,10 +208,10 @@ export default function InsurancePage() {
           </div>
           <div className="mt-4 flex items-center gap-4 text-sm">
             <span className="text-green-600 bg-green-100 px-3 py-1 rounded-full font-medium">
-              ● Connected to {KAIA_TESTNET.name}
+              ● Connected to {ACTIVE_NETWORK.name}
             </span>
             <a
-              href={`${KAIA_TESTNET.blockExplorer}/address/${KAIA_TESTNET.contracts.productCatalog}`}
+              href={`${ACTIVE_NETWORK.blockExplorer}/address/${ACTIVE_NETWORK.contracts.productCatalog}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
@@ -346,7 +347,7 @@ export default function InsurancePage() {
                   contracts.
                 </p>
                 <div className="space-y-1 text-xs text-gray-500">
-                  <p>Contract: {KAIA_TESTNET.contracts.productCatalog}</p>
+                  <p>Contract: {ACTIVE_NETWORK.contracts.productCatalog}</p>
                   <p>Network: Kaia Testnet (Chain ID: 1001)</p>
                 </div>
                 {productsError && (
