@@ -4,9 +4,8 @@ import { formatPercentage, formatUSDT } from "@/utils/calculations";
 import { getTrancheName, getTrancheShortName } from "@/utils/productHelpers";
 import {
   getRiskLevel,
-  getRoundStateColor,
   getRoundStateLabel,
-  getRoundStateTextColor,
+  getRoundStateTextColor
 } from "@/utils/statusMappings";
 import Link from "next/link";
 import React from "react";
@@ -58,20 +57,31 @@ export const TrancheCard: React.FC<TrancheCardProps> = ({
         )
       : 0;
 
+  // Calculate APY (premium + staking rewards estimate)
+  const stakingAPY = 3.5; // Default staking APY
+  const totalAPY = (Number(tranche.premiumRateBps) / 100) + stakingAPY;
+
   return (
-    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 relative">      
+    <div className="bg-[#1f2937] rounded-lg p-4">      
       {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h3 className="text-xl font-bold font-display text-gray-900">{trancheName}</h3>
-          <p className="mt-1 text-gray-600">
+          <h3 className="text-xl font-bold font-display text-white">{trancheName}</h3>
+          <p className="mt-1 text-gray-400 text-sm">
             Trigger: -{formatPercentage(Number(tranche.threshold) / 100)}
           </p>
         </div>
-        <div
-          className={`rounded-full px-3 py-1 text-xs font-medium ${getRoundStateColor(roundState)}`}
-        >
-          {shortName}
+        <div className="flex flex-col items-end gap-1">
+          {/* Premium rate */}
+          <div className="flex items-center gap-2">
+            <span className="text-gray-400 text-xs">Premium:</span>
+            <span className="text-green-400 font-bold text-sm">{premiumRate}</span>
+          </div>
+          {/* APY */}
+          <div className="flex items-center gap-2">
+            <span className="text-gray-400 text-xs">APY:</span>
+            <span className="text-blue-400 font-bold text-sm">{totalAPY.toFixed(1)}%</span>
+          </div>
         </div>
       </div>
 

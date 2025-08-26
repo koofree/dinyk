@@ -197,13 +197,14 @@ export default function InsurancePage() {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="mb-4 text-4xl font-bold font-display text-gray-900">
-            Insurance Products
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Overview of all available insurance products with aggregated
-            statistics from all tranches
-          </p>
+          <div className="mb-16">
+            <h1 className="text-[40px] mobile:text-[42px] font-bold text-gray-900 mb-4 font-display break-words leading-tight">
+              Protect Your Assets,<br />Secure Your Future
+            </h1>
+            <p className="text-gray-600 text-[18px] mobile:text-[20px] mb-8 break-words leading-tight">
+              <span className="font-bold bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent">As an insurance buyer</span>, you can protect<br />yourself against the risks of asset price fluctuations.
+            </p>
+          </div>
           <div className="mt-4 flex items-center gap-4 text-sm">
             <span className="text-green-600 bg-green-100 px-3 py-1 rounded-full font-medium">
               ● Connected to {KAIA_TESTNET.name}
@@ -217,6 +218,14 @@ export default function InsurancePage() {
               View Contracts ↗
             </a>
           </div>
+        </div>
+        
+        <div className="mb-8">
+          <h2 className="text-[30px] font-bold text-gray-900 mb-4 font-display">Insurance Catalog</h2>
+          <p className="text-gray-600 mb-8">
+            Choose from our parametric insurance products to protect your crypto assets
+          </p>
+          <div className="w-full h-px bg-gray-200"></div>
         </div>
 
         {/* Contract Error */}

@@ -7,6 +7,7 @@ import { Toaster } from "@dinsure/ui/toast";
 import { AppProviders } from "@/components/providers/AppProviders";
 
 import "~/app/globals.css";
+import { Footer } from "~/components/common/Footer";
 import { Navbar } from "~/components/common/Navbar";
 import { LanguageProvider } from "~/context/LanguageProvider";
 
@@ -70,6 +71,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
                   {props.children}
                 </div>
               </main> 
+              <Footer />
             </div>
             <Toaster />
           </LanguageProvider>

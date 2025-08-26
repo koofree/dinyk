@@ -329,17 +329,17 @@ function TrancheContent() {
       
       if (filters.status === 'open') {
         // Check if any round is open (state === 1)
-        if (!trancheData || !trancheData.rounds.some(r => r.state === 1)) {
+        if (!trancheData?.rounds.some(r => r.state === 1)) {
           return false;
         }
       } else if (filters.status === 'active') {
         // Check if any round is active (state === 3)
-        if (!trancheData || !trancheData.rounds.some(r => r.state === 3)) {
+        if (!trancheData?.rounds.some(r => r.state === 3)) {
           return false;
         }
       } else if (filters.status === 'settling') {
         // Check if any round is settling (state === 4 or 5)
-        if (!trancheData || !trancheData.rounds.some(r => r.state === 4 || r.state === 5)) {
+        if (!trancheData?.rounds.some(r => r.state === 4 || r.state === 5)) {
           return false;
         }
       }
@@ -372,34 +372,91 @@ function TrancheContent() {
   }
   
   return (
-    <div className="min-h-screen bg-white pt-20 pb-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 pt-20 pb-10">
+      <div className="max-w-[720px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold font-display text-gray-900 mb-4">
-            Insurance Tranches
-            {filters.insuranceProduct !== null && (
-              <span className="ml-2 text-2xl text-gray-500">
-                - Product #{filters.insuranceProduct}
-              </span>
-            )}
+        <div className="mb-16">
+          <h1 className="text-[40px] mobile:text-[42px] font-bold text-gray-900 mb-4 font-display break-words leading-tight">
+            Become a <span className="bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent">Depositor(Seller)</span><br />and provide liquidity<br />to the insurance market.
           </h1>
-          <p className="text-gray-600">
-            Choose your risk level and earn premiums by providing liquidity
+          <p className="text-gray-600 text-[18px] mobile:text-[20px] mb-8 break-words leading-tight">
+            By depositing USDT into the insurance pool,<br /><span className="font-bold bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent">you can earn premium rewards</span> whenever buyers purchase coverage.
           </p>
-          {btcPrice && (
-            <div className="mt-4 text-sm text-gray-500">
-              BTC Price: ${btcPrice.toLocaleString()}
+        </div>
+
+
+        {/* Dashboard Section */}
+        <div className="mb-8">
+          <h2 className="text-[30px] font-bold text-gray-900 mb-4 font-display">Liquidity Provider Dashboard</h2>
+          <div className="w-full h-px bg-gray-200 mb-8"></div>
+          <p className="text-gray-600 mb-8">
+            Provide liquidity to insurance pools and earn premiums + staking rewards
+          </p>
+          
+          {/* User Statistics Cards */}
+          {isConnected && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col justify-between h-full">
+                <div className="text-gray-600 text-sm mb-2">Available Tranches</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {filteredTranches.length}
+                </div>
+                <div className="text-blue-600 text-sm mt-auto">
+                  across {uniqueProducts.length} products
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col justify-between h-full">
+                <div className="text-gray-600 text-sm mb-2">Open for Deposits</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {tranchesData?.filter(t => t.rounds.some(r => r.state === 1)).length || 0}
+                </div>
+                <div className="text-green-600 text-sm mt-auto">
+                  accepting liquidity now
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col justify-between h-full">
+                <div className="text-gray-600 text-sm mb-2">Active Rounds</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {tranchesData?.filter(t => t.rounds.some(r => r.state === 3)).length || 0}
+                </div>
+                <div className="text-yellow-600 text-sm mt-auto">
+                  coverage in progress
+                </div>
+              </div>
             </div>
           )}
+          
+          {/* Filters */}
+          <TrancheFilters
+            products={uniqueProducts}
+            filters={filters}
+            onFilterChange={handleFilterChange}
+          />
+          
+          <div className="w-full h-px bg-gray-200 mt-8"></div>
         </div>
         
-        {/* Filters */}
-        <TrancheFilters
-          products={uniqueProducts}
-          filters={filters}
-          onFilterChange={handleFilterChange}
-        />
+        {/* Connection Notice */}
+        {!isConnected && (
+          <div className="bg-[#F3FEF6] p-6 mb-8 rounded-2xl">
+            <div className="flex items-center gap-3">
+              <div className="text-[#00B1B8] text-xl">💡</div>
+              <div>
+                <h3 className="text-gray-800 font-medium">Connect Your Wallet</h3>
+                <p className="text-gray-800 text-sm">
+                  Connect your wallet to provide liquidity and earn rewards
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Available Pools Section Title */}
+        <div className="mb-6">
+          <h2 className="text-[30px] font-bold text-gray-900 font-display">Available Tranche Pools</h2>
+        </div>
         
         {/* Loading State */}
         {loading && (
@@ -437,7 +494,7 @@ function TrancheContent() {
         
         {/* Tranches Grid */}
         {!loading && filteredTranches.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredTranches.map(tranche => {
               const product = products.find(p => p.productId === tranche.productId);
               

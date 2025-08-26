@@ -43,15 +43,22 @@ export const TrancheFilters: React.FC<TrancheFiltersProps> = ({
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 mb-8 border border-gray-700">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+    <div className="mb-8">
+      <div className="flex gap-4 items-end w-full">
         {/* Insurance Product Filter */}
-        <div>
-          <label className="block text-white font-medium mb-2">Insurance</label>
+        <div className="flex-1">
+          <label className="block text-gray-800 font-medium mb-2">Insurance</label>
           <select
             value={filters.insuranceProduct || 'all'}
             onChange={(e) => handleInsuranceChange(e.target.value)}
-            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 pr-12 text-gray-800 focus:border-[#86D99C] focus:outline-none appearance-none"
+            style={{ 
+              borderRadius: '8px',
+              backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+              backgroundPosition: 'right 12px center',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: '20px'
+            }}
           >
             <option value="all">All Products</option>
             {products.map(product => (
@@ -63,12 +70,19 @@ export const TrancheFilters: React.FC<TrancheFiltersProps> = ({
         </div>
 
         {/* Status Filter */}
-        <div>
-          <label className="block text-white font-medium mb-2">Status</label>
+        <div className="flex-1">
+          <label className="block text-gray-800 font-medium mb-2">Status</label>
           <select
             value={filters.status}
             onChange={(e) => handleStatusChange(e.target.value)}
-            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 pr-12 text-gray-800 focus:border-[#86D99C] focus:outline-none appearance-none"
+            style={{ 
+              borderRadius: '8px',
+              backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+              backgroundPosition: 'right 12px center',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: '20px'
+            }}
           >
             <option value="all">All Status</option>
             <option value="active">Active Only</option>
@@ -81,9 +95,13 @@ export const TrancheFilters: React.FC<TrancheFiltersProps> = ({
         <div>
           <button
             onClick={clearFilters}
-            className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors w-full md:w-auto"
+            className="bg-transparent border border-gray-300 text-gray-600 hover:border-[#86D99C] hover:text-[#86D99C] hover:scale-95 px-3 py-2 transition-all duration-300 flex items-center justify-center"
+            style={{ borderRadius: '8px', height: '42px' }}
           >
-            Clear Filters
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 4V10H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M3.51 15A9 9 0 1 0 6 5L1 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </button>
         </div>
       </div>
@@ -91,9 +109,9 @@ export const TrancheFilters: React.FC<TrancheFiltersProps> = ({
       {/* Active Filters Display */}
       {(filters.insuranceProduct || filters.status !== 'all') && (
         <div className="mt-4 flex items-center gap-2 text-sm">
-          <span className="text-gray-400">Active filters:</span>
+          <span className="text-gray-600">Active filters:</span>
           {filters.insuranceProduct && (
-            <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs">
+            <span className="bg-gradient-to-r from-[#86D99C] to-[#00B1B8] text-white px-3 py-1 rounded-full text-xs">
               {(() => {
                 const product = products.find(p => p.productId === filters.insuranceProduct);
                 return product ? getProductName(product) : 'Unknown Product';
@@ -101,7 +119,7 @@ export const TrancheFilters: React.FC<TrancheFiltersProps> = ({
             </span>
           )}
           {filters.status !== 'all' && (
-            <span className="bg-green-600 text-white px-2 py-1 rounded text-xs capitalize">
+            <span className="bg-gradient-to-r from-[#86D99C] to-[#00B1B8] text-white px-3 py-1 rounded-full text-xs capitalize">
               {filters.status}
             </span>
           )}
