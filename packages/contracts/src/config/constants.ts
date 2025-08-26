@@ -303,6 +303,13 @@ export const TRIGGER_TYPES = {
   CUSTOM: 4,
 } as const;
 
+// Oracle route id to type map
+export const ORACLE_ROUTE_ID_TO_TYPE = {
+  1: "BTC-USDT",
+  2: "ETH-USDT",
+  3: "KAIA-USDT",
+} as const;
+
 // Mock insurance products data (DEPRECATED - use INSURANCE_PRODUCTS above)
 export const MOCK_INSURANCE_PRODUCTS = [
   {

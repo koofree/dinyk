@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useBTCPrice } from "@/hooks/useBTCPrice";
 import Image from "next/image";
 import Link from "next/link";
-import { useBTCPrice } from "@/hooks/useBTCPrice";
+import { useEffect, useState } from "react";
 
 import { useContractFactory } from "@dinsure/contracts";
 
@@ -13,8 +13,6 @@ interface InsuranceProductCardProps {
     threshold: bigint;
     maturityDays: number;
     premiumRateBps: number;
-    buyerCount?: number;
-    providerCount?: number;
   };
 }
 
@@ -43,11 +41,7 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
   };
 
   // TODO: How to set the name of the asset?
-  const assetName: "BTC" | "ETH" | "KAIA" = product.name.includes("BTC")
-    ? "BTC"
-    : product.name.includes("ETH")
-      ? "ETH"
-      : "KAIA";
+  const assetName: "BTC" | "ETH" | "KAIA" = product.name.split("-")[0] as "BTC" | "ETH" | "KAIA";
 
   return (
     <div
@@ -112,7 +106,7 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
         </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-4">
+      {/* <div className="mb-6 grid grid-cols-2 gap-4">
         <div className="rounded-lg bg-gray-50 p-3">
           <div className="mb-1 text-2xl font-bold text-gray-900">
             {product.buyerCount || 0}
@@ -125,7 +119,7 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
           </div>
           <div className="text-xs text-gray-600">Liquidity Providers</div>
         </div>
-      </div>
+      </div> */}
 
       <Link
         href={`/tranches?productId=${product.productId}`}

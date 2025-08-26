@@ -1,34 +1,31 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { InsuranceProductCard } from "@/components/insurance/InsuranceProductCard";
 import Image from "next/image";
 import Link from "next/link";
-import { InsuranceProductCard } from "@/components/insurance/InsuranceProductCard";
+import { useEffect, useRef, useState } from "react";
 
 import {
   ACTIVE_NETWORK,
+  ORACLE_ROUTE_ID_TO_TYPE,
   useContracts,
-  useProductManagement,
-  useWeb3,
+  useProductManagement
 } from "@dinsure/contracts";
 
 import { useLanguage } from "~/context/LanguageProvider";
 
-interface InsuranceProduct {
+export interface InsuranceProduct {
   productId: number;
   name: string;
   triggerType: number;
   threshold: bigint;
   maturityDays: number;
   premiumRateBps: number;
-  buyerCount: number;
-  providerCount: number;
   totalCapacity: bigint;
   active: boolean;
 }
 
 export default function HomePage() {
-  const { isConnected } = useWeb3();
   const { isInitialized, productCatalog } = useContracts();
   const { getProducts, getActiveTranches } = useProductManagement();
 
@@ -39,7 +36,7 @@ export default function HomePage() {
   const [activeTranchesCount, setActiveTranchesCount] = useState(0);
   const [premiumRange, setPremiumRange] = useState({ min: 0, max: 0 });
   const [loading, setLoading] = useState(true);
-  const [isProgressVisible, setIsProgressVisible] = useState(false);
+
   const [heroAnimations, setHeroAnimations] = useState({
     logo: false,
     title: false,
@@ -54,26 +51,6 @@ export default function HomePage() {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Intersection observer for progress bars
-  useEffect(() => {
-    if (!mounted) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setIsProgressVisible(true);
-        }
-      },
-      { threshold: 0.3 },
-    );
-
-    if (progressRef.current) {
-      observer.observe(progressRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [mounted]);
 
   // Hero Section sequential animation
   useEffect(() => {
@@ -120,9 +97,7 @@ export default function HomePage() {
 
       try {
         // Get active products from contract
-        const activeProductIds = await (
-          productCatalog as any
-        ).getActiveProducts();
+        const activeProductIds = await productCatalog.getActiveProducts();
         const fetchedProducts: InsuranceProduct[] = [];
         let totalCap = BigInt(0);
         let minPremium = 100;
@@ -132,32 +107,33 @@ export default function HomePage() {
         // Fetch each product and aggregate data
         for (const productId of activeProductIds) {
           try {
-            const productInfo = await (productCatalog as any).getProduct(
+            const productInfo = await productCatalog.getProduct(
               Number(productId),
             );
 
-            if (productInfo && Number(productInfo.productId) !== 0) {
+            if (Number(productInfo.productId) !== 0) {
               let productCapacity = BigInt(0);
               let avgPremium = 0;
               let avgMaturity = 0;
               let avgThreshold = BigInt(0);
               let triggerType = 0;
               let trancheCount = 0;
+              let oracleRouteId: keyof typeof ORACLE_ROUTE_ID_TO_TYPE = 1;
 
               // Get tranches for this product to calculate averages
-              const trancheIds = productInfo.trancheIds || [];
+              const trancheIds = productInfo.trancheIds;
 
               for (const trancheId of trancheIds) {
                 try {
-                  const tranche = await (productCatalog as any).getTranche(
+                  const tranche = await productCatalog.getTranche(
                     Number(trancheId),
                   );
-                  if (tranche && Number(tranche.productId) > 0) {
+                  if (Number(tranche.productId) > 0) {
                     productCapacity += tranche.trancheCap
                       ? BigInt(tranche.trancheCap.toString())
                       : BigInt(0);
                     avgPremium += Number(tranche.premiumRateBps || 0);
-                    avgMaturity += Number(tranche.maturityDays || 30);
+                    avgMaturity += Number(tranche.maturityTimestamp || 0);
                     avgThreshold += tranche.threshold
                       ? BigInt(tranche.threshold.toString())
                       : BigInt(0);
@@ -170,9 +146,11 @@ export default function HomePage() {
                       minPremium = Math.min(minPremium, premiumPercent);
                       maxPremium = Math.max(maxPremium, premiumPercent);
                     }
+
+                    oracleRouteId = tranche.oracleRouteId as unknown as keyof typeof ORACLE_ROUTE_ID_TO_TYPE;
                   }
                 } catch (err) {
-                  console.log(`Could not fetch tranche ${trancheId}`);
+                  console.log(`Could not fetch tranche ${trancheId}`, err);
                 }
               }
 
@@ -182,29 +160,23 @@ export default function HomePage() {
                 avgMaturity = Math.round(avgMaturity / trancheCount);
                 avgThreshold = avgThreshold / BigInt(trancheCount);
 
-                // Mock buyer and provider counts (in production, fetch from actual pool data)
-                const buyerCount = Math.floor(Math.random() * 50) + 10;
-                const providerCount = Math.floor(Math.random() * 30) + 5;
-
                 // Create aggregated product entry
                 fetchedProducts.push({
                   productId: Number(productId),
-                  name: `BTC Price Protection`,
+                  name: ORACLE_ROUTE_ID_TO_TYPE[oracleRouteId],
                   triggerType: triggerType,
                   threshold: avgThreshold,
-                  maturityDays: avgMaturity,
+                  maturityDays: Math.round(avgMaturity / 86400 / 1000), // milliseconds to days
                   premiumRateBps: avgPremium,
-                  buyerCount: buyerCount,
-                  providerCount: providerCount,
                   totalCapacity: productCapacity,
-                  active: productInfo?.active || false,
+                  active: productInfo.active,
                 });
 
                 totalCap += productCapacity;
               }
             }
           } catch (err) {
-            console.log(`Could not fetch product ${productId}`);
+            console.log(`Could not fetch product ${productId}`, err);
           }
         }
 
@@ -228,7 +200,7 @@ export default function HomePage() {
       }
     };
 
-    fetchContractData();
+    void fetchContractData();
   }, [isInitialized, productCatalog, getProducts, getActiveTranches]);
 
   return (

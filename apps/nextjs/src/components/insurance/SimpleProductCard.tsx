@@ -2,9 +2,11 @@
 
 import React from "react";
 
+import type { InsuranceProduct } from "@/app/page";
+
 interface SimpleProductCardProps {
-  product: any;
-  tranches: any[];
+  product: InsuranceProduct;
+  tranches: Tranche[];
   onViewTranches: () => void;
 }
 
@@ -14,14 +16,13 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
   onViewTranches,
 }) => {
   // Display all product properties dynamically
-  const productName =
-    product.name || product.metadataHash || `Product #${product.productId}`;
+  const productName = product.name;
 
   // Calculate aggregated statistics
   const totalTranches = tranches.length;
 
   // Calculate premium range
-  const premiumRates = tranches.map((t) => t.premiumRateBps || 0);
+  const premiumRates = tranches.map((t) => t.premiumRateBps ?? 0);
   const minPremium =
     premiumRates.length > 0 ? Math.min(...premiumRates) / 100 : 0;
   const maxPremium =
