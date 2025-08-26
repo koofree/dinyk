@@ -164,36 +164,36 @@ export default function HomePage() {
       {/* Key Metrics Dashboard */}
       <div className="max-w-[720px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg p-6 text-left border border-gray-200 shadow-sm hover:cursor-pointer group">
+          <div className="bg-white rounded-lg p-6 text-left border border-gray-200 shadow-sm hover:cursor-pointer group flex flex-col h-full">
             {/* TVL 아이콘 */}
             <div className="w-10 h-10 mb-3">
               <img src="/images/1.svg" alt="TVL Icon" className="w-full h-full" />
             </div>
             <div className="text-3xl font-bold text-gray-800 mb-2 font-outfit">$2.5M</div>
             <div className="text-gray-600 font-medium mb-3 font-outfit">{t('metrics.totalTVL')} (Total Value Locked)</div>
-            <div className="text-gray-500 text-sm leading-relaxed">
+            <div className="text-gray-500 text-sm leading-relaxed mt-auto">
               Higher TVL means more trust and bigger trading capacity.
             </div>
           </div>
-          <div className="bg-white rounded-lg p-6 text-left border border-gray-200 shadow-sm hover:cursor-pointer group">
+          <div className="bg-white rounded-lg p-6 text-left border border-gray-200 shadow-sm hover:cursor-pointer group flex flex-col h-full">
             {/* Active Pools 아이콘 */}
             <div className="w-10 h-10 mb-3">
               <img src="/images/2.svg" alt="Active Pools Icon" className="w-full h-full" />
             </div>
             <div className="text-3xl font-bold text-gray-800 mb-2 font-outfit">12</div>
             <div className="text-gray-600 font-medium mb-3 font-outfit">{t('metrics.activePools')}</div>
-            <div className="text-gray-500 text-sm leading-relaxed">
+            <div className="text-gray-500 text-sm leading-relaxed mt-auto">
               More pools mean more trading pairs supported.
             </div>
           </div>
-          <div className="bg-white rounded-lg p-6 text-left border border-gray-200 shadow-sm hover:cursor-pointer group">
+          <div className="bg-white rounded-lg p-6 text-left border border-gray-200 shadow-sm hover:cursor-pointer group flex flex-col h-full">
             {/* Total Premiums 아이콘 */}
             <div className="w-10 h-10 mb-3">
               <img src="/images/3.svg" alt="Total Premiums Icon" className="w-full h-full" />
             </div>
             <div className="text-3xl font-bold text-gray-800 mb-2 font-outfit">$125K</div>
             <div className="text-gray-600 font-medium mb-3 font-outfit">{t('metrics.totalPremiums')}</div>
-            <div className="text-gray-500 text-sm leading-relaxed">
+            <div className="text-gray-500 text-sm leading-relaxed mt-auto">
               Higher premium means more active trading or subscriptions.
             </div>
           </div>
@@ -206,17 +206,17 @@ export default function HomePage() {
                       {/* 새로운 문구 섹션 */}
             <div className="text-left mb-12 bg-[#F3FEF6] rounded-2xl p-8">
               <h3 className="text-2xl font-bold text-gray-900 mb-2 font-header">
-                Hedge your downside risk with simple, on-chain insurance products. 🚀
+                Hedge your downside trigger probability with simple, on-chain insurance products. 🚀
               </h3>
               <p className="text-base text-gray-700 max-w-3xl">
-                From crypto volatility to special events — cover unexpected risks with DIN.
+                From crypto volatility to special events — cover unexpected trigger probability with DIN.
               </p>
             </div>
             
             <h2 className="text-3xl font-bold text-gray-900 mb-10 text-left font-header">
               Available DIN Protection Plans
             </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6">
                                       <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
               {/* BTC SVG 이미지 */}
               <div className="w-full h-20 mb-4 bg-gray-900 rounded-2xl p-2 relative overflow-hidden flex items-center justify-center">
