@@ -9,15 +9,14 @@ import { AlertCircle, ArrowLeft, Loader2, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-import type { ProductCatalog } from "@dinsure/contracts";
-
-
 import {
   useContracts,
   useProductManagement,
   useSellerOperations,
   useWeb3
 } from "@dinsure/contracts";
+
+import type { ProductSpec } from "@dinsure/contracts/hooks";
 import { Badge } from "@dinsure/ui/badge";
 import { Button } from "@dinsure/ui/button";
 import {
@@ -47,13 +46,6 @@ interface RoundData {
   totalSellerCollateral: bigint;
   matchedAmount: bigint;
 }
-
-interface ProductData {
-  productId: number;
-  name: string;
-  description: string;
-}
-
 interface PoolInfo {
   totalAssets: bigint;
   totalShares: bigint;
@@ -75,10 +67,9 @@ export default function TrancheDetailPage() {
   const { isConnected } = useWeb3();
   const { getProducts } = useProductManagement();
   const { getPoolAccounting } = useSellerOperations();
-  const contracts = useContracts();
-  const { productCatalog, tranchePoolFactory, isInitialized } = contracts;
+  const { productCatalog, tranchePoolFactory, isInitialized } = useContracts();
 
-  const [product, setProduct] = useState<ProductData | null>(null);
+  const [product, setProduct] = useState<ProductSpec | null>(null);
   const [tranche, setTranche] = useState<TrancheData | null>(null);
   const [rounds, setRounds] = useState<RoundData[]>([]);
   const [poolInfo, setPoolInfo] = useState<PoolInfo | null>(null);
@@ -120,58 +111,10 @@ export default function TrancheDetailPage() {
       }
 
       // Get tranche data directly from contract
-      // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-      let trancheData: ProductCatalog.TrancheSpecStructOutput | null;
-      try {
-        trancheData = await productCatalog.getTranche(
-          Number(trancheId),
-        );
-        console.log("Raw tranche data from contract:", trancheData);
-
-        // Validate that the tranche exists and belongs to the correct product
-        if (
-          !trancheData ||
-          Number(trancheData.productId) !== Number(productId)
-        ) {
-          console.warn(
-            `Tranche ${trancheId} doesn't exist or doesn't belong to product ${productId}`,
-          );
-          // Still try to use the data if tranche exists but product mismatch
-          if (!trancheData) {
-            trancheData = null;
-          }
-        }
-      } catch (err) {
-        console.error("Error getting tranche data:", err);
-        // Try alternative approach if getTranche fails
-        trancheData = null;
-      }
-
-      // Get pool address from factory first
-      let poolAddress = "0x0000000000000000000000000000000000000000";
-      try {
-        const factoryPoolAddress = await tranchePoolFactory.getTranchePool(Number(trancheId));
-        console.log(
-          `Factory pool address for tranche ${trancheId}:`,
-          factoryPoolAddress,
-        );
-        if (
-          factoryPoolAddress &&
-          factoryPoolAddress !== "0x0000000000000000000000000000000000000000"
-        ) {
-          poolAddress = factoryPoolAddress;
-        }
-      } catch (err) {
-        console.error("Error getting pool address from factory:", err);
-      }
-
-      // Use pool address from tranche data if factory didn't have it
-      if (
-        poolAddress === "0x0000000000000000000000000000000000000000" &&
-        trancheData?.poolAddress
-      ) {
-        poolAddress = trancheData.poolAddress;
-      }
+      const trancheData = await productCatalog.getTranche(Number(trancheId));
+      const poolAddress: string = await tranchePoolFactory.getTranchePool(Number(trancheId));
+      
+      
 
       // Handle the tranche data carefully - it might be null or have different field names
       const trancheInfo = {
@@ -350,13 +293,7 @@ export default function TrancheDetailPage() {
   };
 
   const getTriggerDisplay = (trigger: bigint) => {
-    // If trigger is in wei (1e18), convert to percentage
-    if (trigger > 1000000n) {
-      const percentage = Number(trigger / BigInt(1e16)); // Convert from 1e18 to percentage with 2 decimals
-      return `-${percentage / 100}%`;
-    }
-    // Otherwise assume it's already in basis points
-    return `-${Number(trigger) / 100}%`;
+    return `$${Number(trigger / BigInt(1e18))}`;
   };
 
   const getPremiumDisplay = (premiumBps: bigint) => {
@@ -408,7 +345,7 @@ export default function TrancheDetailPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Trigger Level
+              Trigger Price
             </CardTitle>
           </CardHeader>
           <CardContent>

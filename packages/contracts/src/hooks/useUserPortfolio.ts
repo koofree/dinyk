@@ -227,6 +227,7 @@ export function useUserPortfolio() {
 
             // Extract asset name safely
             // TODO: how to make the product name more readable?
+            const productId = Number(trancheSpec.productId);
             const productName = `Product ${productId}`;
             const assetName: string = productName.includes(" ")
               ? (productName.split(" ")[0] ?? "")

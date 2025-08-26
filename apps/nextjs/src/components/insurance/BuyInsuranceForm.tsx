@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { calculatePremium } from "@/lib/utils/insurance";
 import { formatUnits, parseUnits } from "ethers";
 import {
@@ -10,6 +9,7 @@ import {
   Loader2,
   Shield,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { useBuyerOperations, useContracts, useWeb3 } from "@dinsure/contracts";
 import { Alert, AlertDescription } from "@dinsure/ui/alert";
@@ -240,10 +240,10 @@ export function BuyInsuranceForm({
             <div className="rounded-lg border p-3">
               <div className="mb-1 flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-red-500" />
-                <span className="text-sm font-medium">Trigger Level</span>
+                <span className="text-sm font-medium">Trigger Price</span>
               </div>
               <p className="text-lg font-bold text-red-600">
-                -{Number(tranche.trigger) / 100}%
+                ${tranche.trigger / BigInt(1e18)}
               </p>
             </div>
             <div className="rounded-lg border p-3">
