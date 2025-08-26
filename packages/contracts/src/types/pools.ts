@@ -1,4 +1,4 @@
-import { BigNumber } from 'ethers';
+import type { BigNumber } from 'ethers';
 
 // Pool types
 export interface PoolInfo {
@@ -124,8 +124,8 @@ export interface WithdrawalParams {
 }
 
 export interface PoolRebalanceInfo {
-  targetAllocation: { [strategyId: number]: number };
-  currentAllocation: { [strategyId: number]: number };
+  targetAllocation: Record<number, number>;
+  currentAllocation: Record<number, number>;
   rebalanceNeeded: boolean;
   estimatedGas: BigNumber;
   estimatedSlippage: number;

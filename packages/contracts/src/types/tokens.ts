@@ -1,4 +1,4 @@
-import { BigNumber } from 'ethers';
+import type { BigNumber } from 'ethers';
 
 // Token interfaces
 export interface TokenInfo {
@@ -159,9 +159,7 @@ export interface TokenEvent {
 }
 
 // Multi-token operations
-export interface MultiTokenBalance {
-  [tokenAddress: string]: TokenBalance;
-}
+export type MultiTokenBalance = Record<string, TokenBalance>;
 
 export interface TokenPortfolio {
   totalUsdValue: number;

@@ -94,9 +94,7 @@ export interface SortOptions {
   direction: 'asc' | 'desc';
 }
 
-export interface FilterOptions {
-  [key: string]: any;
-}
+export type FilterOptions = Record<string, any>;
 
 // Error types
 export interface ContractErrorData {

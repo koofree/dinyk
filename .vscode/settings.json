@@ -23,7 +23,7 @@
 
   // Editor Settings for Test Files
   "[typescript]": {
-    "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": "explicit",
@@ -67,5 +67,6 @@
     "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
   },
   "biome.enabled": false,
-  "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
+  "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
+  "editor.formatOnSave": false
 }

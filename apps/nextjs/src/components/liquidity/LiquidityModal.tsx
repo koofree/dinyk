@@ -5,12 +5,13 @@ import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { useProvideLiquidity } from "@/hooks/useProvideLiquidity";
 import { ethers } from "ethers";
 
+import type {
+  Product,
+  Tranche} from "@dinsure/contracts";
 import {
   formatCurrency,
   formatPercentage,
   formatTimeRemaining,
-  Product,
-  Tranche,
   TriggerType,
   useWeb3,
 } from "@dinsure/contracts";

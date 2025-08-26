@@ -124,7 +124,7 @@ export function parseContractError(error: any): ContractError {
   }
   
   // Handle custom contract errors (Solidity custom errors)
-  if (error.data && error.data.message) {
+  if (error.data?.message) {
     return parseCustomContractError(error.data.message);
   }
   

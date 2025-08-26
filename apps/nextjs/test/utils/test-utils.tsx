@@ -2,8 +2,10 @@
  * Test Utilities for React Testing
  */
 
-import React, { ReactElement } from "react";
-import { render, RenderOptions } from "@testing-library/react";
+import type { ReactElement } from "react";
+import React from "react";
+import type { RenderOptions } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { vi } from "vitest";
 
 import { ContractProvider, Web3Provider } from "@dinsure/contracts";

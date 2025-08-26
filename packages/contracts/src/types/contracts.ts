@@ -1,5 +1,5 @@
-import { Contract } from 'ethers';
-import { BigNumber } from 'ethers';
+import type { Contract } from 'ethers';
+import type { BigNumber } from 'ethers';
 
 // Contract instance types
 export interface ContractInstances {

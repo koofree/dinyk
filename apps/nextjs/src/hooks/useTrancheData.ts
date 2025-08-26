@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { ethers } from "ethers";
+import { useEffect, useState } from "react";
 
 import { ACTIVE_NETWORK, ProductCatalogService } from "@dinsure/contracts";
 
