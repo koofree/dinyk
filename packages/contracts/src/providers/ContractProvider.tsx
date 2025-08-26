@@ -3,7 +3,7 @@
 import { ethers } from 'ethers';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { ACTIVE_NETWORK } from '../config/constants';
+import { ACTIVE_NETWORK, KAIA_RPC_ENDPOINTS } from '../config/constants';
 
 interface ContractProviderProps {
   children: ReactNode;
@@ -34,6 +34,32 @@ export function ContractProvider({ children, provider, chainId }: ContractProvid
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<any>(null);
 
+  const createProviderWithFallback = async (): Promise<ethers.JsonRpcProvider> => {
+    // Try each RPC endpoint in order until one works
+    for (const rpcUrl of KAIA_RPC_ENDPOINTS) {
+      try {
+        const jsonRpcProvider = new ethers.JsonRpcProvider(rpcUrl, {
+          chainId: ACTIVE_NETWORK.chainId,
+          name: ACTIVE_NETWORK.name,
+        });
+
+        // Test the connection with a timeout
+        const blockNumberPromise = jsonRpcProvider.getBlockNumber();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Connection timeout')), 5000),
+        );
+
+        await Promise.race([blockNumberPromise, timeoutPromise]);
+        console.log(`[ContractProvider] Successfully connected to RPC: ${rpcUrl}`);
+        return jsonRpcProvider;
+      } catch (error) {
+        console.warn(`[ContractProvider] RPC endpoint ${rpcUrl} failed, trying next...`);
+      }
+    }
+
+    throw new Error('[ContractProvider] All RPC endpoints failed');
+  };
+
   const initialize = async () => {
     if (isInitialized || isInitializing) return;
     
@@ -41,22 +67,19 @@ export function ContractProvider({ children, provider, chainId }: ContractProvid
     setError(null);
     
     try {
-      // Create default provider for Kaia Testnet if none provided
-      const defaultProvider = new ethers.JsonRpcProvider(ACTIVE_NETWORK.rpcUrl, {
-        chainId: ACTIVE_NETWORK.chainId,
-        name: ACTIVE_NETWORK.name
-      });
+      // Create default provider with fallback mechanism if none provided
+      const defaultProvider = await createProviderWithFallback();
       
       const contractFactory: ContractFactory = {
         provider: provider || defaultProvider,
-        chainId: chainId || 1001
+        chainId: chainId || ACTIVE_NETWORK.chainId
       };
       
       setFactory(contractFactory);
       setIsInitialized(true);
-      console.log('ContractProvider initialized with factory:', contractFactory);
+      console.log('[ContractProvider] Initialized with factory:', contractFactory);
     } catch (err) {
-      console.error('Failed to initialize ContractProvider:', err);
+      console.error('[ContractProvider] Failed to initialize:', err);
       setError(err);
     } finally {
       setIsInitializing(false);
@@ -70,9 +93,32 @@ export function ContractProvider({ children, provider, chainId }: ContractProvid
     setIsInitialized(false);
   };
 
-  // Auto-initialize on mount
+  // Auto-initialize on mount with retry logic
   useEffect(() => {
-    initialize();
+    let mounted = true;
+    let retryCount = 0;
+    const maxRetries = 3;
+    const retryDelay = 2000;
+
+    const tryInitialize = async () => {
+      if (!mounted) return;
+      
+      try {
+        await initialize();
+      } catch (error) {
+        if (mounted && retryCount < maxRetries) {
+          retryCount++;
+          console.log(`[ContractProvider] Retrying initialization (${retryCount}/${maxRetries})...`);
+          setTimeout(tryInitialize, retryDelay);
+        }
+      }
+    };
+
+    tryInitialize();
+
+    return () => {
+      mounted = false;
+    };
   }, []); // Empty dependency array - only run once on mount
 
   const contractState: ContractState = {

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import { PositionCard } from "@/components/insurance/PositionCard";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { useUserPortfolio, useWeb3 } from "@dinsure/contracts";

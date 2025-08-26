@@ -129,7 +129,6 @@ export interface Round {
   endTime?: number; // Round end time
   state: RoundState;
   totalBuyerPurchases?: bigint;
-  totalBuyerOrders?: bigint; // Alternative field
   totalSellerCollateral: bigint;
   matchedAmount: bigint;
   createdAt?: number;

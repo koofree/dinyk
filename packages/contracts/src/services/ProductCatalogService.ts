@@ -1,45 +1,66 @@
 import { ethers } from "ethers";
 
-import type { 
-  Product, 
-  Round, 
-  Tranche, 
-  TriggerType,
-  ProductContractData,
-  TrancheContractData,
-  RoundContractData,
+import type { ProductCatalog, TranchePoolFactory } from "../types/generated";
+import type {
   PoolAccountingData,
-  ProductMetadata
+  Product,
+  ProductMetadata,
+  Round,
+  Tranche,
+  TriggerType,
 } from "../types/products";
-import ProductCatalogABI from "../config/abis/ProductCatalog.json";
 import TranchePoolCoreABI from "../config/abis/TranchePoolCore.json";
-import TranchePoolFactoryABI from "../config/abis/TranchePoolFactory.json";
 import { ACTIVE_NETWORK } from "../config/constants";
+import {
+  ProductCatalog__factory,
+  TranchePoolFactory__factory,
+} from "../types/generated";
 import { RoundState } from "../types/products";
 
 export class ProductCatalogService {
-  public readonly contract: ethers.Contract;
-  private readonly poolFactory: ethers.Contract;
+  public readonly contract: ProductCatalog;
+  private readonly poolFactory: TranchePoolFactory;
+  private isProviderHealthy = true;
 
   constructor(
     private contractAddress: string,
     private provider: ethers.Provider,
   ) {
-    this.contract = new ethers.Contract(
-      contractAddress,
-      ProductCatalogABI.abi,
-      provider,
-    );
-    this.poolFactory = new ethers.Contract(
+    this.contract = ProductCatalog__factory.connect(contractAddress, provider);
+    this.poolFactory = TranchePoolFactory__factory.connect(
       ACTIVE_NETWORK.contracts.TranchePoolFactory,
-      TranchePoolFactoryABI.abi,
       provider,
     );
+    
+    // Test provider health on construction
+    void this.checkProviderHealth();
+  }
+
+  private async checkProviderHealth(): Promise<boolean> {
+    try {
+      // Simple health check - try to get the network
+      await this.provider.getNetwork();
+      this.isProviderHealthy = true;
+      return true;
+    } catch (error) {
+      console.warn('[ProductCatalogService] Provider health check failed:', error);
+      this.isProviderHealthy = false;
+      return false;
+    }
   }
 
   // Get all active product IDs
   async getActiveProductIds(): Promise<number[]> {
     try {
+      // Check provider health before making calls
+      if (!this.isProviderHealthy) {
+        const healthy = await this.checkProviderHealth();
+        if (!healthy) {
+          console.warn('[ProductCatalogService] Provider not healthy, returning empty array');
+          return [];
+        }
+      }
+
       const getActiveProducts = this.contract
         .getActiveProducts as () => Promise<bigint[]>;
       const ids = await getActiveProducts();
@@ -52,6 +73,7 @@ export class ProductCatalogService {
       return ids.map((id: bigint) => Number(id));
     } catch (error) {
       console.error("Failed to get active products:", error);
+      this.isProviderHealthy = false;
       return [];
     }
   }
@@ -72,14 +94,10 @@ export class ProductCatalogService {
   // Get product details with proper struct handling
   async getProduct(productId: number): Promise<Product | null> {
     try {
-      const getProduct = this.contract.getProduct as (
-        id: number,
-      ) => Promise<ProductContractData>;
-      const productData = await getProduct(productId);
+      const productData = await this.contract.getProduct(productId);
 
       // Check if the product data is valid (productId should match and not be 0)
       if (
-        !productData ||
         Number(productData.productId) === 0 ||
         Number(productData.productId) !== productId
       ) {
@@ -88,7 +106,7 @@ export class ProductCatalogService {
       }
 
       // Product struct includes trancheIds array
-      const trancheIds = productData.trancheIds || [];
+      const trancheIds = productData.trancheIds;
 
       // Fetch all tranches for this product
       const tranches = await Promise.all(
@@ -118,7 +136,7 @@ export class ProductCatalogService {
       } else {
         console.error(
           `Error fetching product ${productId}:`,
-          errorWithCode.message || error,
+          errorWithCode.message ?? error,
         );
       }
       return null;
@@ -128,25 +146,19 @@ export class ProductCatalogService {
   // Get tranche details with TrancheSpec structure
   async getTranche(trancheId: number): Promise<Tranche | null> {
     try {
-      const getTranche = this.contract.getTranche as (
-        id: number,
-      ) => Promise<TrancheContractData>;
-      const trancheData = await getTranche(trancheId);
+      const trancheData = await this.contract.getTranche(trancheId);
 
       // Get current round for this tranche if it has rounds
       let currentRound: Round | undefined;
-      const roundIds = trancheData.roundIds || [];
+      const roundIds = trancheData.roundIds;
 
       if (roundIds.length > 0) {
         // Get the latest round (assuming last in array is most recent)
         const latestRoundId = roundIds[roundIds.length - 1];
         try {
-          const getRound = this.contract.getRound as (
-            id: number,
-          ) => Promise<RoundContractData>;
-          const roundData = await getRound(Number(latestRoundId));
+          const roundData = await this.contract.getRound(Number(latestRoundId));
           currentRound = this.parseRound(roundData);
-        } catch (e) {
+        } catch {
           console.log(`No round data for round ${latestRoundId}`);
         }
       }
@@ -197,8 +209,7 @@ export class ProductCatalogService {
   // Get round details
   async getRound(roundId: number): Promise<Round | null> {
     try {
-      const getRound = this.contract.getRound as (id: number) => Promise<RoundContractData>;
-      const roundData = await getRound(roundId);
+      const roundData = await this.contract.getRound(roundId);
       return this.parseRound(roundData);
     } catch (error) {
       console.error(`Failed to get round ${roundId}:`, error);
@@ -225,8 +236,10 @@ export class ProductCatalogService {
         const knownProducts = await Promise.all(
           knownProductIds.map((id) => this.getProduct(id)),
         );
-        
-        const validKnownProducts = knownProducts.filter((p): p is Product => p !== null);
+
+        const validKnownProducts = knownProducts.filter(
+          (p): p is Product => p !== null,
+        );
         if (validKnownProducts.length > 0) {
           console.log(`Found ${validKnownProducts.length} known products`);
           return validKnownProducts;
@@ -244,7 +257,7 @@ export class ProductCatalogService {
           }
         }),
       );
-      
+
       const products = productResults.filter((p): p is Product => p !== null);
 
       console.log(`Successfully fetched ${products.length} products`);
@@ -258,7 +271,9 @@ export class ProductCatalogService {
         const fallbackProductResults = await Promise.all(
           fallbackIds.map((id) => this.getProduct(id)),
         );
-        const fallbackProducts = fallbackProductResults.filter((p): p is Product => p !== null);
+        const fallbackProducts = fallbackProductResults.filter(
+          (p): p is Product => p !== null,
+        );
         return fallbackProducts;
       }
 
@@ -300,7 +315,8 @@ export class ProductCatalogService {
       );
 
       // Get pool accounting data
-      const getPoolAccounting = pool.poolAccounting as () => Promise<PoolAccountingData>;
+      const getPoolAccounting =
+        pool.poolAccounting as () => Promise<PoolAccountingData>;
       const poolAccounting = await getPoolAccounting();
 
       // Calculate metrics
@@ -332,7 +348,7 @@ export class ProductCatalogService {
   }
 
   // Parse round data from contract
-  private parseRound(roundData: RoundContractData): Round {
+  private parseRound(roundData: ProductCatalog.RoundStructOutput): Round {
     const now = Math.floor(Date.now() / 1000);
     const state = Number(roundData.state) as RoundState;
     const salesEndTime = Number(roundData.salesEndTime);
@@ -344,12 +360,11 @@ export class ProductCatalogService {
       salesStartTime: salesStartTime,
       salesEndTime: salesEndTime,
       state,
-      totalBuyerPurchases: roundData.totalPurchased,
-      totalSellerCollateral: roundData.totalCollateral,
-      totalBuyerOrders: roundData.totalPurchased,
+      totalBuyerPurchases: roundData.totalBuyerPurchases,
+      totalSellerCollateral: roundData.totalSellerCollateral,
       matchedAmount: roundData.matchedAmount,
       createdAt: Number(roundData.createdAt),
-      stateChangedAt: Number(roundData.updatedAt),
+      stateChangedAt: Number(roundData.stateChangedAt),
       isOpen:
         state === RoundState.OPEN &&
         salesEndTime > now &&
@@ -360,7 +375,10 @@ export class ProductCatalogService {
   }
 
   // Parse metadata hash to readable format
-  private parseMetadata(metadataHash: string, productId?: number): ProductMetadata {
+  private parseMetadata(
+    metadataHash: string,
+    productId?: number,
+  ): ProductMetadata {
     try {
       // Remove 0x prefix and trailing zeros
       const cleanHash = metadataHash.replace(/^0x/, "").replace(/0+$/, "");

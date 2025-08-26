@@ -9,11 +9,12 @@ import { AlertCircle, ArrowLeft, Loader2, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+
 import {
   useContracts,
   useProductManagement,
   useSellerOperations,
-  useWeb3,
+  useWeb3
 } from "@dinsure/contracts";
 import { Badge } from "@dinsure/ui/badge";
 import { Button } from "@dinsure/ui/button";
@@ -66,8 +67,8 @@ interface NavInfo {
 export default function TrancheDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const productId = params?.productId as string;
-  const trancheId = params?.trancheId as string;
+  const productId = params.productId as string;
+  const trancheId = params.trancheId as string;
 
   const { isConnected } = useWeb3();
   const { getProducts } = useProductManagement();
@@ -92,6 +93,7 @@ export default function TrancheDetailPage() {
     productCatalog,
     tranchePoolFactory,
     isInitialized,
+    loadData
   ]);
 
   const loadData = async () => {
@@ -128,7 +130,7 @@ export default function TrancheDetailPage() {
       // Get tranche data directly from contract
       let trancheData: any;
       try {
-        trancheData = await (productCatalog as any).getTranche(
+        trancheData = await productCatalog.getTranche(
           Number(trancheId),
         );
         console.log("Raw tranche data from contract:", trancheData);
@@ -155,9 +157,7 @@ export default function TrancheDetailPage() {
       // Get pool address from factory first
       let poolAddress = "0x0000000000000000000000000000000000000000";
       try {
-        const factoryPoolAddress = await (
-          tranchePoolFactory as any
-        ).getTranchePool(Number(trancheId));
+        const factoryPoolAddress = await tranchePoolFactory.getTranchePool(Number(trancheId));
         console.log(
           `Factory pool address for tranche ${trancheId}:`,
           factoryPoolAddress,

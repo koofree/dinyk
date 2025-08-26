@@ -7,6 +7,7 @@
 
 // Core contract hooks
 export { useContracts } from "./useContracts";
+export type { ContractsState } from "./useContracts";
 
 // Product and tranche management
 export { useProductManagement } from "./useProductManagement";

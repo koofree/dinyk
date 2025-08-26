@@ -55,7 +55,7 @@ export function useProductManagement() {
       activeProductIds.map((id) => Number(id)),
     );
 
-    const products: any[] = [];
+    const products: ProductSpec[] = [];
 
     // Fetch each product with better error handling
     for (const productId of activeProductIds) {
@@ -134,10 +134,18 @@ export function useProductManagement() {
             ) {
               if (typeof value === "bigint") {
                 processedProduct[key] = Number(value);
-              } else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'bigint') {
+              } else if (
+                Array.isArray(value) &&
+                value.length > 0 &&
+                typeof value[0] === "bigint"
+              ) {
                 processedProduct[key] = value.map((v: bigint) => Number(v));
               } else {
-                processedProduct[key] = value as string | number | boolean | number[];
+                processedProduct[key] = value as
+                  | string
+                  | number
+                  | boolean
+                  | number[];
               }
             }
           });
@@ -180,43 +188,15 @@ export function useProductManagement() {
   const getActiveTranches = useCallback(async () => {
     if (!productCatalog) throw new Error("Product catalog not initialized");
 
-    const maxRetries = 3;
+    try {
+      const tranches = await productCatalog.getActiveTranches();
+      const mappedTranches = tranches.map((id) => Number(id));
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(
-          `[useProductManagement] Attempt ${attempt}/${maxRetries}: Calling getActiveTranches on contract:`,
-          productCatalog.getAddress(),
-        );
-
-        const tranches = await productCatalog.getActiveTranches();
-        console.log(`[useProductManagement] Raw tranches result:`, tranches);
-
-        const mappedTranches = tranches.map((id) => Number(id));
-        console.log(`[useProductManagement] Mapped tranches:`, mappedTranches);
-
-        return mappedTranches;
-      } catch (error) {
-        console.error(
-          `[useProductManagement] Attempt ${attempt} failed:`,
-          error,
-        );
-
-        // If this is the last attempt, return empty array instead of throwing
-        if (attempt === maxRetries) {
-          console.warn(
-            "[useProductManagement] All attempts failed, returning empty array as fallback",
-          );
-          return [];
-        }
-
-        // Wait a bit before retrying
-        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-      }
+      return mappedTranches;
+    } catch {
+      console.info("[useProductManagement] Returning empty array as fallback");
+      return [];
     }
-
-    console.warn("[useProductManagement] Returning empty array as fallback");
-    return [];
   }, [productCatalog]);
 
   return {

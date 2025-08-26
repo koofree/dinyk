@@ -4,7 +4,9 @@ export {
   useContractFactory,
   useContracts,
 } from "./ContractProvider";
-export { Web3Provider, useWeb3 } from "./Web3Provider";
+
+export { useWeb3, Web3Provider } from "./Web3Provider";
+export type { Web3ContextType } from "./Web3Provider";
 
 // Re-export constants
 export {

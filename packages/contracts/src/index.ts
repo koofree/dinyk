@@ -1,29 +1,51 @@
 // Main exports for @dinsure/contracts package
 
 // Types
-export * from './types/common';
-export * from './types/products';
+export * from "./types/common";
+export * from "./types/products";
 
 // Services
-export { ProductCatalogService } from './services/ProductCatalogService';
+export { ProductCatalogService } from "./services/ProductCatalogService";
 
-// Utilities  
-export { CacheManager } from './utils/cache';
-export { formatAddress, formatCurrency, formatPercentage, formatTimeRemaining, isValidAddress } from './utils/formatters';
+// Utilities
+export { CacheManager } from "./utils/cache";
+export {
+  formatAddress,
+  formatCurrency,
+  formatPercentage,
+  formatTimeRemaining,
+  isValidAddress,
+} from "./utils/formatters";
 
 // React hooks - export specific hooks to avoid conflicts
 export {
-  useBuyerOperations, useContracts, useMonitoring, useProductManagement,
-  useRoundManagement, useSellerOperations, useSettlement,
-  useUserPortfolio
-} from './hooks';
+  useBuyerOperations,
+  useContracts,
+  useMonitoring,
+  useProductManagement,
+  useRoundManagement,
+  useSellerOperations,
+  useSettlement,
+  useUserPortfolio,
+} from "./hooks";
+
+export type { ContractsState } from "./hooks";
 
 // Export portfolio types
-export type { UserInsurancePosition, UserLiquidityPosition, UserPosition } from './hooks';
+export type {
+  UserInsurancePosition,
+  UserLiquidityPosition,
+  UserPosition,
+} from "./hooks";
 
 // React providers
-export { ContractProvider, useContractFactory } from './providers/ContractProvider';
-export { useWeb3, Web3Provider } from './providers/Web3Provider';
+export {
+  ContractProvider,
+  useContractFactory,
+} from "./providers/ContractProvider";
+
+export { useWeb3, Web3Provider } from "./providers/Web3Provider";
+export type { Web3ContextType } from "./providers/Web3Provider";
 
 // Configuration
-export * from './config/constants';
+export * from "./config/constants";

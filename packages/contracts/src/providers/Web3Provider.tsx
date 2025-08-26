@@ -4,11 +4,11 @@ import { Web3Provider as KaiaWeb3Provider } from "@kaiachain/ethers-ext/v6";
 import { ethers } from "ethers";
 import type { ReactNode } from "react";
 import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useState,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
 
 import DinUSDTABI from "../config/abis/DinUSDT.json";
@@ -34,7 +34,7 @@ declare global {
 }
 
 // Context type
-interface Web3ContextType {
+export interface Web3ContextType {
   // State
   provider: KaiaWeb3Provider | undefined;
   signer: ethers.JsonRpcSigner | null;
@@ -453,7 +453,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
   return <Web3Context.Provider value={value}>{children}</Web3Context.Provider>;
 };
 
-export const useWeb3 = () => {
+export const useWeb3 = (): Web3ContextType => {
   const context = useContext(Web3Context);
   if (!context) {
     throw new Error("useWeb3 must be used within a Web3Provider");
