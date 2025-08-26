@@ -1,5 +1,6 @@
 "use client";
 
+import { InsuranceProductCard } from "@/components/insurance/InsuranceProductCard";
 import { KAIA_TESTNET } from "@/lib/constants";
 import { useContracts, useProductManagement, useWeb3 } from "@dinsure/contracts";
 import Image from "next/image";
@@ -7,24 +8,16 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "~/context/LanguageProvider";
 
-interface Tranche {
-  trancheId: number;
-  productId: number;
-  triggerType: number;
-  threshold: bigint;
-  premiumRateBps: number;
-  maturityDays: number;
-  trancheCap: bigint;
-  poolAddress: string;
-  active: boolean;
-  name?: string;
-  riskLevel?: string;
-}
-
-interface Product {
+interface InsuranceProduct {
   productId: number;
   name: string;
-  tranches: Tranche[];
+  triggerType: number;
+  threshold: bigint;
+  maturityDays: number;
+  premiumRateBps: number;
+  buyerCount: number;
+  providerCount: number;
+  totalCapacity: bigint;
   active: boolean;
 }
 
@@ -33,7 +26,7 @@ export default function HomePage() {
   const { isInitialized, productCatalog } = useContracts();
   const { getProducts, getActiveTranches } = useProductManagement();
   
-  const [products, setProducts] = useState<Product[]>([]);
+  const [insuranceProducts, setInsuranceProducts] = useState<InsuranceProduct[]>([]);
   const [totalCapacity, setTotalCapacity] = useState<bigint>(BigInt(0));
   const [activeTranchesCount, setActiveTranchesCount] = useState(0);
   const [premiumRange, setPremiumRange] = useState({ min: 0, max: 0 });
@@ -103,49 +96,43 @@ export default function HomePage() {
       setLoading(true);
       
       try {
-        // Get active products and tranches from contract
+        // Get active products from contract
         const activeProductIds = await (productCatalog as any).getActiveProducts();
-        const fetchedProducts: Product[] = [];
+        const fetchedProducts: InsuranceProduct[] = [];
         let totalCap = BigInt(0);
         let minPremium = 100;
         let maxPremium = 0;
-        const allTranches: Tranche[] = [];
+        let totalTranches = 0;
         
-        // Fetch each product and its tranches
+        // Fetch each product and aggregate data
         for (const productId of activeProductIds) {
           try {
             const productInfo = await (productCatalog as any).getProduct(Number(productId));
             
             if (productInfo && Number(productInfo.productId) !== 0) {
-              const productTranches: Tranche[] = [];
+              let productCapacity = BigInt(0);
+              let avgPremium = 0;
+              let avgMaturity = 0;
+              let avgThreshold = BigInt(0);
+              let triggerType = 0;
+              let trancheCount = 0;
               
-              // Get tranches for this product
+              // Get tranches for this product to calculate averages
               const trancheIds = productInfo.trancheIds || [];
               
               for (const trancheId of trancheIds) {
                 try {
                   const tranche = await (productCatalog as any).getTranche(Number(trancheId));
                   if (tranche && Number(tranche.productId) > 0) {
-                    const trancheData: Tranche = {
-                      trancheId: Number(trancheId),
-                      productId: Number(tranche.productId),
-                      triggerType: Number(tranche.triggerType || 0),
-                      threshold: tranche.threshold ? BigInt(tranche.threshold.toString()) : BigInt(0),
-                      premiumRateBps: Number(tranche.premiumRateBps || 0),
-                      maturityDays: Number(tranche.maturityDays || 30),
-                      trancheCap: tranche.trancheCap ? BigInt(tranche.trancheCap.toString()) : BigInt(0),
-                      poolAddress: tranche.poolAddress || "",
-                      active: true,
-                      name: `Tranche ${String.fromCharCode(65 + productTranches.length)}`,
-                      riskLevel: productTranches.length === 0 ? 'LOW' : productTranches.length === 1 ? 'MEDIUM' : 'HIGH'
-                    };
+                    productCapacity += tranche.trancheCap ? BigInt(tranche.trancheCap.toString()) : BigInt(0);
+                    avgPremium += Number(tranche.premiumRateBps || 0);
+                    avgMaturity += Number(tranche.maturityDays || 30);
+                    avgThreshold += tranche.threshold ? BigInt(tranche.threshold.toString()) : BigInt(0);
+                    triggerType = Number(tranche.triggerType || 0);
+                    trancheCount++;
+                    totalTranches++;
                     
-                    productTranches.push(trancheData);
-                    allTranches.push(trancheData);
-                    
-                    // Update totals
-                    totalCap += trancheData.trancheCap;
-                    const premiumPercent = trancheData.premiumRateBps / 100;
+                    const premiumPercent = Number(tranche.premiumRateBps) / 100;
                     if (premiumPercent > 0) {
                       minPremium = Math.min(minPremium, premiumPercent);
                       maxPremium = Math.max(maxPremium, premiumPercent);
@@ -156,63 +143,45 @@ export default function HomePage() {
                 }
               }
               
-              // Create product entry
-              fetchedProducts.push({
-                productId: Number(productId),
-                name: `BTC Price Protection ${productId}`,
-                tranches: productTranches,
-                active: productInfo?.active || false
-              });
+              if (trancheCount > 0) {
+                // Calculate averages
+                avgPremium = Math.round(avgPremium / trancheCount);
+                avgMaturity = Math.round(avgMaturity / trancheCount);
+                avgThreshold = avgThreshold / BigInt(trancheCount);
+                
+                // Mock buyer and provider counts (in production, fetch from actual pool data)
+                const buyerCount = Math.floor(Math.random() * 50) + 10;
+                const providerCount = Math.floor(Math.random() * 30) + 5;
+                
+                // Create aggregated product entry
+                fetchedProducts.push({
+                  productId: Number(productId),
+                  name: `BTC Price Protection`,
+                  triggerType: triggerType,
+                  threshold: avgThreshold,
+                  maturityDays: avgMaturity,
+                  premiumRateBps: avgPremium,
+                  buyerCount: buyerCount,
+                  providerCount: providerCount,
+                  totalCapacity: productCapacity,
+                  active: productInfo?.active || false
+                });
+                
+                totalCap += productCapacity;
+              }
             }
           } catch (err) {
             console.log(`Could not fetch product ${productId}`);
           }
         }
         
-        // If no tranches found from products, try direct tranche query
-        if (allTranches.length === 0) {
-          try {
-            const activeTrancheIds = await (productCatalog as any).getActiveTranches();
-            
-            for (const trancheId of activeTrancheIds) {
-              try {
-                const tranche = await (productCatalog as any).getTranche(Number(trancheId));
-                
-                if (tranche && Number(tranche.productId) > 0 && Number(tranche.premiumRateBps) > 0) {
-                  const trancheData: Tranche = {
-                    trancheId: Number(trancheId),
-                    productId: Number(tranche.productId),
-                    triggerType: Number(tranche.triggerType || 0),
-                    threshold: tranche.threshold ? BigInt(tranche.threshold.toString()) : BigInt(0),
-                    premiumRateBps: Number(tranche.premiumRateBps || 0),
-                    maturityDays: Number(tranche.maturityDays || 30),
-                    trancheCap: tranche.trancheCap ? BigInt(tranche.trancheCap.toString()) : BigInt(0),
-                    poolAddress: tranche.poolAddress || "",
-                    active: true,
-                    name: `Tranche ${trancheId}`,
-                    riskLevel: 'MEDIUM'
-                  };
-                  
-                  allTranches.push(trancheData);
-                  totalCap += trancheData.trancheCap;
-                  const premiumPercent = trancheData.premiumRateBps / 100;
-                  if (premiumPercent > 0) {
-                    minPremium = Math.min(minPremium, premiumPercent);
-                    maxPremium = Math.max(maxPremium, premiumPercent);
-                  }
-                }
-              } catch (err) {
-                // Continue
-              }
-            }
-          } catch (err) {
-            console.error("Error fetching active tranches:", err);
-          }
-        }
+        // Sort by total capacity and take top 3
+        fetchedProducts.sort((a, b) => Number(b.totalCapacity - a.totalCapacity));
+        const topProducts = fetchedProducts.slice(0, 3);
         
-        setProducts(fetchedProducts);
+        setInsuranceProducts(topProducts);
         setTotalCapacity(totalCap / BigInt(1e6));
-        setActiveTranchesCount(allTranches.length);
+        setActiveTranchesCount(totalTranches);
         setPremiumRange({ 
           min: minPremium === 100 ? 3 : minPremium, 
           max: maxPremium === 0 ? 8 : maxPremium 
@@ -343,7 +312,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Live Insurance Products */}
+        {/* Top Insurance Products */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-gray-900 mb-10 text-left font-header">
             Available DIN Protection Plans
@@ -352,66 +321,21 @@ export default function HomePage() {
             <div className="text-center py-12">
               <div className="text-gray-600">Loading insurance products...</div>
             </div>
-          ) : products.length === 0 ? (
+          ) : insuranceProducts.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-gray-500">No insurance products available</div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {products.flatMap(product => 
-                product.tranches.slice(0, 4).map((tranche) => (
-                  <div key={tranche.trancheId} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 group">
-                    <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-xl font-bold font-display text-gray-900">{tranche.name || `Tranche ${tranche.trancheId}`}</h3>
-                      <img src="/images/BTC.svg" alt="BTC" className="w-8 h-8" />
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Trigger:</span>
-                        <span className="text-gray-900 font-semibold">
-                          {tranche.triggerType === 0 ? '<' : '>'} ${(Number(tranche.threshold) / 1000).toFixed(0)}K
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Premium:</span>
-                        <span className="text-gray-900 font-semibold">{(tranche.premiumRateBps / 100).toFixed(1)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Capacity:</span>
-                        <span className="text-gray-900 font-semibold">
-                          ${Number(tranche.trancheCap) >= 1e6 
-                            ? `${(Number(tranche.trancheCap) / 1e6).toFixed(0)}M`
-                            : `${(Number(tranche.trancheCap) / 1e3).toFixed(0)}K`
-                          }
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Risk:</span>
-                        <span className={`font-bold px-2 py-1 rounded-lg text-xs ${
-                          tranche.riskLevel === 'LOW' ? 'bg-green-100 text-green-700' :
-                          tranche.riskLevel === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
-                          {tranche.riskLevel || 'MEDIUM'}
-                        </span>
-                      </div>
-                    </div>
-                    <Link
-                      href={`/tranches/${tranche.productId}/${tranche.trancheId}`}
-                      className="block w-full mt-6 relative bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white text-center py-3 rounded-xl font-semibold font-outfit transition-all duration-300 group-hover:scale-95 group-hover:shadow-md overflow-hidden"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-[#00B1B8] to-[#86D99C] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
-                      <span className="relative">View Details</span>
-                    </Link>
-                  </div>
-                ))
-              )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {insuranceProducts.map((product) => (
+                <InsuranceProductCard key={product.productId} product={product} />
+              ))}
             </div>
           )}
         </div>
 
         {/* How It Works */}
-        <div className="max-w-[720px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        
         <div className="text-left">
           <h2 className="text-3xl font-bold text-gray-900 mb-8">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -437,10 +361,10 @@ export default function HomePage() {
           </div>
         </div>
 
-      </div>
+      
 
       
-      <div className="text-center py-8 pb-20">
+      <div className="text-center py-20">
         {/* Connection Status */}
         {!isConnected && (
           <div className="mb-6">

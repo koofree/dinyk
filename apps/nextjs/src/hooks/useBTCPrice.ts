@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { ethers } from "ethers";
 import { KAIA_TESTNET_ADDRESSES } from "@dinsure/contracts";
+import { ethers } from "ethers";
+import { useEffect, useState } from "react";
 
 interface UseBTCPriceProps {
   factory: any;
@@ -15,7 +15,7 @@ const createDefaultProvider = () => {
   });
 };
 
-export function useBTCPrice({ factory, refreshInterval = 60000 }: UseBTCPriceProps) {
+export function useBTCPrice({ factory, refreshInterval = 10000 }: UseBTCPriceProps) {
   const [price, setPrice] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
