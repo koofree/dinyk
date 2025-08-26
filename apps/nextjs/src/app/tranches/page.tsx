@@ -3,7 +3,6 @@
 import { EnhancedPurchaseModal } from "@/components/insurance/EnhancedPurchaseModal";
 import { LiquidityPoolCard } from "@/components/insurance/LiquidityPoolCard";
 import { LiquidityModal } from "@/components/liquidity/LiquidityModal";
-import { TrancheCard } from "@/components/tranche/TrancheCard";
 import { TrancheFilters } from "@/components/tranche/TrancheFilters";
 import { useBTCPrice } from "@/hooks/useBTCPrice";
 import type { TrancheDetails } from "@/hooks/useTrancheData";
@@ -647,11 +646,35 @@ function TrancheContent() {
               }
               
               return (
-                <TrancheCard
-                  key={tranche.trancheId}
-                  product={product}
-                  tranche={tranche}
-                />
+                <div key={tranche.trancheId} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 relative">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    {product.metadata?.name || `Product #${product.productId}`} - Tranche #{tranche.trancheId}
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <p className="text-gray-600">
+                      Premium: <span className="text-gray-900 font-medium">{tranche.premiumRateBps / 100}%</span>
+                    </p>
+                    <p className="text-gray-600">
+                      Trigger: <span className="text-gray-900 font-medium">
+                        {tranche.triggerType === 0 ? "Price Below" : "Price Above"} ${tranche.threshold.toString()}
+                      </span>
+                    </p>
+                    <p className="text-gray-600">
+                      Cap: <span className="text-gray-900 font-medium">${Number(tranche.trancheCap) / 1e6} USDT</span>
+                    </p>
+                    <p className="text-gray-600">
+                      Maturity: <span className="text-gray-900 font-medium">{tranche.maturityDays} days</span>
+                    </p>
+                  </div>
+                  <div className="mt-4">
+                    <Link 
+                      href={`/tranches/${tranche.productId}/${tranche.trancheId}`}
+                      className="block w-full text-center rounded-xl bg-gradient-to-br from-[#86D99C] to-[#00B1B8] px-4 py-3 text-white font-semibold transition-all duration-300 hover:scale-95 hover:shadow-md"
+                    >
+                      View Details
+                    </Link>
+                  </div>
+                </div>
               );
             })}
           </div>

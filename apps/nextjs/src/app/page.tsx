@@ -221,7 +221,7 @@ export default function HomePage() {
                 ● Live on Testnet
               </span>
               <a 
-                href={`${ACTIVE_NETWORK.blockExplorer}/address/${ACTIVE_NETWORK.contracts.productCatalog}`}
+                href={`${ACTIVE_NETWORK.blockExplorer}/address/${ACTIVE_NETWORK.contracts.ProductCatalog}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"

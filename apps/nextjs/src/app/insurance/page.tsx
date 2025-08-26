@@ -211,7 +211,7 @@ export default function InsurancePage() {
               ● Connected to {ACTIVE_NETWORK.name}
             </span>
             <a
-              href={`${ACTIVE_NETWORK.blockExplorer}/address/${ACTIVE_NETWORK.contracts.productCatalog}`}
+              href={`${ACTIVE_NETWORK.blockExplorer}/address/${ACTIVE_NETWORK.contracts.ProductCatalog}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
@@ -347,7 +347,7 @@ export default function InsurancePage() {
                   contracts.
                 </p>
                 <div className="space-y-1 text-xs text-gray-500">
-                  <p>Contract: {ACTIVE_NETWORK.contracts.productCatalog}</p>
+                  <p>Contract: {ACTIVE_NETWORK.contracts.ProductCatalog}</p>
                   <p>Network: Kaia Testnet (Chain ID: 1001)</p>
                 </div>
                 {productsError && (
