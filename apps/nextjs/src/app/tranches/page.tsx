@@ -373,7 +373,7 @@ function TrancheContent() {
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 pt-20 pb-10">
-      <div className="max-w-[720px] mx-auto px-4 sm:px-6 lg:px-8">
+      
         {/* Header */}
         <div className="mb-16">
           <h1 className="text-[40px] mobile:text-[42px] font-bold text-gray-900 mb-4 font-display break-words leading-tight">
@@ -579,7 +579,7 @@ function TrancheContent() {
             setSelectedRoundId(null);
           }}
         />
-      </div>
+      
     </div>
   );
 }

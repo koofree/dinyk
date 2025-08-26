@@ -1,7 +1,7 @@
 "use client";
 
+import type { UserPosition } from "@/lib/types";
 import React from "react";
-import { UserPosition } from "@/lib/types";
 
 interface PositionCardProps {
   position: UserPosition;
@@ -64,7 +64,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({
           </div>
           <div>
             <div className="text-gray-400 text-sm">Premium Paid</div>
-            <div className="text-white font-medium">${position.premiumPaid} USDT</div>
+            <div className="text-white font-medium">${parseFloat(position.premiumPaid || '0').toFixed(2)} USDT</div>
           </div>
         </div>
 
@@ -89,7 +89,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({
           <div className="mb-4">
             <div className="bg-blue-900 border border-blue-600 rounded-lg p-3">
               <div className="text-blue-400 font-medium">Payout Available</div>
-              <div className="text-blue-300 text-2xl font-bold">${position.payout} USDT</div>
+              <div className="text-blue-300 text-2xl font-bold">${parseFloat(position.payout || '0').toFixed(2)} USDT</div>
             </div>
           </div>
         )}
@@ -140,11 +140,11 @@ export const PositionCard: React.FC<PositionCardProps> = ({
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
           <div className="text-gray-400 text-sm">Earned Premium</div>
-          <div className="text-green-400 font-medium">${position.earnedPremium} USDT</div>
+          <div className="text-green-400 font-medium">${parseFloat(position.earnedPremium || '0').toFixed(2)} USDT</div>
         </div>
         <div>
           <div className="text-gray-400 text-sm">Staking Rewards</div>
-          <div className="text-green-400 font-medium">${position.stakingRewards} USDT</div>
+          <div className="text-green-400 font-medium">${parseFloat(position.stakingRewards || '0').toFixed(2)} USDT</div>
         </div>
       </div>
 
@@ -155,7 +155,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({
         </div>
       )}
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-col">
         {position.roundStatus === 'settled' && onWithdraw && (
           <button
             onClick={() => onWithdraw(position.id)}
@@ -166,7 +166,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({
           </button>
         )}
         {position.roundStatus === 'active' && (
-          <button className="flex-1 bg-gray-600 text-gray-400 py-2 px-4 rounded-lg cursor-not-allowed">
+          <button className=" bg-gray-600 text-gray-400 py-2 px-4 rounded-lg cursor-not-allowed">
             Withdraw After Round
           </button>
         )}

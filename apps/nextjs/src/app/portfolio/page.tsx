@@ -1,7 +1,6 @@
 "use client";
 
 import { PositionCard } from "@/components/insurance/PositionCard";
-import { KAIA_TESTNET } from "@/lib/constants";
 import { useUserPortfolio, useWeb3 } from "@dinsure/contracts";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -12,6 +11,9 @@ export default function PortfolioPage() {
   const { isConnected, account } = useWeb3();
   const [activeTab, setActiveTab] = useState<'insurance' | 'liquidity' | 'history'>('insurance');
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [isPoliciesExpanded, setIsPoliciesExpanded] = useState(false);
+  const [isPositionsExpanded, setIsPositionsExpanded] = useState(false);
+  const [currency, setCurrency] = useState<'USDT' | 'KRW'>('USDT');
   
   const {
     insurancePositions,
@@ -29,8 +31,9 @@ export default function PortfolioPage() {
     try {
       await claimInsurance(positionId);
       toast.success(`Successfully claimed payout for position ${positionId}!`);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to claim insurance");
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to claim insurance";
+      toast.error(errorMessage);
     } finally {
       setProcessingId(null);
     }
@@ -41,8 +44,9 @@ export default function PortfolioPage() {
     try {
       await withdrawLiquidity(positionId);
       toast.success(`Successfully withdrew funds from position ${positionId}!`);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to withdraw liquidity");
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to withdraw liquidity";
+      toast.error(errorMessage);
     } finally {
       setProcessingId(null);
     }
@@ -51,7 +55,7 @@ export default function PortfolioPage() {
   if (!isConnected) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
           <div className="text-center py-16">
             <div className="text-6xl mb-4">🔗</div>
             <h2 className="text-2xl font-bold font-display text-gray-900 mb-4">Connect Your Wallet</h2>
@@ -59,7 +63,7 @@ export default function PortfolioPage() {
               Please connect your wallet to view your portfolio
             </p>
           </div>
-        </div>
+      
       </div>
     );
   }
@@ -68,12 +72,12 @@ export default function PortfolioPage() {
   if (isLoading && !insurancePositions.length && !liquidityPositions.length) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-[#00B1B8]" />
             <span className="ml-3 text-gray-600">Loading portfolio...</span>
           </div>
-        </div>
+        
       </div>
     );
   }
@@ -82,7 +86,6 @@ export default function PortfolioPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-16">
             <div className="text-6xl mb-4">⚠️</div>
             <h2 className="text-2xl font-bold font-display text-gray-900 mb-4">Error Loading Portfolio</h2>
@@ -94,123 +97,180 @@ export default function PortfolioPage() {
               Retry
             </button>
           </div>
-        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold font-display text-gray-900 mb-4">My DIN Portfolio</h1>
-          <p className="text-gray-600 text-lg">
-            Manage your insurance NFTs and liquidity positions
+        <div className="mb-16">
+          <h1 className="text-[40px] mobile:text-[42px] font-bold text-gray-900 mb-4 font-display break-words leading-tight">My Portfolio</h1>
+          <p className="text-gray-600 text-[18px] mobile:text-[20px] mb-8 break-words leading-tight">
+            Manage your insurance policies and liquidity positions
           </p>
-          <div className="mt-4 flex items-center gap-4 text-sm">
-            <span className="text-green-600 bg-green-100 px-3 py-1 rounded-full font-medium">● Connected: {account?.slice(0, 6)}...{account?.slice(-4)}</span>
-            <a 
-              href={`${KAIA_TESTNET.blockExplorer}/address/${account}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
-            >
-              View on Explorer ↗
-            </a>
-            <a 
-              href={`${KAIA_TESTNET.blockExplorer}/token/${KAIA_TESTNET.contracts.insuranceToken}?a=${account}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
-            >
-              View NFTs ↗
-            </a>
-          </div>
         </div>
 
         {/* Portfolio Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-            <div className="text-gray-400 text-sm mb-2">Insurance Coverage</div>
-            <div className="text-2xl font-bold text-white">
-              ${portfolioSummary.totalInsuranceCoverage.toLocaleString()} USDT
+        <div className="mb-8">
+          <h2 className="text-[30px] font-bold text-gray-900 mb-4 font-display">Portfolio Overview</h2>
+          <div className="w-full h-px bg-gray-200 mb-8"></div>
+          
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="p-4 flex flex-col justify-between h-full">
+              <div className="flex justify-between items-center mb-2">
+                <div className="text-gray-600 text-sm">Total Coverage</div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrency('USDT')}
+                    className={`text-xs px-2 py-1 rounded ${currency === 'USDT' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}
+                  >
+                    USDT
+                  </button>
+                  <button
+                    onClick={() => setCurrency('KRW')}
+                    className={`text-xs px-2 py-1 rounded ${currency === 'KRW' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}
+                  >
+                    KRW
+                  </button>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-gray-900">
+                {currency === 'KRW' ? `₩${(portfolioSummary.totalInsuranceCoverage * 1300).toLocaleString()}` : `$${portfolioSummary.totalInsuranceCoverage.toLocaleString()}`} <span className="text-sm text-gray-400">{currency}</span>
+              </div>
+              <div className="mt-auto">
+                <button 
+                  onClick={() => setIsPoliciesExpanded(!isPoliciesExpanded)}
+                  className="flex items-center gap-1 text-green-600 text-sm hover:text-green-700 transition-colors"
+                >
+                  <span>{portfolioSummary.activeInsuranceCount} active policies</span>
+                  <svg 
+                    className={`w-4 h-4 transition-transform ${isPoliciesExpanded ? 'rotate-180' : ''}`}
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isPoliciesExpanded && insurancePositions.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {insurancePositions.map((position: any) => (
+                      <div key={position.id} className="text-xs text-gray-600 bg-gray-50 rounded-lg p-3">
+                        <div className="font-medium">Policy #{position.tokenId}</div>
+                        <div>{position.productName} - {position.trancheName}</div>
+                        <div>Coverage: ${position.coverageAmount?.toLocaleString() ?? '0'} USDT</div>
+                        <div className="text-gray-500">Expires: {position.expiryDate ? new Date(position.expiryDate).toLocaleDateString() : 'N/A'}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="text-green-400 text-sm">
-              {portfolioSummary.activeInsuranceCount} active, {portfolioSummary.claimableInsuranceCount} claimable
+            <div className="w-full h-px bg-gray-200"></div>
+            <div className="p-4 flex flex-col justify-between h-full">
+              <div className="text-gray-600 text-sm mb-2">Liquidity Provided</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {currency === 'KRW' ? `₩${(portfolioSummary.totalLiquidityValue * 1300).toLocaleString()}` : `$${portfolioSummary.totalLiquidityValue.toLocaleString()}`} <span className="text-sm text-gray-400">{currency}</span>
+              </div>
+              <div className="mt-auto">
+                <button 
+                  onClick={() => setIsPositionsExpanded(!isPositionsExpanded)}
+                  className="flex items-center gap-1 text-blue-600 text-sm hover:text-blue-700 transition-colors"
+                >
+                  <span>{portfolioSummary.activeLiquidityCount} pool positions</span>
+                  <svg 
+                    className={`w-4 h-4 transition-transform ${isPositionsExpanded ? 'rotate-180' : ''}`}
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isPositionsExpanded && liquidityPositions.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {liquidityPositions.map((position: any) => (
+                      <div key={position.id} className="text-xs text-gray-600 bg-gray-50 rounded-lg p-3">
+                        <div className="font-medium">{position.productName} - {position.trancheName}</div>
+                        <div>Deposited: ${position.depositAmount?.toLocaleString() ?? '0'} USDT</div>
+                        <div>Current Value: ${position.currentValue?.toLocaleString() ?? '0'} USDT</div>
+                        <div className="text-green-600">
+                          Earned: ${typeof position.earnedPremium === 'number' ? position.earnedPremium.toFixed(2) : parseFloat(position.earnedPremium || '0').toFixed(2)} USDT
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="text-gray-500 text-xs mt-1">
-              InsuranceToken Contract
+            <div className="w-full h-px bg-gray-200"></div>
+            <div className="p-4 flex flex-col justify-between h-full">
+              <div className="text-gray-600 text-sm mb-2">Total Earnings</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {currency === 'KRW' ? `₩${(portfolioSummary.totalEarnings * 1300).toLocaleString()}` : `$${portfolioSummary.totalEarnings.toFixed(2)}`} <span className="text-sm text-gray-400">{currency}</span>
+              </div>
+              <div className="mt-auto space-y-2">
+                <div className="text-yellow-600 text-sm">
+                  Premiums + Staking rewards
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                  <div className="text-gray-500 text-xs">
+                    Earnings vs. capital: <span className="text-green-600">{currency === 'KRW' ? `₩${(portfolioSummary.totalEarnings * 1300).toFixed(0)}` : `$${portfolioSummary.totalEarnings.toFixed(0)}`}</span> earned on {currency === 'KRW' ? `₩${(portfolioSummary.totalLiquidityValue * 1300).toLocaleString()}` : `$${portfolioSummary.totalLiquidityValue.toLocaleString()}`} liquidity = <span className="text-green-600">{portfolioSummary.totalLiquidityValue > 0 ? ((portfolioSummary.totalEarnings / portfolioSummary.totalLiquidityValue) * 100).toFixed(1) : '0'}%</span> return
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-            <div className="text-gray-400 text-sm mb-2">Liquidity Provided</div>
-            <div className="text-2xl font-bold text-white">
-              ${portfolioSummary.totalLiquidityValue.toLocaleString()} USDT
-            </div>
-            <div className="text-blue-400 text-sm">
-              {portfolioSummary.activeLiquidityCount} active position{portfolioSummary.activeLiquidityCount !== 1 ? 's' : ''}
-            </div>
-            <div className="text-gray-500 text-xs mt-1">
-              TranchePoolCore Shares
-            </div>
-          </div>
-
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-            <div className="text-gray-400 text-sm mb-2">Total Earnings</div>
-            <div className="text-2xl font-bold text-white">
-              ${portfolioSummary.totalEarnings.toFixed(2)} USDT
-            </div>
-            <div className="text-yellow-400 text-sm">
-              Premiums + Staking rewards
-            </div>
-          </div>
+          <div className="w-full h-px bg-gray-200 mt-8"></div>
         </div>
-
         {/* Tab Navigation */}
-        <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 mb-8 border border-gray-700">
+        <div className="flex space-x-1 bg-white rounded-lg p-1 mb-8 border border-gray-200 shadow-sm">
           <button
             onClick={() => setActiveTab('insurance')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-1 py-3 px-4 text-sm font-bold transition-colors ${
               activeTab === 'insurance'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-[#374151] text-white'
+                : 'text-gray-600 hover:text-gray-900'
             }`}
+            style={{ borderRadius: activeTab === 'insurance' ? '12px' : '0px' }}
           >
-            🛡️ Insurance Positions ({insurancePositions.length})
+            Active Insurance ({insurancePositions.length})
           </button>
           <button
             onClick={() => setActiveTab('liquidity')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-1 py-3 px-4 text-sm font-bold transition-colors ${
               activeTab === 'liquidity'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-[#374151] text-white'
+                : 'text-gray-600 hover:text-gray-900'
             }`}
+            style={{ borderRadius: activeTab === 'liquidity' ? '12px' : '0px' }}
           >
-            💰 Liquidity Positions ({liquidityPositions.length})
+            LP Positions ({liquidityPositions.length})
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-1 py-3 px-4 text-sm font-bold transition-colors ${
               activeTab === 'history'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-[#374151] text-white'
+                : 'text-gray-600 hover:text-gray-900'
             }`}
+            style={{ borderRadius: activeTab === 'history' ? '12px' : '0px' }}
           >
-            📊 History
+            History
           </button>
         </div>
-
+            
         {/* Tab Content */}
         {activeTab === 'insurance' && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {insurancePositions.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {insurancePositions.map((position) => (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {insurancePositions.map((position: any) => (
                   <PositionCard
                     key={position.id}
-                    position={position as any}
+                    position={position}
                     onClaim={handleClaim}
                     isProcessing={processingId === position.id}
                   />
@@ -219,13 +279,13 @@ export default function PortfolioPage() {
             ) : (
               <div className="text-center py-12">
                 <div className="text-4xl mb-4">🛡️</div>
-                <h3 className="text-xl font-bold text-white mb-2">No Insurance Policies</h3>
-                <p className="text-gray-400 mb-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">No Insurance Policies</h3>
+                <p className="text-gray-600 mb-6">
                   You don't have any active insurance policies yet
                 </p>
                 <a
                   href="/insurance"
-                  className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
+                  className="inline-block bg-gradient-to-br from-[#86D99C] to-[#00B1B8] hover:from-[#00B1B8] hover:to-[#86D99C] text-white px-6 py-3 rounded-lg transition-all duration-300 hover:scale-95"
                 >
                   Browse Insurance Products
                 </a>
@@ -235,13 +295,13 @@ export default function PortfolioPage() {
         )}
 
         {activeTab === 'liquidity' && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {liquidityPositions.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {liquidityPositions.map((position) => (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {liquidityPositions.map((position: any) => (
                   <PositionCard
                     key={position.id}
-                    position={position as any}
+                    position={position}
                     onWithdraw={handleWithdraw}
                     isProcessing={processingId === position.id}
                   />
@@ -250,13 +310,13 @@ export default function PortfolioPage() {
             ) : (
               <div className="text-center py-12">
                 <div className="text-4xl mb-4">💰</div>
-                <h3 className="text-xl font-bold text-white mb-2">No Liquidity Positions</h3>
-                <p className="text-gray-400 mb-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">No Liquidity Positions</h3>
+                <p className="text-gray-600 mb-6">
                   You haven't provided liquidity to any pools yet
                 </p>
                 <Link
                   href="/tranches"
-                  className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
+                  className="inline-block bg-gradient-to-br from-[#86D99C] to-[#00B1B8] hover:from-[#00B1B8] hover:to-[#86D99C] text-white px-6 py-3 rounded-lg transition-all duration-300 hover:scale-95"
                 >
                   Provide Liquidity
                 </Link>
@@ -266,17 +326,16 @@ export default function PortfolioPage() {
         )}
 
         {activeTab === 'history' && (
-          <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 flex flex-col items-center justify-center">
-            <div className="flex flex-col items-center text-center">
-              <div className="text-4xl">📊</div>
-              <h3 className="text-xl font-bold text-white my-2">Transaction History</h3>
-              <p className="text-gray-400 mt-2">
+          <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+            <div className="text-center">
+              <div className="text-4xl mb-4">📊</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Transaction History</h3>
+              <p className="text-gray-600">
                 Coming soon - View your complete transaction history
               </p>
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }

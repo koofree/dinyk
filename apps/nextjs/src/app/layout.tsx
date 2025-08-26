@@ -67,7 +67,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
                 flex-1 bg-gradient-to-br from-blue-50 via-white to-blue-50
                 flex flex-col items-center
               ">
-                <div className="max-w-[720px]">
+                <div className="max-w-[720px] mx-auto px-4 sm:px-6 lg:px-8">
                   {props.children}
                 </div>
               </main> 

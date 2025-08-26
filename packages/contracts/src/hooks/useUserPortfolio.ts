@@ -196,7 +196,8 @@ export function useUserPortfolio() {
             const currentPrice = 44500; // Mock current price
             
             // Extract asset name safely
-            const productName = product.name || product.metadataHash || `Product ${productId}`;
+            // TODO: how to make the product name more readable?
+            const productName = product.name || `Product ${productId}`;
             const assetName = productName.includes(' ') ? productName.split(' ')[0] : productName;
 
             positions.push({
@@ -381,7 +382,7 @@ export function useUserPortfolio() {
                       : 0n;
                     
                     // Extract asset name safely
-                    const productName = product.name || product.metadataHash || `Product ${productId}`;
+                    const productName = product.name || `Product ${productId}`;
                     const assetName = productName.includes(' ') ? productName.split(' ')[0] : productName;
                     
                     positions.push({
