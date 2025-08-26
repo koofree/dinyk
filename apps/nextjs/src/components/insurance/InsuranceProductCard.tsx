@@ -106,7 +106,10 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
         </div>
       </div>
 
-      {/* <div className="mb-6 grid grid-cols-2 gap-4">
+      {/* 
+        TODO: Add buyer and provider counts I don't know how to get this data from the contract
+        
+        <div className="mb-6 grid grid-cols-2 gap-4">
         <div className="rounded-lg bg-gray-50 p-3">
           <div className="mb-1 text-2xl font-bold text-gray-900">
             {product.buyerCount || 0}

@@ -54,7 +54,7 @@ export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h3 className="text-xl font-bold text-white">
-            {pool.asset} - {pool.trancheName}
+            {pool.asset} 
           </h3>
           <p className="text-sm text-gray-400">
             Trigger: {pool.triggerType === "PRICE_BELOW" ? "<" : ">"} $

@@ -2,10 +2,10 @@
 
 import React from "react";
 
-import type { InsuranceProduct } from "@/app/page";
+import type { Product, Tranche } from "@/app/insurance/page";
 
 interface SimpleProductCardProps {
-  product: InsuranceProduct;
+  product: Product;
   tranches: Tranche[];
   onViewTranches: () => void;
 }
@@ -15,8 +15,7 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
   tranches,
   onViewTranches,
 }) => {
-  // Display all product properties dynamically
-  const productName = product.name;
+  
 
   // Calculate aggregated statistics
   const totalTranches = tranches.length;
@@ -26,7 +25,10 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
   const minPremium =
     premiumRates.length > 0 ? Math.min(...premiumRates) / 100 : 0;
   const maxPremium =
-    premiumRates.length > 0 ? Math.max(...premiumRates) / 100 : 0;
+    premiumRates.length > 0 ? Math.max(...premiumRates) / 100 : 0;  
+
+  // Display all product properties dynamically
+  const productName = `${product.asset} Protection`;
 
   return (
     <div className="rounded-lg border border-gray-700 bg-gray-800 p-6 transition-colors hover:border-gray-600">
