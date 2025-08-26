@@ -46,9 +46,9 @@ interface UseTrancheDataProps {
 
 // Create a default provider for Kaia Testnet
 const createDefaultProvider = () => {
-  return new ethers.JsonRpcProvider('https://public-en-kairos.node.kaia.io', {
-    chainId: 1001,
-    name: 'Kaia Kairos'
+  return new ethers.JsonRpcProvider(ACTIVE_NETWORK.rpcUrl, {
+    chainId: ACTIVE_NETWORK.chainId,
+    name: ACTIVE_NETWORK.name
   });
 };
 
