@@ -2,9 +2,9 @@
 
 import { KAIA_TESTNET } from "@/lib/constants";
 import { useContracts, useProductManagement, useWeb3 } from "@dinsure/contracts";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ProgressBar } from "~/components/common/ProgressBar";
 import { useLanguage } from "~/context/LanguageProvider";
 
 interface Tranche {
@@ -211,7 +211,7 @@ export default function HomePage() {
         }
         
         setProducts(fetchedProducts);
-        setTotalCapacity(totalCap);
+        setTotalCapacity(totalCap / BigInt(1e6));
         setActiveTranchesCount(allTranches.length);
         setPremiumRange({ 
           min: minPremium === 100 ? 3 : minPremium, 
@@ -228,14 +228,13 @@ export default function HomePage() {
   }, [isInitialized, productCatalog, getProducts, getActiveTranches]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
-      
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white">
+      <div className="relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
             <div className={`transition-all duration-700 ${heroAnimations.logo ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              <img src="/images/BI.svg" alt="DIN Logo" className="h-16 w-auto mx-auto mb-8" />
+              <img src="/images/BI-symbol.svg" alt="DIN Logo" className="h-16 w-auto mx-auto mb-8" />
             </div>
             <h1 className={`text-5xl md:text-7xl font-bold font-display text-gray-900 mb-6 transition-all duration-700 ${heroAnimations.title ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               Decentralized Insurance
@@ -293,69 +292,61 @@ export default function HomePage() {
       {/* Key Metrics Dashboard */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16" ref={progressRef}>
-          <div className="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
-            <div className="text-4xl font-bold font-display text-transparent bg-clip-text bg-gradient-to-r from-[#86D99C] to-[#00B1B8] mb-2">
+          <div className="bg-white rounded-lg p-6 text-left border border-gray-200 shadow-sm hover:cursor-pointer group">
+            <div className="w-10 h-10 mb-3">
+              <Image src="/images/1.svg" alt="TVL Icon" className="w-full h-full" width={40} height={40} />
+            </div>
+            <div className="text-3xl font-bold text-gray-800 mb-2 font-outfit">
               {loading ? (
                 <span className="text-2xl text-gray-400">Loading...</span>
               ) : (
                 `$${(Number(totalCapacity) / 1e6).toFixed(0)}${Number(totalCapacity) >= 1e6 ? 'M' : 'K'}`
               )}
             </div>
-            <div className="text-gray-700 font-medium">Total Capacity</div>
-            <div className="text-sm text-gray-500 mt-2">
-              {loading ? '-' : `${activeTranchesCount} Active Tranches`}
+            <div className="text-gray-600 font-medium mb-3 font-outfit">{t('metrics.totalTVL')} (Total Value Locked)</div>
+            <div className="text-gray-500 text-sm leading-relaxed">
+              Higher TVL means more trust and bigger trading capacity.
             </div>
-            {!loading && (
-              <div className="mt-4">
-                <ProgressBar 
-                  label="Capacity Filled" 
-                  value={75} 
-                  maxValue={100} 
-                  isVisible={isProgressVisible} 
-                />
-              </div>
-            )}
           </div>
-          <div className="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
-            <div className="text-4xl font-bold font-display text-gray-900 mb-2">
-              {loading ? '-' : activeTranchesCount}
+          <div className="bg-white rounded-lg p-6 text-left border border-gray-200 shadow-sm hover:cursor-pointer group">
+          <div className="w-10 h-10 mb-3">
+              <Image src="/images/2.svg" alt="TVL Icon" className="w-full h-full" width={40} height={40} />
             </div>
-            <div className="text-gray-700 font-medium">Risk Tranches</div>
-            <div className="text-sm text-gray-500 mt-2">BTC Protection</div>
-            {!loading && (
-              <div className="mt-4">
-                <ProgressBar 
-                  label="Active Tranches" 
-                  value={activeTranchesCount} 
-                  maxValue={10} 
-                  isVisible={isProgressVisible} 
-                />
-              </div>
-            )}
-          </div>
-          <div className="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
-            <div className="text-4xl font-bold font-display text-gray-900 mb-2">
-              {loading ? '-' : `${premiumRange.min}-${premiumRange.max}%`}
+            <div className="text-3xl font-bold text-gray-800 mb-2 font-outfit">
+              {loading ? <span className="text-2xl text-gray-400">Loading...</span> : activeTranchesCount}
             </div>
-            <div className="text-gray-700 font-medium">Premium Range</div>
-            <div className="text-sm text-gray-500 mt-2">30-Day Maturity</div>
-            {!loading && (
-              <div className="mt-4">
-                <ProgressBar 
-                  label="Average Premium" 
-                  value={(premiumRange.min + premiumRange.max) / 2} 
-                  maxValue={10} 
-                  isVisible={isProgressVisible} 
-                />
-              </div>
-            )}
+            <div className="text-gray-600 font-medium mb-3 font-outfit">{t('metrics.activePools')}</div>
+            <div className="text-gray-500 text-sm leading-relaxed">
+              More pools mean more trading pairs supported.
+            </div>
           </div>
+          <div className="bg-white rounded-lg p-6 text-left border border-gray-200 shadow-sm hover:cursor-pointer group">
+          <div className="w-10 h-10 mb-3">
+              <Image src="/images/3.svg" alt="TVL Icon" className="w-full h-full" width={40} height={40} />
+            </div>
+            <div className="text-3xl font-bold text-gray-800 mb-2 font-outfit">
+              {loading ? <span className="text-2xl text-gray-400">Loading...</span> : `${premiumRange.min}-${premiumRange.max}%`}
+            </div>
+            <div className="text-gray-600 font-medium mb-3 font-outfit">{t('metrics.totalPremiums')}</div>
+            <div className="text-gray-500 text-sm leading-relaxed">
+              Higher premium means more active trading or subscriptions.
+            </div>
+          </div>
+        </div>
+
+        <div className="text-left mb-12 bg-[#F3FEF6] rounded-2xl p-8">
+          <h3 className="text-2xl font-bold text-gray-900 mb-2 font-header">
+            Hedge your downside risk with simple, on-chain insurance products. 🚀
+          </h3>
+          <p className="text-base text-gray-700 max-w-3xl">
+            From crypto volatility to special events — cover unexpected risks with DIN.
+          </p>
         </div>
 
         {/* Live Insurance Products */}
         <div className="mb-16">
-          <h2 className="text-4xl font-bold font-display text-gray-900 mb-12 text-center">
-            Live Insurance Products
+          <h2 className="text-3xl font-bold text-gray-900 mb-10 text-left font-header">
+            Available DIN Protection Plans
           </h2>
           {loading ? (
             <div className="text-center py-12">
@@ -420,71 +411,53 @@ export default function HomePage() {
         </div>
 
         {/* How It Works */}
-        <div className="text-center">
-          <h2 className="text-4xl font-bold font-display text-gray-900 mb-12">How It Works</h2>
+        <div className="max-w-[720px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="text-left">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
-              <div className="text-5xl mb-6">🛡️</div>
-              <h3 className="text-2xl font-bold font-display text-gray-900 mb-4">For Insurance Buyers</h3>
-              <ul className="text-gray-600 text-left space-y-3">
-                <li className="flex items-start">
-                  <span className="text-[#86D99C] mr-2">•</span>
-                  <span>Browse available insurance products</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-[#86D99C] mr-2">•</span>
-                  <span>Select coverage amount and duration</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-[#86D99C] mr-2">•</span>
-                  <span>Pay premium to secure protection</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-[#86D99C] mr-2">•</span>
-                  <span>Receive automatic payouts when triggered</span>
-                </li>
+            <div className="bg-[#F3FEF6] rounded-2xl p-8 text-left">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">For Insurance Buyers</h3>
+              <ul className="text-gray-700 space-y-2">
+                <li>• Browse available insurance products</li>
+                <li>• Select coverage amount and duration</li>
+                <li>• Pay premium to secure protection</li>
+                <li>• Receive automatic payouts when triggered</li>
               </ul>
             </div>
 
-            <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
-              <div className="text-5xl mb-6">💰</div>
-              <h3 className="text-2xl font-bold font-display text-gray-900 mb-4">For Liquidity Providers</h3>
-              <ul className="text-gray-600 text-left space-y-3">
-                <li className="flex items-start">
-                  <span className="text-[#00B1B8] mr-2">•</span>
-                  <span>Deposit USDT into insurance pools</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-[#00B1B8] mr-2">•</span>
-                  <span>Earn premiums from insurance sales</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-[#00B1B8] mr-2">•</span>
-                  <span>Receive additional staking rewards</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-[#00B1B8] mr-2">•</span>
-                  <span>Withdraw funds after pool periods</span>
-                </li>
+            <div className="bg-[#F3FEF6] rounded-2xl p-8 text-left">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">For Liquidity Providers</h3>
+              <ul className="text-gray-700 text-left space-y-2">
+                <li>• Deposit USDT into insurance pools</li>
+                <li>• Earn premiums from insurance sales</li>
+                <li>• Receive additional staking rewards</li>
+                <li>• Withdraw funds after pool periods</li>
               </ul>
             </div>
           </div>
         </div>
 
+      </div>
+
+      
+      <div className="text-center py-8 pb-20">
         {/* Connection Status */}
         {!isConnected && (
-          <div className="mt-16 text-center">
-            <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 border border-gray-100 shadow-sm">
-              <h3 className="text-2xl font-bold font-display text-gray-900 mb-3">Get Started</h3>
-              <p className="text-gray-600 mb-4">
+          <div className="mb-6">
+            <div className="rounded-lg p-6">
+              <p className="text-gray-400 mb-4">
                 Connect your wallet to start using DIN insurance platform
               </p>
-              <p className="text-gray-500 text-sm">
+              <p className="text-gray-400 text-sm">
                 Supports MetaMask, Kaikas, and other Web3 wallets
               </p>
             </div>
           </div>
         )}
+        
+        {/* Footer Logo */}
+        <img src="/images/bi-symbol.svg" alt="DIN Logo" className="h-12 w-auto mx-auto" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%)' }} />
+      </div>
       </div>
     </div>
   );
