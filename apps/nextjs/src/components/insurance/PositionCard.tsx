@@ -1,6 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 "use client";
 
-import type { UserPosition } from "@/lib/types";
+import type { UserInsurancePosition, UserLiquidityPosition, UserPosition } from "@dinsure/contracts";
 import React from "react";
 
 interface PositionCardProps {
@@ -56,18 +60,19 @@ export const PositionCard: React.FC<PositionCardProps> = ({
   };
 
   if (position.type === "insurance") {
+    const insurancePosition = position as UserInsurancePosition;
     return (
-      <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
+      <div className="min-w-[250px] rounded-lg border border-gray-700 bg-gray-800 p-6">
         <div className="mb-4 flex items-start justify-between">
           <div>
-            <h3 className="font-medium text-white">Policy #{position.id}</h3>
-            <p className="text-sm text-gray-400">{position.tranche}</p>
+            <h3 className="font-medium text-white">Tranche #{insurancePosition.trancheId}</h3>
+            <p className="text-sm text-gray-400">{insurancePosition.asset}</p>
           </div>
           <div
-            className={`flex items-center gap-1 ${getStatusColor(position.status)}`}
+            className={`flex items-center gap-1 ${getStatusColor(insurancePosition.status)}`}
           >
-            <span>{getStatusIcon(position.status)}</span>
-            <span className="text-sm capitalize">{position.status}</span>
+            <span>{getStatusIcon(insurancePosition.status)}</span>
+            <span className="text-sm capitalize">{insurancePosition.status}</span>
           </div>
         </div>
 
@@ -75,13 +80,13 @@ export const PositionCard: React.FC<PositionCardProps> = ({
           <div>
             <div className="text-sm text-gray-400">Coverage</div>
             <div className="font-medium text-white">
-              ${parseInt(position.coverage || "0").toLocaleString()} USDT
+              ${parseInt(position.coverage ?? "0").toLocaleString()}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-400">Premium Paid</div>
             <div className="font-medium text-white">
-              ${parseFloat(position.premiumPaid || "0").toFixed(2)} USDT
+              ${parseFloat(position.premiumPaid ?? "0").toFixed(2)}
             </div>
           </div>
         </div>
@@ -95,13 +100,13 @@ export const PositionCard: React.FC<PositionCardProps> = ({
             <div className="mb-2 flex justify-between text-sm">
               <span className="text-gray-400">Current {position.asset}</span>
               <span className="text-white">
-                ${position.currentPrice?.toLocaleString()}
+                ${insurancePosition.currentPrice?.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Trigger at</span>
               <span className="text-white">
-                ${position.triggerPrice?.toLocaleString()}
+                ${insurancePosition.triggerPrice?.toLocaleString()}
               </span>
             </div>
           </div>
@@ -112,7 +117,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({
             <div className="rounded-lg border border-blue-600 bg-blue-900 p-3">
               <div className="font-medium text-blue-400">Payout Available</div>
               <div className="text-2xl font-bold text-blue-300">
-                ${parseFloat(position.payout || "0").toFixed(2)} USDT
+                ${parseFloat(insurancePosition.claimAmount ?? "0").toFixed(2)} USDT
               </div>
             </div>
           </div>
@@ -140,18 +145,20 @@ export const PositionCard: React.FC<PositionCardProps> = ({
   }
 
   // Liquidity position
+
+  const liquidityPosition = position as UserLiquidityPosition;
   return (
-    <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
+    <div className="min-w-[250px] rounded-lg border border-gray-700 bg-gray-800 p-6">
       <div className="mb-4 flex items-start justify-between">
         <div>
-          <h3 className="font-medium text-white">{position.tranche}</h3>
-          <p className="text-sm text-gray-400">{position.asset} Pool</p>
+          <h3 className="font-medium text-white">{liquidityPosition.tranche}</h3>
+          <p className="text-sm text-gray-400">{liquidityPosition.asset}</p>
         </div>
         <div
-          className={`flex items-center gap-1 ${getRoundStatusColor(position.roundStatus)}`}
+          className={`flex items-center gap-1 ${getRoundStatusColor(liquidityPosition.roundStatus)}`}
         >
-          <span>●</span>
-          <span className="text-sm capitalize">{position.roundStatus}</span>
+          <span>{getStatusIcon(liquidityPosition.roundStatus)}</span>
+          <span className="text-sm capitalize">{liquidityPosition.roundStatus}</span>
         </div>
       </div>
 
@@ -159,13 +166,13 @@ export const PositionCard: React.FC<PositionCardProps> = ({
         <div>
           <div className="text-sm text-gray-400">Deposited</div>
           <div className="font-medium text-white">
-            ${parseInt(position.deposited || "0").toLocaleString()} USDT
+            ${parseInt(liquidityPosition.deposited ?? "0").toLocaleString()}
           </div>
         </div>
         <div>
           <div className="text-sm text-gray-400">Current Value</div>
           <div className="font-medium text-white">
-            ${parseInt(position.currentValue || "0").toLocaleString()} USDT
+            ${parseInt(liquidityPosition.currentValue ?? "0").toLocaleString()}
           </div>
         </div>
       </div>
@@ -174,13 +181,13 @@ export const PositionCard: React.FC<PositionCardProps> = ({
         <div>
           <div className="text-sm text-gray-400">Earned Premium</div>
           <div className="font-medium text-green-400">
-            ${parseFloat(position.earnedPremium || "0").toFixed(2)} USDT
+            ${parseFloat(liquidityPosition.earnedPremium ?? "0").toFixed(2)}
           </div>
         </div>
         <div>
           <div className="text-sm text-gray-400">Staking Rewards</div>
           <div className="font-medium text-green-400">
-            ${parseFloat(position.stakingRewards || "0").toFixed(2)} USDT
+            ${parseFloat(liquidityPosition.stakingRewards ?? "0").toFixed(2)}
           </div>
         </div>
       </div>
@@ -188,7 +195,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({
       {position.roundStatus === "active" && (
         <div className="mb-4">
           <div className="text-sm text-gray-400">Round ends in</div>
-          <div className="text-white">{position.daysLeft} days</div>
+          <div className="text-white">{liquidityPosition.daysLeft} days</div>
         </div>
       )}
 

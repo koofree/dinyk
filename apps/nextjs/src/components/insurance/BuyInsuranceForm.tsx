@@ -11,7 +11,14 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { useBuyerOperations, useContracts, useWeb3 } from "@dinsure/contracts";
+import { ErrorAlert } from "@/components/common/ErrorAlert";
+import type { ErrorHandlingResult } from "@dinsure/contracts";
+import {
+  useBuyerOperations,
+  useContracts,
+  useWeb3,
+  Web3ErrorHandler
+} from "@dinsure/contracts";
 import { Alert, AlertDescription } from "@dinsure/ui/alert";
 import { Button } from "@dinsure/ui/button";
 import {
@@ -50,7 +57,7 @@ export function BuyInsuranceForm({
     usdtBalance: usdtBalanceStr,
     refreshUSDTBalance,
   } = useWeb3();
-  const { buyInsurance, calculatePurchase } = useBuyerOperations();
+  const { buyInsurance } = useBuyerOperations();
   const { usdtContract, isInitialized } = useContracts();
 
   // Convert string balance to bigint
@@ -68,7 +75,7 @@ export function BuyInsuranceForm({
 
   const [coverageAmount, setCoverageAmount] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<ErrorHandlingResult | null>(null);
   const [success, setSuccess] = useState(false);
   const [txHash, setTxHash] = useState("");
 
@@ -82,7 +89,7 @@ export function BuyInsuranceForm({
   // Refresh USDT balance when component mounts or when connection changes
   useEffect(() => {
     if (isConnected && refreshUSDTBalance) {
-      refreshUSDTBalance();
+      void refreshUSDTBalance();
     }
   }, [isConnected, refreshUSDTBalance]);
 
@@ -96,32 +103,52 @@ export function BuyInsuranceForm({
     });
 
     if (!isConnected) {
-      setError("Please connect your wallet");
+      setError({
+        userMessage: "Please connect your wallet",
+        action: 'none',
+        severity: 'warning'
+      });
       return;
     }
 
     if (!account) {
-      setError("No wallet address found");
+      setError({
+        userMessage: "No wallet address found",
+        action: 'none',
+        severity: 'error'
+      });
       return;
     }
 
     if (!isInitialized || !usdtContract) {
-      setError("Contracts are still loading. Please try again.");
+      setError({
+        userMessage: "Contracts are still loading. Please try again.",
+        action: 'retry',
+        severity: 'warning'
+      });
       return;
     }
 
     if (roundId === 0n) {
-      setError("No active round available for this tranche");
+      setError({
+        userMessage: "No active round available for this tranche",
+        action: 'none',
+        severity: 'warning'
+      });
       return;
     }
 
     if (!coverageAmount || parseFloat(coverageAmount) <= 0) {
-      setError("Please enter a valid coverage amount");
+      setError({
+        userMessage: "Please enter a valid coverage amount",
+        action: 'none',
+        severity: 'warning'
+      });
       return;
     }
 
     setLoading(true);
-    setError("");
+    setError(null);
     setSuccess(false);
 
     try {
@@ -133,23 +160,26 @@ export function BuyInsuranceForm({
         coverageAmount: coverageAmount, // Pass as string, not bigint
       });
 
-      setTxHash(receipt.hash);
-      setSuccess(true);
-      setCoverageAmount("");
+      if (receipt) {
+        setTxHash(receipt.hash);
+        setSuccess(true);
+        setCoverageAmount("");
 
-      if (onSuccess) {
-        onSuccess();
+        if (onSuccess) {
+          onSuccess();
+        }
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error buying insurance:", err);
-      setError(err.message || "Failed to buy insurance");
+      const result = Web3ErrorHandler.handle(err);
+      setError(result);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSliderChange = (value: number[]) => {
-    setCoverageAmount(value[0]?.toString() || "0");
+    setCoverageAmount(value[0]?.toString() ?? "0");
   };
 
   const maxCoverage = usdtBalance
@@ -189,7 +219,7 @@ export function BuyInsuranceForm({
               disabled={loading || !isConnected}
             />
             <Slider
-              value={[parseFloat(coverageAmount) || 0]}
+              value={[parseFloat(coverageAmount) ?? 0]}
               onValueChange={handleSliderChange}
               max={maxCoverage}
               step={100}
@@ -259,10 +289,11 @@ export function BuyInsuranceForm({
         </div>
 
         {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <ErrorAlert 
+            error={error}
+            onRetry={handleBuyInsurance}
+            onClose={() => setError(null)}
+          />
         )}
 
         {success && (

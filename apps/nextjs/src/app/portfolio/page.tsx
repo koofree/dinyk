@@ -4,16 +4,14 @@ import { PositionCard } from "@/components/insurance/PositionCard";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { useUserPortfolio, useWeb3 } from "@dinsure/contracts";
 
 export default function PortfolioPage() {
-  const { isConnected, account } = useWeb3();
+  const { isConnected } = useWeb3();
   const [activeTab, setActiveTab] = useState<
     "insurance" | "liquidity" | "history"
   >("insurance");
-  const [processingId, setProcessingId] = useState<string | null>(null);
   const [isPoliciesExpanded, setIsPoliciesExpanded] = useState(false);
   const [isPositionsExpanded, setIsPositionsExpanded] = useState(false);
   const [currency, setCurrency] = useState<"USDT" | "KRW">("USDT");
@@ -24,38 +22,8 @@ export default function PortfolioPage() {
     portfolioSummary,
     isLoading,
     error,
-    claimInsurance,
-    withdrawLiquidity,
     refetch,
-  } = useUserPortfolio();
-
-  const handleClaim = async (positionId: string) => {
-    setProcessingId(positionId);
-    try {
-      await claimInsurance(positionId);
-      toast.success(`Successfully claimed payout for position ${positionId}!`);
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to claim insurance";
-      toast.error(errorMessage);
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const handleWithdraw = async (positionId: string) => {
-    setProcessingId(positionId);
-    try {
-      await withdrawLiquidity(positionId);
-      toast.success(`Successfully withdrew funds from position ${positionId}!`);
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to withdraw liquidity";
-      toast.error(errorMessage);
-    } finally {
-      setProcessingId(null);
-    }
-  };
+  } = useUserPortfolio();  
 
   if (!isConnected) {
     return (
@@ -174,7 +142,7 @@ export default function PortfolioPage() {
               </button>
               {isPoliciesExpanded && insurancePositions.length > 0 && (
                 <div className="mt-3 space-y-2">
-                  {insurancePositions.map((position: any) => (
+                  {insurancePositions.map((position) => (
                     <div
                       key={position.id}
                       className="rounded-lg bg-gray-50 p-3 text-xs text-gray-600"
@@ -183,7 +151,7 @@ export default function PortfolioPage() {
                         Policy #{position.tokenId}
                       </div>
                       <div>
-                        {position.productName} - {position.trancheName}
+                        {position.productId} - {position.trancheId}
                       </div>
                       <div>
                         Coverage: $
@@ -351,12 +319,10 @@ export default function PortfolioPage() {
         <div className="space-y-4">
           {insurancePositions.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {insurancePositions.map((position: any) => (
+              {insurancePositions.map((position) => (
                 <PositionCard
                   key={position.id}
                   position={position}
-                  onClaim={handleClaim}
-                  isProcessing={processingId === position.id}
                 />
               ))}
             </div>
@@ -384,12 +350,10 @@ export default function PortfolioPage() {
         <div className="space-y-4">
           {liquidityPositions.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {liquidityPositions.map((position: any) => (
+              {liquidityPositions.map((position) => (
                 <PositionCard
                   key={position.id}
                   position={position}
-                  onWithdraw={handleWithdraw}
-                  isProcessing={processingId === position.id}
                 />
               ))}
             </div>

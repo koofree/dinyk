@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { ethers } from "ethers";
 
 import type { ProductCatalog } from "../types/generated";
-import { KAIA_RPC_ENDPOINTS } from "../config/constants";
+import {
+  KAIA_RPC_ENDPOINTS,
+  ORACLE_ROUTE_ID_TO_TYPE,
+} from "../config/constants";
 import { useWeb3 } from "../providers/Web3Provider";
 import { TranchePoolCore__factory } from "../types/generated";
 import { useContracts } from "./useContracts";
@@ -219,24 +222,26 @@ export function useUserPortfolio() {
 
             // Get price information (mock for now, would come from oracle)
             const trancheThreshold = Number(trancheSpec.threshold);
-            const baseline = 45000; // Mock BTC price
+            const baseline = 110000; // Mock BTC price
             const triggerLevel =
               ((baseline - trancheThreshold) / baseline) * 100;
-            const triggerPrice = trancheThreshold;
-            const currentPrice = 44500; // Mock current price
+            const triggerPrice = trancheThreshold / 1e18;
+            const currentPrice = 110000; // Mock current price
 
             // Extract asset name safely
-            // TODO: how to make the product name more readable?
             const productId = Number(trancheSpec.productId);
             const productName = `Product ${productId}`;
-            const assetName: string = productName.includes(" ")
-              ? (productName.split(" ")[0] ?? "")
-              : productName;
+            const assetName: string | undefined =
+              ORACLE_ROUTE_ID_TO_TYPE[
+                Number(
+                  trancheSpec.oracleRouteId,
+                ) as keyof typeof ORACLE_ROUTE_ID_TO_TYPE
+              ].split("-")[0];
 
             positions.push({
-              id: `nft-${tokenId}`,
+              id: tokenId.toString(),
               tokenId,
-              asset: assetName,
+              asset: assetName ?? "Unknown",
               type: "insurance",
               tranche: `${productName} -${triggerLevel}% Protection`,
               trancheId,
@@ -340,10 +345,12 @@ export function useUserPortfolio() {
               );
 
               // Skip event checking for now - just check rounds directly
-              const trancheThreshold = Number(trancheSpec.threshold);
+              const trancheThreshold = Number(trancheSpec.threshold) / 1e18;
               const baseline = 100000; // Assuming baseline
-              const triggerLevel =
-                ((baseline - trancheThreshold) / baseline) * 100;
+              const triggerLevel = (
+                ((baseline - trancheThreshold) / baseline) *
+                100
+              ).toFixed(2);
 
               // Get active rounds for this tranche
               let roundIds = [];
@@ -462,16 +469,18 @@ export function useUserPortfolio() {
                         : 0n;
 
                     // Extract asset name safely
-                    const productName = `Product ${productId}`;
-                    const assetName = productName.includes(" ")
-                      ? (productName.split(" ")[0] ?? "")
-                      : productName;
+                    const assetName =
+                      ORACLE_ROUTE_ID_TO_TYPE[
+                        Number(
+                          trancheSpec.oracleRouteId,
+                        ) as keyof typeof ORACLE_ROUTE_ID_TO_TYPE
+                      ].split("-")[0] ?? "Unknown";
 
                     positions.push({
-                      id: `lp-${trancheId}-${roundId}`,
+                      id: trancheId.toString(),
                       asset: assetName,
                       type: "liquidity",
-                      tranche: `${productName} -${triggerLevel}% Tranche Pool`,
+                      tranche: `Tranche #${trancheId}`,
                       trancheId,
                       productId,
                       roundId,

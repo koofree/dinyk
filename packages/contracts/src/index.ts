@@ -16,6 +16,13 @@ export {
   formatTimeRemaining,
   isValidAddress,
 } from "./utils/formatters";
+export {
+  METAMASK_ERROR_CODES,
+  useWeb3ErrorHandler,
+  WEB3_ERROR_PATTERNS,
+  Web3ErrorHandler,
+} from "./utils/web3-errors";
+export type { ErrorHandlingResult, Web3Error } from "./utils/web3-errors";
 
 // React hooks - export specific hooks to avoid conflicts
 export {

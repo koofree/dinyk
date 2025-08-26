@@ -94,7 +94,7 @@ export function useSellerOperations() {
       if (!productCatalog) throw new Error("Product catalog not initialized");
 
       try {
-        const trancheSpec = await (productCatalog as any).getTranche(trancheId);
+        const trancheSpec = await productCatalog.getTranche(trancheId);
         const premiumRateBps = Number(trancheSpec.premiumRateBps);
         const premiumRate = premiumRateBps / 100;
 
@@ -367,7 +367,7 @@ export function useSellerOperations() {
 
         // Verify pool contract exists, but handle RPC errors gracefully
         try {
-          const poolCode = await signer.provider?.getCode(poolAddress);
+          const poolCode = await signer.provider.getCode(poolAddress);
           if (!poolCode || poolCode === "0x") {
             throw new Error(`Pool contract not deployed at ${poolAddress}`);
           }
