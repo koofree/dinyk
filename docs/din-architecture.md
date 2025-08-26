@@ -307,15 +307,7 @@ const {
 ### 2. useProductManagement - Product & Tranche Operations
 
 ```typescript
-const {
-  isLoading,
-  getProducts,
-  registerProduct,
-  registerTranche,
-  createTranchePool,
-  updateProductStatus,
-  updateTrancheStatus,
-} = useProductManagement();
+const { isLoading, getProducts } = useProductManagement();
 
 // Example: Register new insurance product
 await registerProduct({
