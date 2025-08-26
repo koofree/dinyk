@@ -25,7 +25,7 @@ export const Navbar: React.FC = () => {
 
   const navigation = [
     { name: 'For Buyer', badge: 'Insurance', href: '/insurance' },
-    { name: 'For Depositor', badge: 'Liquidity', href: '/tranches' },
+    { name: 'For Depositor(Seller)', badge: 'Liquidity', href: '/tranches' },
     { name: 'Portfolio', href: '/portfolio' },
   ];
 
@@ -74,7 +74,7 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Right side */}
-          <div className="flex items-center space-x-4 absolute right-0">
+          <div className="hidden mobile:flex items-center space-x-4 absolute right-0">
             {isTestnet && (
               <div className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-medium">
                 Testnet
@@ -103,6 +103,9 @@ export const Navbar: React.FC = () => {
       <div className={`mobile:hidden border-t border-gray-100 ${mounted && isScrolled ? 'bg-white' : 'bg-transparent'} ${isMobileMenuOpen ? 'block' : 'hidden'}`}>
         <div className="px-4 py-2 pb-0">
           <div className={`flex flex-col space-y-1 p-1 pb-0 ${mounted && isScrolled ? 'bg-white' : 'bg-transparent'}`}>
+            <div className="flex justify-center items-center space-x-4 my-4">
+              <WalletButton />
+            </div>
             {navigation.map((item) => (
               <Link
                 key={item.name}

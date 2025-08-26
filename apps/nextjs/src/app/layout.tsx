@@ -4,10 +4,11 @@ import { Inter, Space_Mono } from "next/font/google";
 import { cn } from "@dinsure/ui";
 import { Toaster } from "@dinsure/ui/toast";
 
-import { Navbar } from "@/components/common/Navbar";
 import { AppProviders } from "@/components/providers/AppProviders";
 
 import "~/app/globals.css";
+import { Navbar } from "~/components/common/Navbar";
+import { LanguageProvider } from "~/context/LanguageProvider";
 
 export const metadata: Metadata = {
   title: "DIN - Decentralized Insurance Platform",
@@ -36,6 +37,7 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 const spaceMono = Space_Mono({
@@ -50,20 +52,22 @@ export default function RootLayout(props: { children: React.ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          "min-h-screen bg-white text-gray-900 antialiased",
+          "min-h-screen antialiased",
           inter.variable,
           spaceMono.variable,
         )}
         suppressHydrationWarning
       >
         <AppProviders>
-          <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-blue-50">
-            <Navbar />
-            <main className="flex-1">
-              {props.children}
-            </main>
-          </div>
-          <Toaster />
+          <LanguageProvider>
+            <div className="min-h-screen flex flex-col">
+              <Navbar />
+              <main className="flex-1">
+                {props.children}
+              </main> 
+            </div>
+            <Toaster />
+          </LanguageProvider>
         </AppProviders>
       </body>
     </html>

@@ -4,6 +4,8 @@ import { KAIA_TESTNET } from "@/lib/constants";
 import { useContracts, useProductManagement, useWeb3 } from "@dinsure/contracts";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { ProgressBar } from "~/components/common/ProgressBar";
+import { useLanguage } from "~/context/LanguageProvider";
 
 interface Tranche {
   trancheId: number;
@@ -26,54 +28,6 @@ interface Product {
   active: boolean;
 }
 
-// Progress bar component
-function ProgressBar({ label, value, maxValue = 100, isVisible = false }: { label: string; value: number; maxValue?: number; isVisible?: boolean }) {
-  const [displayValue, setDisplayValue] = useState(0);
-  const [progressWidth, setProgressWidth] = useState(0);
-
-  useEffect(() => {
-    if (isVisible) {
-      const duration = 1500;
-      const steps = 60;
-      const increment = value / steps;
-      const progressIncrement = Math.min((value / maxValue) * 100, 100) / steps;
-      let current = 0;
-      let currentProgress = 0;
-      
-      const timer = setInterval(() => {
-        current += increment;
-        currentProgress += progressIncrement;
-        
-        if (current >= value) {
-          current = value;
-          currentProgress = Math.min((value / maxValue) * 100, 100);
-          clearInterval(timer);
-        }
-        
-        setDisplayValue(Math.floor(current));
-        setProgressWidth(Math.min(currentProgress, 100));
-      }, duration / steps);
-
-      return () => clearInterval(timer);
-    }
-  }, [isVisible, value, maxValue]);
-
-  return (
-    <div>
-      <div className="flex justify-between text-xs text-gray-400 mb-1">
-        <span className="font-bold">{label}</span>
-        <span className={isVisible ? 'count-animate' : ''}>{displayValue}</span>
-      </div>
-      <div className="w-full bg-gray-100 rounded-full h-2">
-        <div 
-          className="bg-gradient-to-r from-[#86D99C] to-[#00B1B8] h-2 rounded-full transition-all duration-1500 ease-out"
-          style={{ width: isVisible ? `${progressWidth}%` : '0%' }}
-        />
-      </div>
-    </div>
-  );
-}
-
 export default function HomePage() {
   const { isConnected } = useWeb3();
   const { isInitialized, productCatalog } = useContracts();
@@ -94,7 +48,7 @@ export default function HomePage() {
   });
   const [mounted, setMounted] = useState(false);
   const progressRef = useRef<HTMLDivElement>(null);
-
+  const { t } = useLanguage();
   // Track mounting state
   useEffect(() => {
     setMounted(true);
@@ -274,7 +228,8 @@ export default function HomePage() {
   }, [isInitialized, productCatalog, getProducts, getActiveTranches]);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
+      
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
@@ -283,15 +238,17 @@ export default function HomePage() {
               <img src="/images/BI.svg" alt="DIN Logo" className="h-16 w-auto mx-auto mb-8" />
             </div>
             <h1 className={`text-5xl md:text-7xl font-bold font-display text-gray-900 mb-6 transition-all duration-700 ${heroAnimations.title ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              DIN Protocol
+              Decentralized Insurance
               <span className={`block text-transparent bg-clip-text bg-gradient-to-r from-[#86D99C] to-[#00B1B8] transition-all duration-700 delay-200 ${heroAnimations.subtitle ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                Decentralized Insurance on Kaia
+                on Kaia
               </span>
             </h1>
-            <p className={`text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto transition-all duration-700 delay-400 ${heroAnimations.description ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              On-chain parametric insurance with automatic oracle-triggered payouts.
-              100% collateralized pools with NFT insurance tokens.
+            <p className={`text-lg md:text-[18px] text-gray-600 mb-8 max-w-3xl mx-auto font-semibold font-outfit leading-tight transition-all duration-700 ease-out ${
+              heroAnimations.description ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}>
+              {t('hero.description')}
             </p>
+            
             <div className={`flex justify-center items-center gap-4 mb-8 transition-all duration-700 delay-600 ${heroAnimations.buttons ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               <span className="text-sm text-green-600 bg-green-100 px-3 py-1 rounded-full font-medium">
                 ● Live on Testnet

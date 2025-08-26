@@ -1,7 +1,7 @@
 "use client";
 
+import { ACTIVE_NETWORK, ProviderType, useWeb3 } from "@dinsure/contracts";
 import React, { useState } from "react";
-import { useWeb3, ProviderType, ACTIVE_NETWORK } from "@dinsure/contracts";
 
 export const WalletButton: React.FC = () => {
   const { 

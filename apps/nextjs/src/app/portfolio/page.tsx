@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
 import { PositionCard } from "@/components/insurance/PositionCard";
-import { useWeb3, useUserPortfolio } from "@dinsure/contracts";
 import { KAIA_TESTNET } from "@/lib/constants";
+import { useUserPortfolio, useWeb3 } from "@dinsure/contracts";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export default function PortfolioPage() {
@@ -253,32 +254,25 @@ export default function PortfolioPage() {
                 <p className="text-gray-400 mb-6">
                   You haven't provided liquidity to any pools yet
                 </p>
-                <a
+                <Link
                   href="/tranches"
                   className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
                 >
                   Provide Liquidity
-                </a>
+                </Link>
               </div>
             )}
           </div>
         )}
 
         {activeTab === 'history' && (
-          <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
-            <div className="text-center">
-              <div className="text-4xl mb-4">📊</div>
-              <h3 className="text-xl font-bold text-white mb-2">Transaction History</h3>
-              <p className="text-gray-400 mb-6">
+          <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 flex flex-col items-center justify-center">
+            <div className="flex flex-col items-center text-center">
+              <div className="text-4xl">📊</div>
+              <h3 className="text-xl font-bold text-white my-2">Transaction History</h3>
+              <p className="text-gray-400 mt-2">
                 Coming soon - View your complete transaction history
               </p>
-              <button
-                onClick={() => refetch()}
-                className="text-blue-400 hover:text-blue-300 text-sm"
-                disabled={isLoading}
-              >
-                {isLoading ? "Refreshing..." : "Refresh Portfolio"}
-              </button>
             </div>
           </div>
         )}
