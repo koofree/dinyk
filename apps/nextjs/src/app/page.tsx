@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
-import Link from "next/link";
-import { useWeb3, useContracts, useProductManagement } from "@dinsure/contracts";
 import { KAIA_TESTNET } from "@/lib/constants";
+import { useContracts, useProductManagement, useWeb3 } from "@dinsure/contracts";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
 interface Tranche {
   trancheId: number;
@@ -36,7 +36,7 @@ function ProgressBar({ label, value, maxValue = 100, isVisible = false }: { labe
       const duration = 1500;
       const steps = 60;
       const increment = value / steps;
-      const progressIncrement = (value / maxValue) * 100 / steps;
+      const progressIncrement = Math.min((value / maxValue) * 100, 100) / steps;
       let current = 0;
       let currentProgress = 0;
       
@@ -46,12 +46,12 @@ function ProgressBar({ label, value, maxValue = 100, isVisible = false }: { labe
         
         if (current >= value) {
           current = value;
-          currentProgress = (value / maxValue) * 100;
+          currentProgress = Math.min((value / maxValue) * 100, 100);
           clearInterval(timer);
         }
         
         setDisplayValue(Math.floor(current));
-        setProgressWidth(currentProgress);
+        setProgressWidth(Math.min(currentProgress, 100));
       }, duration / steps);
 
       return () => clearInterval(timer);

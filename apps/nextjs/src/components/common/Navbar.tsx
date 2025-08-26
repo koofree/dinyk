@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { WalletButton } from "@/components/web3/WalletButton";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { WalletButton } from "@/components/web3/WalletButton";
+import React, { useEffect, useState } from "react";
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
@@ -15,7 +15,7 @@ export const Navbar: React.FC = () => {
   useEffect(() => {
     setMounted(true);
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
+      setIsScrolled(window.scrollY > 110);
     };
     // Check initial scroll position after mount
     handleScroll();
