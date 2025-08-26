@@ -100,7 +100,7 @@ export function useProductManagement() {
         }
 
         // Validate product data
-        if (product.productId && Number(product.productId) !== 0) {
+        if (product && product.productId && Number(product.productId) !== 0) {
           console.log(
             `[useProductManagement] Valid product ${productId} found`,
           );
@@ -115,8 +115,8 @@ export function useProductManagement() {
             active: product.active !== false,
             createdAt: product.createdAt ? Number(product.createdAt) : 0,
             updatedAt: product.updatedAt ? Number(product.updatedAt) : 0,
-            trancheIds: Array.isArray(product.trancheIds)
-              ? product.trancheIds.map((id: bigint) => Number(id))
+            trancheIds: Array.isArray((product as any).trancheIds)
+              ? (product as any).trancheIds.map((id: bigint) => Number(id))
               : [],
           };
 
@@ -133,9 +133,11 @@ export function useProductManagement() {
               ].includes(key)
             ) {
               if (typeof value === "bigint") {
-                processedProduct[key] = value.toString();
+                processedProduct[key] = Number(value);
+              } else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'bigint') {
+                processedProduct[key] = value.map((v: bigint) => Number(v));
               } else {
-                processedProduct[key] = value;
+                processedProduct[key] = value as string | number | boolean | number[];
               }
             }
           });

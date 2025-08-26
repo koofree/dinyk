@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { Contract, ethers } from "ethers";
+import { ethers } from "ethers";
 
-import TranchePoolCoreABI from "../config/abis/TranchePoolCore.json";
+import type { ProductCatalog } from "../types/generated";
 import { KAIA_RPC_ENDPOINTS } from "../config/constants";
 import { useWeb3 } from "../providers/Web3Provider";
 import { TranchePoolCore__factory } from "../types/generated";
@@ -14,6 +14,7 @@ export interface UserInsurancePosition {
   type: "insurance";
   tranche: string;
   trancheId: number;
+  productId: number;
   roundId: number;
   coverage: string;
   premiumPaid: string;
@@ -36,6 +37,7 @@ export interface UserLiquidityPosition {
   tranche: string;
   trancheId: number;
   roundId: number;
+  productId: number;
   deposited: string;
   shares: string;
   currentValue: string;
@@ -113,22 +115,20 @@ export function useUserPortfolio() {
       console.log(`User has ${balance} insurance NFTs`);
 
       // Fetch token IDs owned by user using Transfer events
-      const filter = insuranceToken.filters.Transfer(null, account);
+      const filter = insuranceToken.filters.Transfer(undefined, account);
       const events = await insuranceToken.queryFilter(filter);
 
       const tokenIds = new Set<number>();
       for (const event of events) {
-        if (event.args) {
-          const tokenId = Number(event.args[2]);
-          try {
-            // Verify current ownership
-            const currentOwner = await insuranceToken.ownerOf(tokenId);
-            if (currentOwner.toLowerCase() === account.toLowerCase()) {
-              tokenIds.add(tokenId);
-            }
-          } catch (e) {
-            // Token might be burned or transferred
+        const tokenId = Number(event.args[2]);
+        try {
+          // Verify current ownership
+          const currentOwner = await insuranceToken.ownerOf(tokenId);
+          if (currentOwner.toLowerCase() === account.toLowerCase()) {
+            tokenIds.add(tokenId);
           }
+        } catch (e) {
+          // Token might be burned or transferred
         }
       }
 
@@ -154,17 +154,19 @@ export function useUserPortfolio() {
           }
 
           // Get round and tranche details with error handling
-          let roundInfo, trancheSpec, product;
+          let roundInfo,
+            trancheSpec,
+            product: ProductCatalog.ProductStructOutput | undefined;
           try {
             roundInfo = await productCatalog.getRound(roundId);
-          } catch (e) {
+          } catch {
             console.log(`Round ${roundId} not found for token ${tokenId}`);
             continue;
           }
 
           try {
             trancheSpec = await productCatalog.getTranche(trancheId);
-          } catch (e) {
+          } catch {
             console.log(`Tranche ${trancheId} not found for token ${tokenId}`);
             continue;
           }
@@ -172,7 +174,7 @@ export function useUserPortfolio() {
           const productId = Number(trancheSpec.productId);
           try {
             product = await productCatalog.getProduct(productId);
-          } catch (e) {
+          } catch {
             console.log(`Product ${productId} not found for token ${tokenId}`);
             continue;
           }
@@ -190,7 +192,9 @@ export function useUserPortfolio() {
             // Calculate status
             const roundState = Number(roundInfo.state);
             const now = Math.floor(Date.now() / 1000);
-            const maturityTime = Number(roundInfo.maturityTimestamp);
+            // Get maturity from tranche
+            const trancheInfo = await productCatalog.getTranche(trancheId);
+            const maturityTime = Number(trancheInfo.maturityTimestamp);
             const expiresIn = Math.max(
               0,
               Math.ceil((maturityTime - now) / (24 * 60 * 60)),
@@ -207,7 +211,10 @@ export function useUserPortfolio() {
               if (settlementInfo.triggered) {
                 // User can claim
                 status = "claimable";
-                claimAmount = ethers.formatUnits(buyerOrder.filled, 6);
+                claimAmount = ethers.formatUnits(
+                  buyerOrder.filled ? 1n : 0n,
+                  6,
+                );
               } else {
                 status = "expired";
               }
@@ -220,16 +227,18 @@ export function useUserPortfolio() {
             }
 
             // Get price information (mock for now, would come from oracle)
-            const triggerLevel = Number(trancheSpec.triggerLevel) / 100; // Convert from bps
+            const trancheThreshold = Number(trancheSpec.threshold);
             const baseline = 45000; // Mock BTC price
-            const triggerPrice = baseline * (1 - triggerLevel / 100);
+            const triggerLevel =
+              ((baseline - trancheThreshold) / baseline) * 100;
+            const triggerPrice = trancheThreshold;
             const currentPrice = 44500; // Mock current price
 
             // Extract asset name safely
             // TODO: how to make the product name more readable?
-            const productName = product.name || `Product ${productId}`;
-            const assetName = productName.includes(" ")
-              ? productName.split(" ")[0]
+            const productName = `Product ${productId}`;
+            const assetName: string = productName.includes(" ")
+              ? (productName.split(" ")[0] ?? "")
               : productName;
 
             positions.push({
@@ -251,7 +260,7 @@ export function useUserPortfolio() {
               roundState: ROUND_STATES[roundState] || "UNKNOWN",
               maturityTimestamp: maturityTime * 1000,
               startTime: new Date(Number(roundInfo.salesStartTime) * 1000),
-              endTime: new Date(Number(roundInfo.maturityTimestamp) * 1000),
+              endTime: new Date(maturityTime * 1000),
               claimAmount,
             });
           }
@@ -292,14 +301,7 @@ export function useUserPortfolio() {
           console.log(`Checking product ${productId}...`);
           const product = await productCatalog.getProduct(productId);
 
-          // Skip if product doesn't exist or is inactive
-          if (!product) {
-            console.log(`Product ${productId} doesn't exist`);
-            continue;
-          }
-
-          const isActive =
-            product.active !== undefined ? product.active : product.enabled;
+          const isActive = product.active;
           if (!isActive) {
             console.log(`Product ${productId} is not active`);
             continue;
@@ -309,13 +311,13 @@ export function useUserPortfolio() {
           let trancheIds = [];
           try {
             trancheIds = await productCatalog.getProductTranches(productId);
-          } catch (e) {
+          } catch {
             console.log(`No tranches found for product ${productId}`);
             continue;
           }
 
           // Skip if no tranches
-          if (!trancheIds || trancheIds.length === 0) {
+          if (trancheIds.length === 0) {
             console.log(`Product ${productId} has no tranches`);
             continue;
           }
@@ -328,7 +330,6 @@ export function useUserPortfolio() {
 
               // Get tranche details
               const trancheSpec = await productCatalog.getTranche(trancheId);
-              if (!trancheSpec) continue;
 
               // Get pool address
               const poolAddress =
@@ -341,14 +342,16 @@ export function useUserPortfolio() {
               console.log(
                 `Found pool at ${poolAddress} for tranche ${trancheId}`,
               );
-              const pool = new Contract(
+              const pool = TranchePoolCore__factory.connect(
                 poolAddress,
-                TranchePoolCoreABI.abi,
                 provider,
               );
 
               // Skip event checking for now - just check rounds directly
-              const triggerLevel = Number(trancheSpec.triggerLevel) / 100;
+              const trancheThreshold = Number(trancheSpec.threshold);
+              const baseline = 100000; // Assuming baseline
+              const triggerLevel =
+                ((baseline - trancheThreshold) / baseline) * 100;
 
               // Get active rounds for this tranche
               let roundIds = [];
@@ -364,7 +367,7 @@ export function useUserPortfolio() {
               }
 
               // Skip if no rounds
-              if (!roundIds || roundIds.length === 0) {
+              if (roundIds.length === 0) {
                 console.log(`Tranche ${trancheId} has no rounds`);
                 continue;
               }
@@ -414,22 +417,22 @@ export function useUserPortfolio() {
                     `Checking seller position for round ${roundId} in tranche ${trancheId}:`,
                     {
                       collateralAmount:
-                        sellerPosition?.collateralAmount?.toString() || "0",
+                        sellerPosition.collateralAmount.toString() || "0",
                       sharesMinted:
-                        sellerPosition?.sharesMinted?.toString() || "0",
+                        sellerPosition.sharesMinted.toString() || "0",
                       filledCollateral:
-                        sellerPosition?.filledCollateral?.toString() || "0",
+                        sellerPosition.filledCollateral.toString() || "0",
                       lockedSharesAssigned:
-                        sellerPosition?.lockedSharesAssigned?.toString() || "0",
+                        sellerPosition.lockedSharesAssigned.toString() || "0",
                       account,
                       rawPosition: sellerPosition,
                     },
                   );
 
                   // Use sharesMinted as the correct field name from the contract
-                  const sharesAmount = sellerPosition?.sharesMinted || 0n;
+                  const sharesAmount = sellerPosition.sharesMinted || 0n;
                   const collateralAmount =
-                    sellerPosition?.collateralAmount || 0n;
+                    sellerPosition.collateralAmount || 0n;
 
                   if (collateralAmount > 0n || sharesAmount > 0n) {
                     console.log(`Found liquidity position in round ${roundId}`);
@@ -441,7 +444,12 @@ export function useUserPortfolio() {
 
                     // Calculate days left
                     const now = Math.floor(Date.now() / 1000);
-                    const maturityTime = Number(roundInfo.maturityTimestamp);
+                    // Get maturity from tranche
+                    const trancheForMaturity =
+                      await productCatalog.getTranche(trancheId);
+                    const maturityTime = Number(
+                      trancheForMaturity.maturityTimestamp,
+                    );
                     const daysLeft = Math.max(
                       0,
                       Math.ceil((maturityTime - now) / (24 * 60 * 60)),
@@ -462,9 +470,9 @@ export function useUserPortfolio() {
                         : 0n;
 
                     // Extract asset name safely
-                    const productName = product.name || `Product ${productId}`;
+                    const productName = `Product ${productId}`;
                     const assetName = productName.includes(" ")
-                      ? productName.split(" ")[0]
+                      ? (productName.split(" ")[0] ?? "")
                       : productName;
 
                     positions.push({
@@ -481,18 +489,16 @@ export function useUserPortfolio() {
                       earnedPremium: ethers.formatUnits(earnedPremium, 6),
                       stakingRewards: "0", // TODO: Implement staking rewards calculation
                       lockedAmount: ethers.formatUnits(
-                        sellerPosition?.lockedSharesAssigned || 0n,
+                        sellerPosition.lockedSharesAssigned || 0n,
                         18,
                       ),
                       roundStatus,
-                      roundState: ROUND_STATES[roundState] || "UNKNOWN",
+                      roundState: ROUND_STATES[roundState] ?? "UNKNOWN",
                       daysLeft,
                       startTime: new Date(
                         Number(roundInfo.salesStartTime) * 1000,
                       ),
-                      endTime: new Date(
-                        Number(roundInfo.maturityTimestamp) * 1000,
-                      ),
+                      endTime: new Date(maturityTime * 1000),
                       lossAmount:
                         earnedPremium < 0n
                           ? ethers.formatUnits(-earnedPremium, 6)
@@ -550,9 +556,11 @@ export function useUserPortfolio() {
 
       setInsurancePositions(insurance);
       setLiquidityPositions(liquidity);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching portfolio:", error);
-      setError(error.message || "Failed to fetch portfolio");
+      setError(
+        error instanceof Error ? error.message : "Failed to fetch portfolio",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -563,75 +571,9 @@ export function useUserPortfolio() {
     fetchLiquidityPositions,
   ]);
 
-  // Claim insurance payout
-  const claimInsurance = useCallback(
-    async (positionId: string) => {
-      const position = insurancePositions.find((p) => p.id === positionId);
-      if (!position || !signer || !tranchePoolFactory) {
-        throw new Error("Position not found or contracts not initialized");
-      }
-
-      try {
-        const poolAddress = await tranchePoolFactory.getTranchePool(
-          position.trancheId,
-        );
-        const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, signer);
-
-        const tx = await pool.claimBuyerPayout(position.roundId);
-        await tx.wait();
-
-        // Refresh positions
-        await fetchAllPositions();
-
-        return tx;
-      } catch (error) {
-        console.error("Error claiming insurance:", error);
-        throw error;
-      }
-    },
-    [insurancePositions, signer, tranchePoolFactory, fetchAllPositions],
-  );
-
-  // Withdraw liquidity
-  const withdrawLiquidity = useCallback(
-    async (positionId: string) => {
-      const position = liquidityPositions.find((p) => p.id === positionId);
-      if (!position || !signer || !tranchePoolFactory) {
-        throw new Error("Position not found or contracts not initialized");
-      }
-
-      try {
-        const poolAddress = await tranchePoolFactory.getTranchePool(
-          position.trancheId,
-        );
-        const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, signer);
-
-        // Withdraw shares
-        const shares = ethers.parseUnits(position.shares, 18);
-        const tx = await pool.withdraw(shares, account, account);
-        await tx.wait();
-
-        // Refresh positions
-        await fetchAllPositions();
-
-        return tx;
-      } catch (error) {
-        console.error("Error withdrawing liquidity:", error);
-        throw error;
-      }
-    },
-    [
-      liquidityPositions,
-      signer,
-      tranchePoolFactory,
-      account,
-      fetchAllPositions,
-    ],
-  );
-
   // Auto-fetch on account/contract changes
   useEffect(() => {
-    fetchAllPositions();
+    void fetchAllPositions();
   }, [fetchAllPositions]);
 
   // Calculate portfolio summary
@@ -663,7 +605,5 @@ export function useUserPortfolio() {
     isLoading,
     error,
     refetch: fetchAllPositions,
-    claimInsurance,
-    withdrawLiquidity,
   };
 }

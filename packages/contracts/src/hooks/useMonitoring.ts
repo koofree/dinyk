@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Contract, ethers } from "ethers";
+import { ethers } from "ethers";
 
-import TranchePoolCoreABI from "../config/abis/TranchePoolCore.json";
 import { useWeb3 } from "../providers/Web3Provider";
 import { TranchePoolCore__factory } from "../types/generated";
 import { useContracts } from "./useContracts";
@@ -165,7 +164,7 @@ export function useMonitoring() {
     } finally {
       setIsLoading(false);
     }
-  }, [tranchePoolFactory, usdt]);
+  }, [tranchePoolFactory, usdt, provider]);
 
   // Analyze tranche risk
   const analyzeTranchesRisk = useCallback(async (): Promise<
@@ -202,8 +201,8 @@ export function useMonitoring() {
             3: "KAIA-USDT",
           };
 
-          const targetSymbol = routeMapping[oracleRouteId] || "BTC-USDT";
-          const currentPrice = prices[targetSymbol] || 0;
+          const targetSymbol = routeMapping[oracleRouteId] ?? "BTC-USDT";
+          const currentPrice = prices[targetSymbol] ?? 0;
 
           // Calculate distance to trigger
           let distanceToTrigger = 0;
@@ -245,18 +244,22 @@ export function useMonitoring() {
           let utilizationRate = 0;
           if (poolAddress !== ethers.ZeroAddress) {
             try {
-              const pool = new Contract(
+              const pool = TranchePoolCore__factory.connect(
                 poolAddress,
-                TranchePoolCoreABI.abi,
                 provider,
               );
-              const accounting = await (pool as any).getPoolAccounting();
+              const accounting = await pool.getPoolAccounting();
               const trancheCap = trancheSpec.trancheCap;
               utilizationRate =
                 trancheCap > 0n
                   ? Number((accounting.totalAssets * 10000n) / trancheCap) / 100
                   : 0;
-            } catch {}
+            } catch (error) {
+              console.error(
+                `Error getting utilization for pool ${poolAddress}:`,
+                error,
+              );
+            }
           }
 
           analyses.push({
@@ -291,7 +294,7 @@ export function useMonitoring() {
     } finally {
       setIsLoading(false);
     }
-  }, [productCatalog, tranchePoolFactory, fetchMarketPrices]);
+  }, [productCatalog, tranchePoolFactory, fetchMarketPrices, provider]);
 
   // Monitor active rounds
   const monitorActiveRounds = useCallback(async (): Promise<
@@ -343,14 +346,11 @@ export function useMonitoring() {
               Number(trancheId),
             );
             if (poolAddress !== ethers.ZeroAddress) {
-              const pool = new Contract(
+              const pool = TranchePoolCore__factory.connect(
                 poolAddress,
-                TranchePoolCoreABI.abi,
                 provider,
               );
-              const poolEconomics = await (pool as any).getRoundEconomics(
-                roundId,
-              );
+              const poolEconomics = await pool.getRoundEconomics(roundId);
               economics = {
                 totalBuyerPurchases: poolEconomics[0],
                 totalSellerCollateral: poolEconomics[1],
@@ -376,7 +376,9 @@ export function useMonitoring() {
               };
 
               const targetSymbol = routeMapping[oracleRouteId];
-              const currentPrice = targetSymbol ? prices[targetSymbol] || 0 : 0;
+              const currentPrice = targetSymbol
+                ? (prices[targetSymbol] ?? 0)
+                : 0;
 
               if (currentPrice > 0) {
                 if (triggerType === 0) {
@@ -407,7 +409,7 @@ export function useMonitoring() {
             rounds.push({
               roundId: Number(roundId),
               trancheId: Number(trancheId),
-              state: stateNames[state] || "unknown",
+              state: stateNames[state] ?? "unknown",
               salesStartTime: roundInfo.salesStartTime,
               salesEndTime: roundInfo.salesEndTime,
               ...economics,
@@ -428,7 +430,7 @@ export function useMonitoring() {
     } finally {
       setIsLoading(false);
     }
-  }, [productCatalog, tranchePoolFactory, fetchMarketPrices]);
+  }, [productCatalog, tranchePoolFactory, fetchMarketPrices, provider]);
 
   // Get system-wide metrics
   const getSystemMetrics = useCallback(async (): Promise<SystemMetrics> => {
@@ -446,18 +448,16 @@ export function useMonitoring() {
       for (let i = 0; i < Number(poolCount); i++) {
         try {
           const poolAddress = await tranchePoolFactory.allPools(i);
-          const pool = new Contract(
-            poolAddress,
-            TranchePoolCoreABI.abi,
-            provider,
-          );
-          const accounting = await (pool as any).getPoolAccounting();
+          const pool = TranchePoolCore__factory.connect(poolAddress, provider);
+          const accounting = await pool.getPoolAccounting();
           const usdtBalance = await usdt.balanceOf(poolAddress);
 
           totalTVL += usdtBalance;
           totalAssets += accounting.totalAssets;
           totalLockedAssets += accounting.lockedAssets;
-        } catch {}
+        } catch (error) {
+          console.error(`Error getting system metrics for pool ${i}:`, error);
+        }
       }
 
       const totalAvailable = totalAssets - totalLockedAssets;
@@ -510,13 +510,15 @@ export function useMonitoring() {
     } finally {
       setIsLoading(false);
     }
-  }, [tranchePoolFactory, productCatalog, usdt]);
+  }, [tranchePoolFactory, productCatalog, usdt, provider]);
 
   // Auto-refresh market prices
   useEffect(() => {
     if (oracleRouter) {
-      fetchMarketPrices();
-      const interval = setInterval(fetchMarketPrices, 60000); // Refresh every minute
+      const result = fetchMarketPrices();
+      console.log("Market prices fetched", result);
+
+      const interval = setInterval(() => void fetchMarketPrices(), 60000); // Refresh every minute
       return () => clearInterval(interval);
     }
   }, [oracleRouter, fetchMarketPrices]);

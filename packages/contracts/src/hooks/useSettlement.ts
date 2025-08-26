@@ -1,5 +1,5 @@
-import { ethers } from "ethers";
 import { useCallback, useState } from "react";
+import { ethers } from "ethers";
 import { toast } from "sonner";
 
 import { useWeb3 } from "../providers/Web3Provider";
@@ -75,9 +75,9 @@ export function useSettlement() {
           3: "KAIA-USDT",
         };
 
-        const targetSymbol = routeMapping[oracleRouteId] || "BTC-USDT";
+        const targetSymbol = routeMapping[oracleRouteId] ?? "BTC-USDT";
         const priceIdentifier = ethers.keccak256(
-          ethers.toUtf8Bytes(targetSymbol || "BTC-USDT"),
+          ethers.toUtf8Bytes(targetSymbol),
         );
 
         let currentPrice = 0;
@@ -114,12 +114,14 @@ export function useSettlement() {
               livenessWindow = Number(await settlementEngine.livenessWindow());
             }
           }
-        } catch {}
+        } catch (error) {
+          console.error("Error checking settlement status:", error);
+        }
 
         return {
           roundId,
           trancheId,
-          state: stateNames[state] || "unknown",
+          state: stateNames[state] ?? "unknown",
           isMatured,
           canSettle,
           currentPrice,
@@ -189,7 +191,7 @@ export function useSettlement() {
 
         const targetSymbol = routeMapping[oracleRouteId];
         const priceIdentifier = ethers.keccak256(
-          ethers.toUtf8Bytes(targetSymbol || "BTC-USDT"),
+          ethers.toUtf8Bytes(targetSymbol ?? "BTC-USDT"),
         );
 
         console.log("Requesting oracle observation...", {
@@ -222,7 +224,7 @@ export function useSettlement() {
         // Check if we need to wait for liveness window
         const settlementInfo =
           await settlementContract.getSettlementInfo(roundId);
-        const livenessWindow = await settlementContract.livenessWindow();
+
         const now = Math.floor(Date.now() / 1000);
         const livenessDeadline = Number(settlementInfo.livenessDeadline);
         const timeUntilFinalize = livenessDeadline - now;
@@ -234,9 +236,9 @@ export function useSettlement() {
         }
 
         return receipt;
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error triggering settlement:", error);
-        toast.error(error.message);
+        toast.error((error as Error).message);
         throw error;
       } finally {
         setIsLoading(false);
@@ -304,9 +306,9 @@ export function useSettlement() {
 
         const receipt = await tx.wait();
         return receipt;
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error finalizing settlement:", error);
-        toast.error(error.message);
+        toast.error((error as Error).message);
         throw error;
       } finally {
         setIsLoading(false);
@@ -342,64 +344,6 @@ export function useSettlement() {
       }
     },
     [settlementEngine],
-  );
-
-  // Dispute a settlement (during liveness window)
-  const disputeSettlement = useCallback(
-    async (roundId: number, reason: string) => {
-      if (!settlementEngine || !signer) {
-        throw new Error("Not initialized");
-      }
-
-      setIsLoading(true);
-      try {
-        const settlementContract = settlementEngine.connect(signer);
-
-        // Get settlement info
-        const settlementInfo =
-          await settlementContract.getSettlementInfo(roundId);
-        if (settlementInfo.roundId === 0n) {
-          throw new Error("No settlement info found");
-        }
-
-        if (settlementInfo.settled) {
-          throw new Error("Settlement already finalized");
-        }
-
-        // Check if within liveness window
-        const now = Math.floor(Date.now() / 1000);
-        const timeUntilDeadline = Number(settlementInfo.livenessDeadline) - now;
-
-        if (timeUntilDeadline <= 0) {
-          throw new Error("Liveness window has passed");
-        }
-
-        console.log("Disputing settlement...", {
-          roundId,
-          reason,
-          timeRemaining: timeUntilDeadline,
-        });
-
-        // Dispute the settlement
-        const tx = await (settlementContract as any).disputeSettlement(roundId, reason);
-
-        toast.promise(tx.wait(), {
-          loading: "Submitting dispute...",
-          success: "Dispute submitted! Settlement will be reviewed.",
-          error: "Failed to submit dispute",
-        });
-
-        const receipt = await tx.wait();
-        return receipt;
-      } catch (error: any) {
-        console.error("Error disputing settlement:", error);
-        toast.error(error.message);
-        throw error;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [settlementEngine, signer],
   );
 
   // Get all rounds needing settlement
@@ -470,7 +414,6 @@ export function useSettlement() {
     checkSettlementStatus,
     triggerSettlement,
     finalizeSettlement,
-    disputeSettlement,
     batchSettle,
 
     // Query functions

@@ -1,11 +1,11 @@
-import { ethers, Contract } from "ethers";
 import { useCallback, useState } from "react";
+import { ethers } from "ethers";
 import { toast } from "sonner";
 
-import { useWeb3 } from "../providers/Web3Provider";
-import { useContracts } from "./useContracts";
-import TranchePoolCoreABI from '../config/abis/TranchePoolCore.json';
 import { KAIA_RPC_ENDPOINTS } from "../config/constants";
+import { useWeb3 } from "../providers/Web3Provider";
+import { TranchePoolCore__factory } from "../types/generated";
+import { useContracts } from "./useContracts";
 
 export interface BuyInsuranceParams {
   roundId: number;
@@ -15,8 +15,8 @@ export interface BuyInsuranceParams {
 export interface BuyerOrder {
   purchaseAmount: bigint;
   premiumPaid: bigint;
-  filled: bigint;
-  refunded: bigint;
+  filled: boolean;
+  refunded: boolean;
 }
 
 export interface InsuranceTokenInfo {
@@ -64,7 +64,7 @@ export function useBuyerOperations() {
       if (!productCatalog) throw new Error("Product catalog not initialized");
 
       try {
-        const trancheSpec = await (productCatalog as any).getTranche(trancheId);
+        const trancheSpec = await productCatalog.getTranche(trancheId);
         const premiumRateBps = Number(trancheSpec.premiumRateBps);
 
         const coverageAmountWei = ethers.parseUnits(coverageAmount, 6);
@@ -104,7 +104,7 @@ export function useBuyerOperations() {
       setIsLoading(true);
       try {
         // Get round info
-        const roundInfo = await (productCatalog as any).getRound(params.roundId);
+        const roundInfo = await productCatalog.getRound(params.roundId);
         const trancheId = Number(roundInfo.trancheId);
         const roundState = Number(roundInfo.state);
 
@@ -135,7 +135,7 @@ export function useBuyerOperations() {
         }
 
         // Get tranche details
-        const trancheSpec = await (productCatalog as any).getTranche(trancheId);
+        const trancheSpec = await productCatalog.getTranche(trancheId);
 
         // Calculate costs
         const calculation = await calculatePremium(
@@ -171,24 +171,24 @@ export function useBuyerOperations() {
         }
 
         // Get pool address
-        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
+        const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
         if (poolAddress === ethers.ZeroAddress) {
           throw new Error(`No pool found for tranche ${trancheId}`);
         }
 
         // Approve USDT if needed
         setIsPreparing(true);
-        const currentAllowance = await (usdt as any).allowance(account, poolAddress);
+        const currentAllowance = await usdt.allowance(account, poolAddress);
         if (currentAllowance < calculation.totalCost) {
           console.log("Approving USDT...");
 
           // Reset to zero first if needed (for tokens like USDT that require it)
           if (currentAllowance > 0n) {
-            const resetTx = await (usdt as any).connect(signer).approve(poolAddress, 0);
+            const resetTx = await usdt.connect(signer).approve(poolAddress, 0);
             await resetTx.wait();
           }
 
-          const approveTx = await (usdt as any)
+          const approveTx = await usdt
             .connect(signer)
             .approve(poolAddress, calculation.totalCost);
           await approveTx.wait();
@@ -200,12 +200,8 @@ export function useBuyerOperations() {
         const tokenBalanceBefore = await insuranceToken.balanceOf(account);
 
         // Place buyer order
-        const pool = new Contract(
-          poolAddress,
-          TranchePoolCoreABI.abi,
-          signer,
-        );
-        
+        const pool = TranchePoolCore__factory.connect(poolAddress, signer);
+
         // Log details before the transaction
         console.log("Placing buyer order with:", {
           poolAddress,
@@ -216,22 +212,24 @@ export function useBuyerOperations() {
           account,
           allowance: ethers.formatUnits(currentAllowance, 6),
         });
-        
+
         // Check user's USDT balance
         const userBalance = await usdt.balanceOf(account);
         console.log("User USDT balance:", ethers.formatUnits(userBalance, 6));
-        
+
         if (userBalance < calculation.totalCost) {
-          throw new Error(`Insufficient USDT balance. Need ${ethers.formatUnits(calculation.totalCost, 6)} USDT, have ${ethers.formatUnits(userBalance, 6)} USDT`);
+          throw new Error(
+            `Insufficient USDT balance. Need ${ethers.formatUnits(calculation.totalCost, 6)} USDT, have ${ethers.formatUnits(userBalance, 6)} USDT`,
+          );
         }
-        
+
         // Use manual gas limit instead of estimation
-        const tx = await (pool as any).placeBuyerOrder(
+        const tx = await pool.placeBuyerOrder(
           params.roundId,
           calculation.coverageAmount,
           {
             gasLimit: 500000n, // Manual gas limit
-          }
+          },
         );
 
         toast.promise(tx.wait(), {
@@ -253,7 +251,8 @@ export function useBuyerOperations() {
         return receipt;
       } catch (error) {
         console.error("Error buying insurance:", error);
-        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
         toast.error(errorMessage);
         throw error;
       } finally {
@@ -279,20 +278,23 @@ export function useBuyerOperations() {
         throw new Error("Contracts not initialized");
       }
 
-      const buyerAddress = buyer || account;
+      const buyerAddress = buyer ?? account;
       if (!buyerAddress) return null;
 
       try {
         // Get round info to find tranche
-        const roundInfo = await (productCatalog as any).getRound(roundId);
+        const roundInfo = await productCatalog.getRound(roundId);
         const trancheId = Number(roundInfo.trancheId);
 
         // Get pool
-        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
+        const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
         if (poolAddress === ethers.ZeroAddress) return null;
 
-        const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, getProvider());
-        const order = await (pool as any).getBuyerOrder(roundId, buyerAddress);
+        const pool = TranchePoolCore__factory.connect(
+          poolAddress,
+          getProvider(),
+        );
+        const order = await pool.getBuyerOrder(roundId, buyerAddress);
 
         return {
           purchaseAmount: order.purchaseAmount,
@@ -305,7 +307,7 @@ export function useBuyerOperations() {
         return null;
       }
     },
-    [productCatalog, tranchePoolFactory, account],
+    [productCatalog, tranchePoolFactory, account, getProvider],
   );
 
   // Get buyer's insurance tokens with details
@@ -315,7 +317,7 @@ export function useBuyerOperations() {
         throw new Error("Insurance token contract not initialized");
       }
 
-      const buyerAddress = buyer || account;
+      const buyerAddress = buyer ?? account;
       if (!buyerAddress) return [];
 
       try {
@@ -374,7 +376,7 @@ export function useBuyerOperations() {
 
       try {
         // Get round info
-        const roundInfo = await (productCatalog as any).getRound(roundId);
+        const roundInfo = await productCatalog.getRound(roundId);
         const trancheId = Number(roundInfo.trancheId);
         const roundState = Number(roundInfo.state);
 
@@ -391,16 +393,19 @@ export function useBuyerOperations() {
         }
 
         // Get pool to check buyer order
-        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
-        const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, getProvider());
+        const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
+        const pool = TranchePoolCore__factory.connect(
+          poolAddress,
+          getProvider(),
+        );
 
-        const buyerOrder = await (pool as any).getBuyerOrder(roundId, account);
+        const buyerOrder = await pool.getBuyerOrder(roundId, account);
 
         // Check if settlement was triggered (would need to check SettlementEngine)
         // For now, assume triggered if buyer has filled amount
-        const triggered = buyerOrder.filled > 0n;
-        const canClaim = triggered && settled && buyerOrder.filled > 0n;
-        const payoutAmount = buyerOrder.filled; // Full coverage amount if triggered
+        const triggered = buyerOrder.filled;
+        const canClaim = triggered && settled;
+        const payoutAmount = buyerOrder.purchaseAmount; // Full coverage amount if triggered
 
         return {
           canClaim,
@@ -418,7 +423,7 @@ export function useBuyerOperations() {
         };
       }
     },
-    [productCatalog, tranchePoolFactory, account],
+    [productCatalog, tranchePoolFactory, account, getProvider],
   );
 
   // Claim insurance payout (if triggered and settled)
@@ -437,18 +442,14 @@ export function useBuyerOperations() {
         }
 
         // Get pool
-        const roundInfo = await (productCatalog as any).getRound(roundId);
+        const roundInfo = await productCatalog.getRound(roundId);
         const trancheId = Number(roundInfo.trancheId);
-        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
-        const pool = new Contract(
-          poolAddress,
-          TranchePoolCoreABI.abi,
-          signer,
-        );
+        const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
+        const pool = TranchePoolCore__factory.connect(poolAddress, signer);
 
         // Claim payout
         console.log("Claiming payout for round:", roundId);
-        const tx = await (pool as any).claimBuyerPayout(roundId);
+        const tx = await pool.executeBuyerPayouts(roundId);
 
         toast.promise(tx.wait(), {
           loading: "Claiming insurance payout...",
@@ -460,7 +461,8 @@ export function useBuyerOperations() {
         return receipt;
       } catch (error) {
         console.error("Error claiming payout:", error);
-        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
         toast.error(errorMessage);
         throw error;
       } finally {
@@ -473,7 +475,7 @@ export function useBuyerOperations() {
   // Get buyer's active insurances
   const getActiveInsurances = useCallback(
     async (buyer?: string) => {
-      const buyerAddress = buyer || account;
+      const buyerAddress = buyer ?? account;
       if (!buyerAddress || !productCatalog) return [];
 
       try {
@@ -481,7 +483,7 @@ export function useBuyerOperations() {
         const activeInsurances = [];
 
         for (const token of tokens) {
-          const roundInfo = await (productCatalog as any).getRound(token.roundId);
+          const roundInfo = await productCatalog.getRound(token.roundId);
           const roundState = Number(roundInfo.state);
 
           // Include ACTIVE and MATURED states

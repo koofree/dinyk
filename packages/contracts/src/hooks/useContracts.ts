@@ -54,16 +54,6 @@ export function useContracts(): ContractsState {
     error: null,
   });
 
-  // Debug logging
-  if (typeof window !== "undefined" && process.env.DEBUG) {
-    console.log(
-      "[useContracts] Hook called, provider:",
-      !!provider,
-      "signer:",
-      !!signer,
-    );
-  }
-
   useEffect(() => {
     if (!provider) {
       if (typeof window !== "undefined" && process.env.DEBUG) {
@@ -85,7 +75,7 @@ export function useContracts(): ContractsState {
         },
       );
 
-      const initializeReadOnlyContracts = async () => {
+      const initializeReadOnlyContracts = () => {
         try {
           if (typeof window !== "undefined" && process.env.DEBUG) {
             console.log("[useContracts] Initializing read-only contracts...");
@@ -158,14 +148,14 @@ export function useContracts(): ContractsState {
       return;
     }
 
-    const initializeContracts = async () => {
+    const initializeContracts = () => {
       try {
         if (typeof window !== "undefined" && process.env.DEBUG) {
           console.log("[useContracts] Initializing contracts...");
         }
 
         // Use signer if available, otherwise use provider
-        const signerOrProvider = signer || provider;
+        const signerOrProvider = signer ?? provider;
 
         // Initialize all contracts
         const productCatalog = ProductCatalog__factory.connect(
@@ -252,7 +242,7 @@ export function useTranchePool(poolAddress: string | null) {
     }
 
     try {
-      const signerOrProvider = signer || provider;
+      const signerOrProvider = signer ?? provider;
       const poolContract = new ethers.Contract(
         poolAddress,
         TranchePoolCoreABI.abi,
