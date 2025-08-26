@@ -1,6 +1,7 @@
 "use client";
 
 import { EnhancedPurchaseModal } from "@/components/insurance/EnhancedPurchaseModal";
+import { LiquidityPoolCard } from "@/components/insurance/LiquidityPoolCard";
 import { LiquidityModal } from "@/components/liquidity/LiquidityModal";
 import { TrancheCard } from "@/components/tranche/TrancheCard";
 import { TrancheFilters } from "@/components/tranche/TrancheFilters";
@@ -8,7 +9,7 @@ import { useBTCPrice } from "@/hooks/useBTCPrice";
 import type { TrancheDetails } from "@/hooks/useTrancheData";
 import { useTrancheData } from "@/hooks/useTrancheData";
 import { INSURANCE_PRODUCTS } from "@/lib/constants";
-import { useContractFactory, useContracts, useProductManagement, useWeb3 } from "@dinsure/contracts";
+import { useContractFactory, useContracts, useProductManagement, useUserPortfolio, useWeb3 } from "@dinsure/contracts";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -68,6 +69,9 @@ function TrancheContent() {
   
   // Get real contract data
   const { price: btcPrice, loading: priceLoading, error: priceError } = useBTCPrice({ factory });
+  
+  // Get user's liquidity positions
+  const { liquidityPositions, insurancePositions, isLoading: portfolioLoading, refetch: refetchPortfolio } = useUserPortfolio();
   
   const searchParams = useSearchParams();
   const productIdParam = searchParams.get('productId');
@@ -348,11 +352,89 @@ function TrancheContent() {
     return true;
   });
   
+  // Transform liquidity positions to LiquidityPoolCard format
+  const transformedUserPools = liquidityPositions.map((position) => {
+    // Find the corresponding tranche and product data
+    const tranche = tranches.find(t => t.trancheId === position.trancheId);
+    const product = products.find(p => p.productId === tranche?.productId);
+    const trancheData = tranchesData?.find(t => t.trancheId === position.trancheId);
+    
+    // Calculate trigger price based on threshold
+    const triggerLevel = tranche ? Number(tranche.threshold) / 1000000 : 5; // Default 5%
+    const currentPrice = btcPrice || 90000;
+    const triggerPrice = currentPrice * (100 - triggerLevel) / 100;
+    
+    // Get round state
+    const roundState = position.roundState || 'OPEN';
+    const daysLeft = position.daysLeft || 7;
+
+    // TODO: how to determine the asset type?
+    let asset: 'BTC' | 'KAIA' | 'ETH';
+    if (position.asset === 'BTC' || position.asset === 'KAIA' || position.asset === 'ETH') {
+      asset = position.asset;
+    } else {
+      asset = 'BTC'; // default to KAIA if not one of the types
+    }
+    
+    return {
+      id: position.trancheId,
+      productId: tranche?.productId || 0,
+      asset: asset,
+      trancheName: position.tranche.split(' -')[0] || `Tranche ${position.trancheId}`,
+      triggerPrice: triggerPrice,
+      triggerType: 'PRICE_BELOW',
+      expectedPremium: tranche ? Number(tranche.premiumRateBps) / 100 : 5,
+      premiumRateBps: tranche?.premiumRateBps || 500,
+      stakingAPY: 2.5, // TODO: Get from yield router
+      riskLevel: triggerLevel <= 5 ? 'LOW' : triggerLevel <= 10 ? 'MEDIUM' : 'HIGH' as 'LOW' | 'MEDIUM' | 'HIGH',
+      poolSize: trancheData?.poolDetails?.totalCapacity || '10000000',
+      totalLiquidity: position.deposited,
+      userShare: position.currentValue,
+      utilization: trancheData?.poolDetails?.utilizationRate || 0,
+      roundState: roundState,
+      roundEndsIn: daysLeft,
+      navPerShare: trancheData?.poolDetails?.navPerShare || '1.00'
+    };
+  });
+  
+  // Group user pools by asset
+  const groupedUserPools = transformedUserPools.reduce((acc: any[], pool) => {
+    const existingGroup = acc.find(g => g.asset === pool.asset);
+    if (existingGroup) {
+      existingGroup.pools.push(pool);
+    } else {
+      acc.push({ asset: pool.asset, pools: [pool] });
+    }
+    return acc;
+  }, []);
+  
+  // Handlers for liquidity operations
+  const handleDeposit = (pool: any) => {
+    const tranche = tranchesData?.find(t => t.trancheId === pool.id);
+    if (tranche) {
+      setSelectedTranche(tranche);
+      const openRound = tranche.rounds.find((r: any) => r.state === 1);
+      if (openRound) {
+        setSelectedRoundId(openRound.roundId);
+      }
+      setShowLiquidityModal(true);
+    }
+  };
+  
+  const handleWithdraw = (pool: any) => {
+    // TODO: Implement withdrawal logic
+    console.log('Withdraw from pool:', pool);
+  };
+  
+  const handleAddMore = (pool: any) => {
+    handleDeposit(pool); // Same as deposit for now
+  };
+  
   // Get unique products for filter options
   const uniqueProducts = Array.from(new Set(products.map(p => p.productId)))
     .map(id => products.find(p => p.productId === id)!);
   
-  const loading = productsLoading || trancheLoading || priceLoading;
+  const loading = productsLoading || trancheLoading || priceLoading || portfolioLoading;
   const error = contractError || productsError || trancheError || priceError;
   
   if (!isInitialized) {
@@ -450,6 +532,37 @@ function TrancheContent() {
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Your Pools Section */}
+        {isConnected && liquidityPositions.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-[30px] font-bold text-gray-900 mb-4 font-display">Your Liquidity Positions</h2>
+            {groupedUserPools.map(({ asset, pools }, index) => (
+              <div key={asset} style={{ marginTop: index > 0 ? '60px' : '0' }}>
+                <div className={`flex items-center mb-4 ${asset === 'KAIA' ? 'gap-4' : 'gap-2'}`}>
+                  <img
+                    src={`/images/${asset}.svg`}
+                    alt={asset}
+                    className={`${asset === 'KAIA' ? 'w-6 h-6' : 'w-10 h-10'}`}
+                    style={{ filter: 'brightness(0) invert(0.2)' }}
+                  />
+                  <h3 className="text-[24px] font-bold text-gray-900 font-display">{asset} Pools</h3>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {pools.map((pool) => (
+                    <LiquidityPoolCard
+                      key={pool.id}
+                      pool={pool}
+                      onDeposit={handleDeposit}
+                      onWithdraw={handleWithdraw}
+                      onAddMore={handleAddMore}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
         

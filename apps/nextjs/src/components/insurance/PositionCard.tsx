@@ -104,9 +104,12 @@ export const PositionCard: React.FC<PositionCardProps> = ({
               {isProcessing ? 'Processing...' : 'Claim Now'}
             </button>
           )}
-          <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
-            View Details
-          </button>
+          <a
+              href={`/tranches/${position.productId}/${position.trancheId}`}
+              className="flex-1 bg-gradient-to-br from-[#86D99C] to-[#00B1B8] hover:from-[#00B1B8] hover:to-[#86D99C] text-white py-2 rounded-lg transition-all duration-300 text-center font-semibold flex items-center justify-center"
+            >
+              View Details
+            </a>
         </div>
       </div>
     );
@@ -165,14 +168,13 @@ export const PositionCard: React.FC<PositionCardProps> = ({
             {isProcessing ? 'Processing...' : 'Withdraw Available'}
           </button>
         )}
-        {position.roundStatus === 'active' && (
-          <button className=" bg-gray-600 text-gray-400 py-2 px-4 rounded-lg cursor-not-allowed">
-            Withdraw After Round
-          </button>
-        )}
-        <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
-          Add More
-        </button>
+        
+        <a
+              href={`/tranches/${position.productId}/${position.trancheId}`}
+              className="flex-1 bg-gradient-to-br from-[#86D99C] to-[#00B1B8] hover:from-[#00B1B8] hover:to-[#86D99C] text-white py-2 rounded-lg transition-all duration-300 text-center font-semibold flex items-center justify-center"
+            >
+              View Details
+            </a>
       </div>
     </div>
   );

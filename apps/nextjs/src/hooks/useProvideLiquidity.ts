@@ -96,16 +96,15 @@ export function useProvideLiquidity() {
   }, []);
 
   const checkBalance = useCallback(async (): Promise<bigint> => {
-    if (!signer || !account) return 0n;
+    if (!usdt || !account) return 0n;
 
     try {
-      const usdt = new ethers.Contract(KAIA_TESTNET_ADDRESSES.DinUSDT, USDT_ABI, signer);
       return await usdt.balanceOf(account);
     } catch (err) {
       console.error("Error checking USDT balance:", err);
       return 0n;
     }
-  }, [signer, account]);
+  }, [usdt, account]);
 
   const getPoolInfo = useCallback(async (poolAddress: string) => {
     if (!signer) return null;

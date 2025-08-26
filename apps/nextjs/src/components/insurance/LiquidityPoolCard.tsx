@@ -151,22 +151,12 @@ export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
           </button>
         ) : (
           <div className="flex gap-2">
-            {onAddMore && (
-              <button
-                onClick={() => onAddMore(pool)}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors"
-              >
-                Add More
-              </button>
-            )}
-            {onWithdraw && (
-              <button
-                onClick={() => onWithdraw(pool)}
-                className="flex-1 bg-gray-600 hover:bg-gray-500 text-white py-2 rounded-lg transition-colors"
-              >
-                Withdraw
-              </button>
-            )}
+            <a
+              href={`/tranches/${pool.productId}/${pool.id}`}
+              className="flex-1 bg-gradient-to-br from-[#86D99C] to-[#00B1B8] hover:from-[#00B1B8] hover:to-[#86D99C] text-white py-2 rounded-lg transition-all duration-300 text-center font-semibold flex items-center justify-center"
+            >
+              View Details
+            </a>
           </div>
         )}
       </div>

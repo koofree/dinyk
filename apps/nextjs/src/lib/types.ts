@@ -54,6 +54,7 @@ export interface UserPosition {
   asset: string;
   type: 'insurance' | 'liquidity';
   tranche: string;
+  productId?: number;
   trancheId?: number;
   roundId?: number;
   
