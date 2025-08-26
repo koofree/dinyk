@@ -1,6 +1,7 @@
-import '@testing-library/jest-dom';
-import { cleanup } from '@testing-library/react';
-import { afterEach, beforeAll, vi } from 'vitest';
+import "@testing-library/jest-dom";
+
+import { cleanup } from "@testing-library/react";
+import { afterEach, beforeAll, vi } from "vitest";
 
 // Cleanup after each test
 afterEach(() => {
@@ -16,7 +17,7 @@ beforeAll(() => {
     on: vi.fn(),
     removeListener: vi.fn(),
     selectedAddress: null,
-    chainId: '0x3E9', // Kaia testnet
+    chainId: "0x3E9", // Kaia testnet
   };
 
   // Mock localStorage

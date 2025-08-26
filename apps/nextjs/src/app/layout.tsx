@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Mono } from "next/font/google";
+import { AppProviders } from "@/components/providers/AppProviders";
 
 import { cn } from "@dinsure/ui";
 import { Toaster } from "@dinsure/ui/toast";
 
-import { AppProviders } from "@/components/providers/AppProviders";
-
 import "~/app/globals.css";
+
 import { Footer } from "~/components/common/Footer";
 import { Navbar } from "~/components/common/Navbar";
 import { LanguageProvider } from "~/context/LanguageProvider";
@@ -16,7 +16,8 @@ export const metadata: Metadata = {
   description: "Parametric insurance products on Kaia blockchain",
   openGraph: {
     title: "DIN - Decentralized Insurance",
-    description: "Protect your crypto assets with on-chain parametric insurance",
+    description:
+      "Protect your crypto assets with on-chain parametric insurance",
     url: "https://din-insurance.vercel.app",
     siteName: "DIN Insurance",
   },
@@ -61,16 +62,13 @@ export default function RootLayout(props: { children: React.ReactNode }) {
       >
         <AppProviders>
           <LanguageProvider>
-            <div className="min-h-screen flex flex-col">
+            <div className="flex min-h-screen flex-col">
               <Navbar />
-              <main className="
-                flex-1 bg-gradient-to-br from-blue-50 via-white to-blue-50
-                flex flex-col items-center
-              ">
-                <div className="max-w-[720px] mx-auto px-4 sm:px-6 lg:px-8">
+              <main className="flex flex-1 flex-col items-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
+                <div className="mx-auto max-w-[720px] px-4 sm:px-6 lg:px-8">
                   {props.children}
                 </div>
-              </main> 
+              </main>
               <Footer />
             </div>
             <Toaster />

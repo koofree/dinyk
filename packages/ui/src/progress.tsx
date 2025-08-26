@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as ProgressPrimitive from "@radix-ui/react-progress";
+
 import { cn } from ".";
 
 const Progress = React.forwardRef<
@@ -10,7 +11,7 @@ const Progress = React.forwardRef<
     ref={ref}
     className={cn(
       "relative h-4 w-full overflow-hidden rounded-full bg-secondary",
-      className
+      className,
     )}
     {...props}
   >

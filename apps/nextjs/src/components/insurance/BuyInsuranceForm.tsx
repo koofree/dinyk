@@ -1,16 +1,29 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { calculatePremium } from "@/lib/utils/insurance";
+import { formatUnits, parseUnits } from "ethers";
+import {
+  AlertCircle,
+  Calculator,
+  CheckCircle,
+  Loader2,
+  Shield,
+} from "lucide-react";
+
 import { useBuyerOperations, useContracts, useWeb3 } from "@dinsure/contracts";
 import { Alert, AlertDescription } from "@dinsure/ui/alert";
 import { Button } from "@dinsure/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@dinsure/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@dinsure/ui/card";
 import { Input } from "@dinsure/ui/input";
 import { Label } from "@dinsure/ui/label";
 import { Slider } from "@dinsure/ui/slider";
-import { formatUnits, parseUnits } from "ethers";
-import { AlertCircle, Calculator, CheckCircle, Loader2, Shield } from "lucide-react";
-import { useEffect, useState } from "react";
 
 interface BuyInsuranceFormProps {
   productId: bigint;
@@ -29,34 +42,42 @@ export function BuyInsuranceForm({
   trancheId,
   roundId,
   tranche,
-  onSuccess
+  onSuccess,
 }: BuyInsuranceFormProps) {
-  const { account, isConnected, usdtBalance: usdtBalanceStr, refreshUSDTBalance } = useWeb3();
+  const {
+    account,
+    isConnected,
+    usdtBalance: usdtBalanceStr,
+    refreshUSDTBalance,
+  } = useWeb3();
   const { buyInsurance, calculatePurchase } = useBuyerOperations();
   const { usdtContract, isInitialized } = useContracts();
-  
+
   // Convert string balance to bigint
   const usdtBalance = usdtBalanceStr ? parseUnits(usdtBalanceStr, 6) : 0n;
-  
+
   // Debug logging
   useEffect(() => {
     console.log("BuyInsuranceForm state:", {
       isConnected,
       account,
       isInitialized,
-      hasUsdtContract: !!usdtContract
+      hasUsdtContract: !!usdtContract,
     });
   }, [isConnected, account, isInitialized, usdtContract]);
-  
+
   const [coverageAmount, setCoverageAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [txHash, setTxHash] = useState("");
 
-  const premiumAmount = coverageAmount ? calculatePremium(coverageAmount, tranche.premiumBps) : "0";
-  const totalCost = coverageAmount ? 
-    (parseFloat(coverageAmount) + parseFloat(premiumAmount)).toFixed(2) : "0";
+  const premiumAmount = coverageAmount
+    ? calculatePremium(coverageAmount, tranche.premiumBps)
+    : "0";
+  const totalCost = coverageAmount
+    ? (parseFloat(coverageAmount) + parseFloat(premiumAmount)).toFixed(2)
+    : "0";
 
   // Refresh USDT balance when component mounts or when connection changes
   useEffect(() => {
@@ -71,19 +92,19 @@ export function BuyInsuranceForm({
       account,
       hasUsdtContract: !!usdtContract,
       isInitialized,
-      roundId
+      roundId,
     });
-    
+
     if (!isConnected) {
       setError("Please connect your wallet");
       return;
     }
-    
+
     if (!account) {
       setError("No wallet address found");
       return;
     }
-    
+
     if (!isInitialized || !usdtContract) {
       setError("Contracts are still loading. Please try again.");
       return;
@@ -109,13 +130,13 @@ export function BuyInsuranceForm({
         productId,
         trancheId,
         roundId,
-        coverageAmount: coverageAmount  // Pass as string, not bigint
+        coverageAmount: coverageAmount, // Pass as string, not bigint
       });
-      
+
       setTxHash(receipt.hash);
       setSuccess(true);
       setCoverageAmount("");
-      
+
       if (onSuccess) {
         onSuccess();
       }
@@ -131,8 +152,9 @@ export function BuyInsuranceForm({
     setCoverageAmount(value[0]?.toString() || "0");
   };
 
-  const maxCoverage = usdtBalance ? 
-    Math.min(Number(formatUnits(usdtBalance, 6)), 100000) : 100000;
+  const maxCoverage = usdtBalance
+    ? Math.min(Number(formatUnits(usdtBalance, 6)), 100000)
+    : 100000;
 
   return (
     <Card>
@@ -150,7 +172,8 @@ export function BuyInsuranceForm({
           <Alert className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20">
             <AlertCircle className="h-4 w-4 text-yellow-600" />
             <AlertDescription className="text-yellow-600">
-              No active insurance round available. Please check back later or select a different tranche.
+              No active insurance round available. Please check back later or
+              select a different tranche.
             </AlertDescription>
           </Alert>
         )}
@@ -174,27 +197,28 @@ export function BuyInsuranceForm({
               disabled={loading || !isConnected}
             />
             <p className="text-sm text-muted-foreground">
-              {isConnected ? (
-                `Available: $${usdtBalance ? Number(formatUnits(usdtBalance, 6)).toLocaleString() : "0"} USDT`
-              ) : (
-                "Connect wallet to view balance"
-              )}
+              {isConnected
+                ? `Available: $${usdtBalance ? Number(formatUnits(usdtBalance, 6)).toLocaleString() : "0"} USDT`
+                : "Connect wallet to view balance"}
             </p>
             {usdtBalance === 0n && isConnected && (
-              <p className="text-xs text-yellow-600 mt-1">
-                No test USDT detected. The contract may not be deployed on this network or you need test tokens.
+              <p className="mt-1 text-xs text-yellow-600">
+                No test USDT detected. The contract may not be deployed on this
+                network or you need test tokens.
               </p>
             )}
           </div>
 
-          <div className="rounded-lg bg-muted p-4 space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Coverage Amount:</span>
+          <div className="space-y-3 rounded-lg bg-muted p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">
+                Coverage Amount:
+              </span>
               <span className="font-medium">
                 ${parseFloat(coverageAmount || "0").toLocaleString()} USDT
               </span>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">
                 Premium ({Number(tranche.premiumBps) / 100}%):
               </span>
@@ -203,7 +227,7 @@ export function BuyInsuranceForm({
               </span>
             </div>
             <div className="border-t pt-3">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <span className="font-medium">Total Cost:</span>
                 <span className="text-lg font-bold">
                   ${parseFloat(totalCost).toLocaleString()} USDT
@@ -214,7 +238,7 @@ export function BuyInsuranceForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-lg border p-3">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="mb-1 flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-red-500" />
                 <span className="text-sm font-medium">Trigger Level</span>
               </div>
@@ -223,7 +247,7 @@ export function BuyInsuranceForm({
               </p>
             </div>
             <div className="rounded-lg border p-3">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="mb-1 flex items-center gap-2">
                 <Calculator className="h-4 w-4 text-blue-500" />
                 <span className="text-sm font-medium">Max Payout</span>
               </div>
@@ -251,7 +275,7 @@ export function BuyInsuranceForm({
                   href={`https://kairos.kaiascope.com/tx/${txHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block mt-1 underline"
+                  className="mt-1 block underline"
                 >
                   View transaction
                 </a>
@@ -262,7 +286,13 @@ export function BuyInsuranceForm({
 
         <Button
           onClick={handleBuyInsurance}
-          disabled={loading || !isConnected || !isInitialized || roundId === 0n || (!coverageAmount && isConnected)}
+          disabled={
+            loading ||
+            !isConnected ||
+            !isInitialized ||
+            roundId === 0n ||
+            (!coverageAmount && isConnected)
+          }
           className="w-full"
           size="lg"
         >
@@ -288,7 +318,7 @@ export function BuyInsuranceForm({
             Connect your wallet to purchase insurance coverage
           </p>
         )}
-        
+
         {isConnected && !isInitialized && (
           <p className="text-center text-sm text-muted-foreground">
             Loading contracts...

@@ -11,7 +11,12 @@ export interface InsuranceTranche {
   id: number; // On-chain tranche ID
   name: string; // Human-readable name
   productId?: number; // Parent product ID
-  triggerType: 'PRICE_BELOW' | 'PRICE_ABOVE' | 'RELATIVE' | 'BOOLEAN' | 'CUSTOM';
+  triggerType:
+    | "PRICE_BELOW"
+    | "PRICE_ABOVE"
+    | "RELATIVE"
+    | "BOOLEAN"
+    | "CUSTOM";
   triggerPrice: number; // Actual trigger price in USD
   triggerLevel: number; // Percentage for UI display
   threshold?: string; // On-chain threshold value
@@ -26,8 +31,15 @@ export interface InsuranceTranche {
   maturityDays: number; // Maturity period in days
   maturityTimestamp?: number; // On-chain maturity timestamp
   oracleRouteId: number; // Oracle route for price feeds
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
-  roundState?: 'ANNOUNCED' | 'OPEN' | 'MATCHED' | 'ACTIVE' | 'MATURED' | 'SETTLED' | 'CANCELED';
+  riskLevel: "LOW" | "MEDIUM" | "HIGH";
+  roundState?:
+    | "ANNOUNCED"
+    | "OPEN"
+    | "MATCHED"
+    | "ACTIVE"
+    | "MATURED"
+    | "SETTLED"
+    | "CANCELED";
   roundId?: number; // Current round ID if exists
   active?: boolean; // Whether tranche is active
 }
@@ -52,22 +64,22 @@ export interface UserPosition {
   id: string; // NFT token ID or position ID
   tokenId?: number; // InsuranceToken NFT ID
   asset: string;
-  type: 'insurance' | 'liquidity';
+  type: "insurance" | "liquidity";
   tranche: string;
   productId?: number;
   trancheId?: number;
   roundId?: number;
-  
+
   // Insurance buyer fields
   coverage?: string; // Purchase amount (coverage)
   premiumPaid?: string;
-  status?: 'active' | 'claimable' | 'expired' | 'settled';
+  status?: "active" | "claimable" | "expired" | "settled";
   expiresIn?: number;
   currentPrice?: number;
   triggerPrice?: number;
   baseline?: number;
   payout?: string;
-  
+
   // Liquidity provider fields
   deposited?: string; // Collateral amount
   shares?: string; // Share tokens minted
@@ -75,10 +87,17 @@ export interface UserPosition {
   earnedPremium?: string;
   stakingRewards?: string;
   lockedAmount?: string; // Amount locked in active rounds
-  
+
   // Round status
-  roundStatus?: 'active' | 'settlement' | 'completed';
-  roundState?: 'ANNOUNCED' | 'OPEN' | 'MATCHED' | 'ACTIVE' | 'MATURED' | 'SETTLED' | 'CANCELED';
+  roundStatus?: "active" | "settlement" | "completed";
+  roundState?:
+    | "ANNOUNCED"
+    | "OPEN"
+    | "MATCHED"
+    | "ACTIVE"
+    | "MATURED"
+    | "SETTLED"
+    | "CANCELED";
   daysLeft?: number;
   maturityTimestamp?: number;
 }
@@ -106,7 +125,14 @@ export interface Round {
   trancheId: number;
   salesStartTime: number;
   salesEndTime: number;
-  state: 'ANNOUNCED' | 'OPEN' | 'MATCHED' | 'ACTIVE' | 'MATURED' | 'SETTLED' | 'CANCELED';
+  state:
+    | "ANNOUNCED"
+    | "OPEN"
+    | "MATCHED"
+    | "ACTIVE"
+    | "MATURED"
+    | "SETTLED"
+    | "CANCELED";
   totalBuyerPurchases: string; // Total amount buyers want
   totalSellerCollateral: string; // Total seller collateral
   matchedAmount: string; // Final matched amount

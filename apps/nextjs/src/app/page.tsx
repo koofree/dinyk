@@ -1,10 +1,17 @@
 "use client";
 
-import { InsuranceProductCard } from "@/components/insurance/InsuranceProductCard";
-import { ACTIVE_NETWORK, useContracts, useProductManagement, useWeb3 } from "@dinsure/contracts";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { InsuranceProductCard } from "@/components/insurance/InsuranceProductCard";
+
+import {
+  ACTIVE_NETWORK,
+  useContracts,
+  useProductManagement,
+  useWeb3,
+} from "@dinsure/contracts";
+
 import { useLanguage } from "~/context/LanguageProvider";
 
 interface InsuranceProduct {
@@ -24,8 +31,10 @@ export default function HomePage() {
   const { isConnected } = useWeb3();
   const { isInitialized, productCatalog } = useContracts();
   const { getProducts, getActiveTranches } = useProductManagement();
-  
-  const [insuranceProducts, setInsuranceProducts] = useState<InsuranceProduct[]>([]);
+
+  const [insuranceProducts, setInsuranceProducts] = useState<
+    InsuranceProduct[]
+  >([]);
   const [totalCapacity, setTotalCapacity] = useState<bigint>(BigInt(0));
   const [activeTranchesCount, setActiveTranchesCount] = useState(0);
   const [premiumRange, setPremiumRange] = useState({ min: 0, max: 0 });
@@ -36,7 +45,7 @@ export default function HomePage() {
     title: false,
     subtitle: false,
     description: false,
-    buttons: false
+    buttons: false,
   });
   const [mounted, setMounted] = useState(false);
   const progressRef = useRef<HTMLDivElement>(null);
@@ -49,14 +58,14 @@ export default function HomePage() {
   // Intersection observer for progress bars
   useEffect(() => {
     if (!mounted) return;
-    
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting) {
           setIsProgressVisible(true);
         }
       },
-      { threshold: 0.3 }
+      { threshold: 0.3 },
     );
 
     if (progressRef.current) {
@@ -69,12 +78,27 @@ export default function HomePage() {
   // Hero Section sequential animation
   useEffect(() => {
     if (!mounted) return;
-    
-    const timer1 = setTimeout(() => setHeroAnimations(prev => ({ ...prev, logo: true })), 200);
-    const timer2 = setTimeout(() => setHeroAnimations(prev => ({ ...prev, title: true })), 400);
-    const timer3 = setTimeout(() => setHeroAnimations(prev => ({ ...prev, subtitle: true })), 600);
-    const timer4 = setTimeout(() => setHeroAnimations(prev => ({ ...prev, description: true })), 800);
-    const timer5 = setTimeout(() => setHeroAnimations(prev => ({ ...prev, buttons: true })), 1000);
+
+    const timer1 = setTimeout(
+      () => setHeroAnimations((prev) => ({ ...prev, logo: true })),
+      200,
+    );
+    const timer2 = setTimeout(
+      () => setHeroAnimations((prev) => ({ ...prev, title: true })),
+      400,
+    );
+    const timer3 = setTimeout(
+      () => setHeroAnimations((prev) => ({ ...prev, subtitle: true })),
+      600,
+    );
+    const timer4 = setTimeout(
+      () => setHeroAnimations((prev) => ({ ...prev, description: true })),
+      800,
+    );
+    const timer5 = setTimeout(
+      () => setHeroAnimations((prev) => ({ ...prev, buttons: true })),
+      1000,
+    );
 
     return () => {
       clearTimeout(timer1);
@@ -91,23 +115,27 @@ export default function HomePage() {
       if (!isInitialized || !productCatalog) {
         return;
       }
-      
+
       setLoading(true);
-      
+
       try {
         // Get active products from contract
-        const activeProductIds = await (productCatalog as any).getActiveProducts();
+        const activeProductIds = await (
+          productCatalog as any
+        ).getActiveProducts();
         const fetchedProducts: InsuranceProduct[] = [];
         let totalCap = BigInt(0);
         let minPremium = 100;
         let maxPremium = 0;
         let totalTranches = 0;
-        
+
         // Fetch each product and aggregate data
         for (const productId of activeProductIds) {
           try {
-            const productInfo = await (productCatalog as any).getProduct(Number(productId));
-            
+            const productInfo = await (productCatalog as any).getProduct(
+              Number(productId),
+            );
+
             if (productInfo && Number(productInfo.productId) !== 0) {
               let productCapacity = BigInt(0);
               let avgPremium = 0;
@@ -115,22 +143,28 @@ export default function HomePage() {
               let avgThreshold = BigInt(0);
               let triggerType = 0;
               let trancheCount = 0;
-              
+
               // Get tranches for this product to calculate averages
               const trancheIds = productInfo.trancheIds || [];
-              
+
               for (const trancheId of trancheIds) {
                 try {
-                  const tranche = await (productCatalog as any).getTranche(Number(trancheId));
+                  const tranche = await (productCatalog as any).getTranche(
+                    Number(trancheId),
+                  );
                   if (tranche && Number(tranche.productId) > 0) {
-                    productCapacity += tranche.trancheCap ? BigInt(tranche.trancheCap.toString()) : BigInt(0);
+                    productCapacity += tranche.trancheCap
+                      ? BigInt(tranche.trancheCap.toString())
+                      : BigInt(0);
                     avgPremium += Number(tranche.premiumRateBps || 0);
                     avgMaturity += Number(tranche.maturityDays || 30);
-                    avgThreshold += tranche.threshold ? BigInt(tranche.threshold.toString()) : BigInt(0);
+                    avgThreshold += tranche.threshold
+                      ? BigInt(tranche.threshold.toString())
+                      : BigInt(0);
                     triggerType = Number(tranche.triggerType || 0);
                     trancheCount++;
                     totalTranches++;
-                    
+
                     const premiumPercent = Number(tranche.premiumRateBps) / 100;
                     if (premiumPercent > 0) {
                       minPremium = Math.min(minPremium, premiumPercent);
@@ -141,17 +175,17 @@ export default function HomePage() {
                   console.log(`Could not fetch tranche ${trancheId}`);
                 }
               }
-              
+
               if (trancheCount > 0) {
                 // Calculate averages
                 avgPremium = Math.round(avgPremium / trancheCount);
                 avgMaturity = Math.round(avgMaturity / trancheCount);
                 avgThreshold = avgThreshold / BigInt(trancheCount);
-                
+
                 // Mock buyer and provider counts (in production, fetch from actual pool data)
                 const buyerCount = Math.floor(Math.random() * 50) + 10;
                 const providerCount = Math.floor(Math.random() * 30) + 5;
-                
+
                 // Create aggregated product entry
                 fetchedProducts.push({
                   productId: Number(productId),
@@ -163,9 +197,9 @@ export default function HomePage() {
                   buyerCount: buyerCount,
                   providerCount: providerCount,
                   totalCapacity: productCapacity,
-                  active: productInfo?.active || false
+                  active: productInfo?.active || false,
                 });
-                
+
                 totalCap += productCapacity;
               }
             }
@@ -173,25 +207,27 @@ export default function HomePage() {
             console.log(`Could not fetch product ${productId}`);
           }
         }
-        
+
         // Sort by total capacity and take top 3
-        fetchedProducts.sort((a, b) => Number(b.totalCapacity - a.totalCapacity));
+        fetchedProducts.sort((a, b) =>
+          Number(b.totalCapacity - a.totalCapacity),
+        );
         const topProducts = fetchedProducts.slice(0, 3);
-        
+
         setInsuranceProducts(topProducts);
         setTotalCapacity(totalCap / BigInt(1e6));
         setActiveTranchesCount(totalTranches);
-        setPremiumRange({ 
-          min: minPremium === 100 ? 3 : minPremium, 
-          max: maxPremium === 0 ? 8 : maxPremium 
+        setPremiumRange({
+          min: minPremium === 100 ? 3 : minPremium,
+          max: maxPremium === 0 ? 8 : maxPremium,
         });
       } catch (error) {
-        console.error('Error fetching contract data:', error);
+        console.error("Error fetching contract data:", error);
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchContractData();
   }, [isInitialized, productCatalog, getProducts, getActiveTranches]);
 
@@ -199,56 +235,74 @@ export default function HomePage() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className={`transition-all duration-700 ${heroAnimations.logo ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              <img src="/images/BI-symbol.svg" alt="DIN Logo" className="h-16 w-auto mx-auto mb-8" />
+            <div
+              className={`transition-all duration-700 ${heroAnimations.logo ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+            >
+              <img
+                src="/images/BI-symbol.svg"
+                alt="DIN Logo"
+                className="mx-auto mb-8 h-16 w-auto"
+              />
             </div>
-            <h1 className={`text-5xl md:text-7xl font-bold font-display text-gray-900 mb-6 transition-all duration-700 ${heroAnimations.title ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <h1
+              className={`font-display mb-6 text-5xl font-bold text-gray-900 transition-all duration-700 md:text-7xl ${heroAnimations.title ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+            >
               Decentralized Insurance
-              <span className={`block text-transparent bg-clip-text bg-gradient-to-r from-[#86D99C] to-[#00B1B8] transition-all duration-700 delay-200 ${heroAnimations.subtitle ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              <span
+                className={`block bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent transition-all delay-200 duration-700 ${heroAnimations.subtitle ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+              >
                 on Kaia
               </span>
             </h1>
-            <p className={`text-lg md:text-[18px] text-gray-600 mb-8 max-w-3xl mx-auto font-semibold font-outfit leading-tight transition-all duration-700 ease-out ${
-              heroAnimations.description ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}>
-              {t('hero.description')}
+            <p
+              className={`font-outfit mx-auto mb-8 max-w-3xl text-lg font-semibold leading-tight text-gray-600 transition-all duration-700 ease-out md:text-[18px] ${
+                heroAnimations.description
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-8 opacity-0"
+              }`}
+            >
+              {t("hero.description")}
             </p>
-            
-            <div className={`flex justify-center items-center gap-4 mb-8 transition-all duration-700 delay-600 ${heroAnimations.buttons ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              <span className="text-sm text-green-600 bg-green-100 px-3 py-1 rounded-full font-medium">
+
+            <div
+              className={`delay-600 mb-8 flex items-center justify-center gap-4 transition-all duration-700 ${heroAnimations.buttons ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+            >
+              <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-600">
                 ● Live on Testnet
               </span>
-              <a 
+              <a
                 href={`${ACTIVE_NETWORK.blockExplorer}/address/${ACTIVE_NETWORK.contracts.ProductCatalog}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
               >
                 View Contracts ↗
               </a>
-              <a 
+              <a
                 href={ACTIVE_NETWORK.faucet}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
               >
                 Get Test KAIA ↗
               </a>
             </div>
-            
-            <div className={`flex flex-col sm:flex-row gap-4 justify-center items-center transition-all duration-700 delay-800 ${heroAnimations.buttons ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+
+            <div
+              className={`delay-800 flex flex-col items-center justify-center gap-4 transition-all duration-700 sm:flex-row ${heroAnimations.buttons ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+            >
               <Link
                 href="/insurance"
-                className="relative bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white px-8 py-4 rounded-2xl text-lg font-semibold font-outfit transition-all duration-300 hover:scale-95 hover:shadow-lg group overflow-hidden"
+                className="font-outfit group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#86D99C] to-[#00B1B8] px-8 py-4 text-lg font-semibold text-white transition-all duration-300 hover:scale-95 hover:shadow-lg"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-[#00B1B8] to-[#86D99C] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#00B1B8] to-[#86D99C] opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
                 <span className="relative">Buy Insurance</span>
               </Link>
               <Link
                 href="/tranches"
-                className="bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 px-8 py-4 rounded-2xl text-lg font-semibold font-outfit transition-all duration-300"
+                className="font-outfit rounded-2xl border-2 border-gray-200 bg-white px-8 py-4 text-lg font-semibold text-gray-700 transition-all duration-300 hover:border-gray-300 hover:bg-gray-50"
               >
                 Provide Liquidity
               </Link>
@@ -258,89 +312,135 @@ export default function HomePage() {
       </div>
 
       {/* Key Metrics Dashboard */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16" ref={progressRef}>
-          <div className="bg-white rounded-lg p-6 text-left border border-gray-200 shadow-sm hover:cursor-pointer group">
-            <div className="w-10 h-10 mb-3">
-              <Image src="/images/1.svg" alt="TVL Icon" className="w-full h-full" width={40} height={40} />
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div
+          className="mb-16 grid grid-cols-1 gap-8 md:grid-cols-3"
+          ref={progressRef}
+        >
+          <div className="group rounded-lg border border-gray-200 bg-white p-6 text-left shadow-sm hover:cursor-pointer">
+            <div className="mb-3 h-10 w-10">
+              <Image
+                src="/images/1.svg"
+                alt="TVL Icon"
+                className="h-full w-full"
+                width={40}
+                height={40}
+              />
             </div>
-            <div className="text-3xl font-bold text-gray-800 mb-2 font-outfit">
+            <div className="font-outfit mb-2 text-3xl font-bold text-gray-800">
               {loading ? (
                 <span className="text-2xl text-gray-400">Loading...</span>
               ) : (
-                `$${(Number(totalCapacity) / 1e6).toFixed(0)}${Number(totalCapacity) >= 1e6 ? 'M' : 'K'}`
+                `$${(Number(totalCapacity) / 1e6).toFixed(0)}${Number(totalCapacity) >= 1e6 ? "M" : "K"}`
               )}
             </div>
-            <div className="text-gray-600 font-medium mb-3 font-outfit">{t('metrics.totalTVL')} (Total Value Locked)</div>
-            <div className="text-gray-500 text-sm leading-relaxed">
+            <div className="font-outfit mb-3 font-medium text-gray-600">
+              {t("metrics.totalTVL")} (Total Value Locked)
+            </div>
+            <div className="text-sm leading-relaxed text-gray-500">
               Higher TVL means more trust and bigger trading capacity.
             </div>
           </div>
-          <div className="bg-white rounded-lg p-6 text-left border border-gray-200 shadow-sm hover:cursor-pointer group">
-          <div className="w-10 h-10 mb-3">
-              <Image src="/images/2.svg" alt="TVL Icon" className="w-full h-full" width={40} height={40} />
+          <div className="group rounded-lg border border-gray-200 bg-white p-6 text-left shadow-sm hover:cursor-pointer">
+            <div className="mb-3 h-10 w-10">
+              <Image
+                src="/images/2.svg"
+                alt="TVL Icon"
+                className="h-full w-full"
+                width={40}
+                height={40}
+              />
             </div>
-            <div className="text-3xl font-bold text-gray-800 mb-2 font-outfit">
-              {loading ? <span className="text-2xl text-gray-400">Loading...</span> : activeTranchesCount}
+            <div className="font-outfit mb-2 text-3xl font-bold text-gray-800">
+              {loading ? (
+                <span className="text-2xl text-gray-400">Loading...</span>
+              ) : (
+                activeTranchesCount
+              )}
             </div>
-            <div className="text-gray-600 font-medium mb-3 font-outfit">{t('metrics.activePools')}</div>
-            <div className="text-gray-500 text-sm leading-relaxed">
+            <div className="font-outfit mb-3 font-medium text-gray-600">
+              {t("metrics.activePools")}
+            </div>
+            <div className="text-sm leading-relaxed text-gray-500">
               More pools mean more trading pairs supported.
             </div>
           </div>
-          <div className="bg-white rounded-lg p-6 text-left border border-gray-200 shadow-sm hover:cursor-pointer group">
-          <div className="w-10 h-10 mb-3">
-              <Image src="/images/3.svg" alt="TVL Icon" className="w-full h-full" width={40} height={40} />
+          <div className="group rounded-lg border border-gray-200 bg-white p-6 text-left shadow-sm hover:cursor-pointer">
+            <div className="mb-3 h-10 w-10">
+              <Image
+                src="/images/3.svg"
+                alt="TVL Icon"
+                className="h-full w-full"
+                width={40}
+                height={40}
+              />
             </div>
-            <div className="text-3xl font-bold text-gray-800 mb-2 font-outfit">
-              {loading ? <span className="text-2xl text-gray-400">Loading...</span> : `${premiumRange.min}-${premiumRange.max}%`}
+            <div className="font-outfit mb-2 text-3xl font-bold text-gray-800">
+              {loading ? (
+                <span className="text-2xl text-gray-400">Loading...</span>
+              ) : (
+                `${premiumRange.min}-${premiumRange.max}%`
+              )}
             </div>
-            <div className="text-gray-600 font-medium mb-3 font-outfit">{t('metrics.totalPremiums')}</div>
-            <div className="text-gray-500 text-sm leading-relaxed">
+            <div className="font-outfit mb-3 font-medium text-gray-600">
+              {t("metrics.totalPremiums")}
+            </div>
+            <div className="text-sm leading-relaxed text-gray-500">
               Higher premium means more active trading or subscriptions.
             </div>
           </div>
         </div>
 
-        <div className="text-left mb-12 bg-[#F3FEF6] rounded-2xl p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2 font-header">
-            Hedge your downside risk with simple, on-chain insurance products. 🚀
+        <div className="mb-12 rounded-2xl bg-[#F3FEF6] p-8 text-left">
+          <h3 className="font-header mb-2 text-2xl font-bold text-gray-900">
+            Hedge your downside risk with simple, on-chain insurance products.
+            🚀
           </h3>
-          <p className="text-base text-gray-700 max-w-3xl">
-            From crypto volatility to special events — cover unexpected risks with DIN.
+          <p className="max-w-3xl text-base text-gray-700">
+            From crypto volatility to special events — cover unexpected risks
+            with DIN.
           </p>
         </div>
 
         {/* Top Insurance Products */}
         <div className="mb-16">
-          <h2 className="text-3xl font-bold text-gray-900 mb-10 text-left font-header">
+          <h2 className="font-header mb-10 text-left text-3xl font-bold text-gray-900">
             Available DIN Protection Plans
           </h2>
           {loading ? (
-            <div className="text-center py-12">
+            <div className="py-12 text-center">
               <div className="text-gray-600">Loading insurance products...</div>
             </div>
           ) : insuranceProducts.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-gray-500">No insurance products available</div>
+            <div className="py-12 text-center">
+              <div className="text-gray-500">
+                No insurance products available
+              </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               {insuranceProducts.map((product) => (
-                <InsuranceProductCard key={product.productId} product={product} />
+                <InsuranceProductCard
+                  key={product.productId}
+                  product={product}
+                />
               ))}
             </div>
           )}
         </div>
 
         {/* How It Works */}
-        
+
         <div className="text-left">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">How It Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-[#F3FEF6] rounded-2xl p-8 text-left">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">For Insurance Buyers</h3>
-              <ul className="text-gray-700 space-y-2">
+          <h2 className="mb-8 text-3xl font-bold text-gray-900">
+            How It Works
+          </h2>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <div className="rounded-2xl bg-[#F3FEF6] p-8 text-left">
+              <h3 className="mb-4 text-2xl font-bold text-gray-900">
+                For Insurance Buyers
+              </h3>
+              <ul className="space-y-2 text-gray-700">
                 <li>• Browse available insurance products</li>
                 <li>• Select coverage amount and duration</li>
                 <li>• Pay premium to secure protection</li>
@@ -348,9 +448,11 @@ export default function HomePage() {
               </ul>
             </div>
 
-            <div className="bg-[#F3FEF6] rounded-2xl p-8 text-left">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">For Liquidity Providers</h3>
-              <ul className="text-gray-700 text-left space-y-2">
+            <div className="rounded-2xl bg-[#F3FEF6] p-8 text-left">
+              <h3 className="mb-4 text-2xl font-bold text-gray-900">
+                For Liquidity Providers
+              </h3>
+              <ul className="space-y-2 text-left text-gray-700">
                 <li>• Deposit USDT into insurance pools</li>
                 <li>• Earn premiums from insurance sales</li>
                 <li>• Receive additional staking rewards</li>
@@ -358,7 +460,7 @@ export default function HomePage() {
               </ul>
             </div>
           </div>
-        </div> 
+        </div>
       </div>
     </div>
   );

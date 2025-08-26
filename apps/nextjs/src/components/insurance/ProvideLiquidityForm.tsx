@@ -1,16 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@dinsure/ui/card";
+import { useEffect, useState } from "react";
+import { formatUnits, parseUnits } from "ethers";
+import {
+  AlertCircle,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  CheckCircle,
+  Loader2,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
+
+import { useContracts, useSellerOperations, useWeb3 } from "@dinsure/contracts";
+import { Alert, AlertDescription } from "@dinsure/ui/alert";
 import { Button } from "@dinsure/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@dinsure/ui/card";
 import { Input } from "@dinsure/ui/input";
 import { Label } from "@dinsure/ui/label";
-import { Alert, AlertDescription } from "@dinsure/ui/alert";
 import { Slider } from "@dinsure/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@dinsure/ui/tabs";
-import { TrendingUp, AlertCircle, CheckCircle, Loader2, Wallet, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
-import { useWeb3, useSellerOperations, useContracts } from "@dinsure/contracts";
-import { formatUnits, parseUnits } from "ethers";
 
 interface ProvideLiquidityFormProps {
   poolAddress: string;
@@ -23,28 +38,39 @@ export function ProvideLiquidityForm({
   poolAddress,
   trancheId,
   roundId,
-  onSuccess
+  onSuccess,
 }: ProvideLiquidityFormProps) {
   const web3Context = useWeb3();
-  const { account, isConnected, usdtBalance: usdtBalanceStr, refreshUSDTBalance, signer } = web3Context;
-  const { depositCollateral, withdrawCollateral, getPoolAccounting, getShareBalance } = useSellerOperations();
+  const {
+    account,
+    isConnected,
+    usdtBalance: usdtBalanceStr,
+    refreshUSDTBalance,
+    signer,
+  } = web3Context;
+  const {
+    depositCollateral,
+    withdrawCollateral,
+    getPoolAccounting,
+    getShareBalance,
+  } = useSellerOperations();
   const contracts = useContracts();
   const { isInitialized } = contracts;
-  
+
   // Debug Web3 context
   useEffect(() => {
     console.log("Web3 context in ProvideLiquidityForm:", {
       account,
       isConnected,
       hasSigner: !!signer,
-      signerType: signer ? typeof signer : 'undefined',
-      web3ContextKeys: Object.keys(web3Context)
+      signerType: signer ? typeof signer : "undefined",
+      web3ContextKeys: Object.keys(web3Context),
     });
   }, [account, isConnected, signer, web3Context]);
-  
+
   // Convert string balance to bigint
   const usdtBalance = usdtBalanceStr ? parseUnits(usdtBalanceStr, 6) : 0n;
-  
+
   const [activeTab, setActiveTab] = useState("deposit");
   const [amount, setAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState(""); // Changed from shares to withdrawAmount (USDT)
@@ -57,7 +83,7 @@ export function ProvideLiquidityForm({
     totalAssets: bigint;
     sharePrice: bigint;
   } | null>(null);
-  
+
   // Debug button state
   useEffect(() => {
     console.log("Deposit button state:", {
@@ -68,17 +94,22 @@ export function ProvideLiquidityForm({
       hasSigner: !!signer,
       roundId,
       hasRoundId: !!roundId,
-      buttonDisabled: loading || !isConnected || !isInitialized || !amount || !signer,
-      tabDisabled: !roundId
+      buttonDisabled:
+        loading || !isConnected || !isInitialized || !amount || !signer,
+      tabDisabled: !roundId,
     });
   }, [loading, isConnected, isInitialized, amount, signer, roundId]);
 
   useEffect(() => {
     // Refresh USDT balance
-    if (isConnected && refreshUSDTBalance && typeof refreshUSDTBalance === 'function') {
+    if (
+      isConnected &&
+      refreshUSDTBalance &&
+      typeof refreshUSDTBalance === "function"
+    ) {
       void refreshUSDTBalance();
     }
-    
+
     const loadUserData = async () => {
       if (isConnected && account && isInitialized) {
         try {
@@ -87,13 +118,13 @@ export function ProvideLiquidityForm({
           if (poolAccounting) {
             setNavInfo({
               totalAssets: poolAccounting.totalAssets ?? 0n,
-              sharePrice: poolAccounting.navPerShare ?? 0n
+              sharePrice: poolAccounting.navPerShare ?? 0n,
             });
           } else {
             // No pool or round exists, clear NAV info
             setNavInfo(null);
           }
-          
+
           // Get user's share balance (will return 0 if no pool)
           const shares = await getShareBalance(trancheId);
           setUserShares(shares);
@@ -106,7 +137,15 @@ export function ProvideLiquidityForm({
       }
     };
     void loadUserData();
-  }, [isConnected, account, isInitialized, trancheId, getPoolAccounting, getShareBalance, refreshUSDTBalance]);
+  }, [
+    isConnected,
+    account,
+    isInitialized,
+    trancheId,
+    getPoolAccounting,
+    getShareBalance,
+    refreshUSDTBalance,
+  ]);
 
   const handleDeposit = async () => {
     if (!isConnected || !account) {
@@ -123,7 +162,7 @@ export function ProvideLiquidityForm({
       setError("No active round available for deposits");
       return;
     }
-    
+
     if (!isInitialized) {
       setError("Contracts are still initializing. Please wait a moment.");
       return;
@@ -142,19 +181,19 @@ export function ProvideLiquidityForm({
         hasTranchePoolFactory: !!(contracts as any).tranchePoolFactory,
         hasUsdt: !!(contracts as any).usdt,
         hasSigner: !!signer,
-        account
+        account,
       });
-      
+
       // depositCollateral already waits for the transaction and returns the receipt
       const receipt = await depositCollateral({
         roundId: Number(roundId),
-        collateralAmount: amount
+        collateralAmount: amount,
       });
-      
+
       setTxHash(receipt?.hash ?? "");
       setSuccess(true);
       setAmount("");
-      
+
       if (onSuccess) {
         onSuccess();
       }
@@ -164,10 +203,10 @@ export function ProvideLiquidityForm({
       if (poolAccounting) {
         setNavInfo({
           totalAssets: poolAccounting.totalAssets ?? 0n,
-          sharePrice: poolAccounting.navPerShare ?? 0n
+          sharePrice: poolAccounting.navPerShare ?? 0n,
         });
       }
-      
+
       // Get updated user shares
       const updatedShares = await getShareBalance(trancheId);
       setUserShares(updatedShares);
@@ -191,7 +230,7 @@ export function ProvideLiquidityForm({
       setError("Please enter a valid USDT amount");
       return;
     }
-    
+
     if (!isInitialized) {
       setError("Contracts are still initializing. Please wait a moment.");
       return;
@@ -211,26 +250,24 @@ export function ProvideLiquidityForm({
       // shares = usdtAmount * 1e18 / sharePrice
       // sharePrice is in 18 decimals (price per share in USDT with 6 decimals)
       const usdtAmountWei = parseUnits(withdrawAmount, 6); // Convert USDT to 6 decimals
-      const sharesToWithdraw = (usdtAmountWei * parseUnits("1", 18)) / navInfo.sharePrice;
+      const sharesToWithdraw =
+        (usdtAmountWei * parseUnits("1", 18)) / navInfo.sharePrice;
       const sharesToWithdrawStr = formatUnits(sharesToWithdraw, 18);
-      
+
       console.log("Withdrawal calculation:", {
         requestedUSDT: withdrawAmount,
         usdtAmountWei: formatUnits(usdtAmountWei, 6),
         sharePrice: formatUnits(navInfo.sharePrice, 18),
-        sharesToWithdraw: sharesToWithdrawStr
+        sharesToWithdraw: sharesToWithdrawStr,
       });
-      
+
       // withdrawCollateral accepts shares as a string
-      const receipt = await withdrawCollateral(
-        trancheId,
-        sharesToWithdrawStr
-      );
-      
+      const receipt = await withdrawCollateral(trancheId, sharesToWithdrawStr);
+
       setTxHash(receipt?.hash ?? "");
       setSuccess(true);
       setWithdrawAmount("");
-      
+
       if (onSuccess) {
         onSuccess();
       }
@@ -240,10 +277,10 @@ export function ProvideLiquidityForm({
       if (poolAccounting) {
         setNavInfo({
           totalAssets: poolAccounting.totalAssets ?? 0n,
-          sharePrice: poolAccounting.navPerShare ?? 0n
+          sharePrice: poolAccounting.navPerShare ?? 0n,
         });
       }
-      
+
       // Get updated user shares
       const updatedShares = await getShareBalance(trancheId);
       setUserShares(updatedShares);
@@ -264,19 +301,29 @@ export function ProvideLiquidityForm({
     }
   };
 
-  const maxDeposit = usdtBalance ? 
-    Math.min(Number(formatUnits(usdtBalance, 6)), 100000) : 100000;
-  
-  // Max withdraw in USDT based on user's shares
-  const maxWithdraw = userShares && navInfo?.sharePrice ? 
-    Number(formatUnits(userShares, 18)) * Number(navInfo.sharePrice) / 1e6 : 0;
+  const maxDeposit = usdtBalance
+    ? Math.min(Number(formatUnits(usdtBalance, 6)), 100000)
+    : 100000;
 
-  const estimatedShares = amount && navInfo?.sharePrice ? 
-    (parseFloat(amount) * 1e6 / Number(navInfo.sharePrice)).toFixed(4) : "0";
-  
+  // Max withdraw in USDT based on user's shares
+  const maxWithdraw =
+    userShares && navInfo?.sharePrice
+      ? (Number(formatUnits(userShares, 18)) * Number(navInfo.sharePrice)) / 1e6
+      : 0;
+
+  const estimatedShares =
+    amount && navInfo?.sharePrice
+      ? ((parseFloat(amount) * 1e6) / Number(navInfo.sharePrice)).toFixed(4)
+      : "0";
+
   // Calculate shares needed for the USDT withdrawal amount
-  const estimatedSharesForWithdrawal = withdrawAmount && navInfo?.sharePrice && navInfo.sharePrice > 0n ? 
-    (parseFloat(withdrawAmount) * 1e6 / Number(navInfo.sharePrice)).toFixed(6) : "0";
+  const estimatedSharesForWithdrawal =
+    withdrawAmount && navInfo?.sharePrice && navInfo.sharePrice > 0n
+      ? (
+          (parseFloat(withdrawAmount) * 1e6) /
+          Number(navInfo.sharePrice)
+        ).toFixed(6)
+      : "0";
 
   return (
     <Card>
@@ -292,14 +339,20 @@ export function ProvideLiquidityForm({
       <CardContent className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
           <div className="rounded-lg border p-3">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="mb-1 flex items-center gap-2">
               <Wallet className="h-4 w-4 text-blue-500" />
               <span className="text-sm font-medium">Your Position</span>
             </div>
             <p className="text-lg font-bold">
-              ${navInfo && userShares > 0n 
-                ? (Number(formatUnits(userShares, 18)) * Number(navInfo.sharePrice) / 1e6).toFixed(2)
-                : "0.00"} USDT
+              $
+              {navInfo && userShares > 0n
+                ? (
+                    (Number(formatUnits(userShares, 18)) *
+                      Number(navInfo.sharePrice)) /
+                    1e6
+                  ).toFixed(2)
+                : "0.00"}{" "}
+              USDT
             </p>
             {userShares > 0n && (
               <p className="text-sm text-muted-foreground">
@@ -308,16 +361,17 @@ export function ProvideLiquidityForm({
             )}
           </div>
           <div className="rounded-lg border p-3">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="mb-1 flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-green-500" />
               <span className="text-sm font-medium">Share Price</span>
             </div>
             <p className="text-lg font-bold">
-              ${navInfo ? (Number(navInfo.sharePrice) / 1e6).toFixed(4) : "1.0000"}
+              $
+              {navInfo
+                ? (Number(navInfo.sharePrice) / 1e6).toFixed(4)
+                : "1.0000"}
             </p>
-            <p className="text-sm text-muted-foreground">
-              Per share value
-            </p>
+            <p className="text-sm text-muted-foreground">Per share value</p>
           </div>
         </div>
 
@@ -338,67 +392,82 @@ export function ProvideLiquidityForm({
               <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
                 <AlertDescription className="text-amber-800 dark:text-amber-200">
-                  Deposits require an OPEN round. Please select a round with "OPEN" status from the rounds list below to provide liquidity.
+                  Deposits require an OPEN round. Please select a round with
+                  "OPEN" status from the rounds list below to provide liquidity.
                 </AlertDescription>
               </Alert>
             ) : (
               <>
-            <div className="space-y-2">
-              <Label htmlFor="deposit-amount">Deposit Amount (USDT)</Label>
-              <Input
-                id="deposit-amount"
-                type="number"
-                placeholder="Enter amount to deposit"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                disabled={loading}
-              />
-              <Slider
-                value={[parseFloat(amount) || 0]}
-                onValueChange={handleSliderChange}
-                max={maxDeposit}
-                step={10}
-                className="mt-2"
-                disabled={loading}
-              />
-              <p className="text-sm text-muted-foreground">
-                Available: ${usdtBalance ? Number(formatUnits(usdtBalance, 6)).toLocaleString() : "0"} USDT
-              </p>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="deposit-amount">Deposit Amount (USDT)</Label>
+                  <Input
+                    id="deposit-amount"
+                    type="number"
+                    placeholder="Enter amount to deposit"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    disabled={loading}
+                  />
+                  <Slider
+                    value={[parseFloat(amount) || 0]}
+                    onValueChange={handleSliderChange}
+                    max={maxDeposit}
+                    step={10}
+                    className="mt-2"
+                    disabled={loading}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Available: $
+                    {usdtBalance
+                      ? Number(formatUnits(usdtBalance, 6)).toLocaleString()
+                      : "0"}{" "}
+                    USDT
+                  </p>
+                </div>
 
-            <div className="rounded-lg bg-muted p-4 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">You will deposit:</span>
-                <span className="font-medium">
-                  {parseFloat(amount || "0").toLocaleString()} USDT
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Estimated shares:</span>
-                <span className="font-medium text-green-600">
-                  {estimatedShares} shares
-                </span>
-              </div>
-            </div>
+                <div className="space-y-2 rounded-lg bg-muted p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      You will deposit:
+                    </span>
+                    <span className="font-medium">
+                      {parseFloat(amount || "0").toLocaleString()} USDT
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      Estimated shares:
+                    </span>
+                    <span className="font-medium text-green-600">
+                      {estimatedShares} shares
+                    </span>
+                  </div>
+                </div>
 
-            <Button
-              onClick={handleDeposit}
-              disabled={loading || !isConnected || !isInitialized || !amount || !signer}
-              className="w-full"
-              size="lg"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <ArrowDownToLine className="mr-2 h-4 w-4" />
-                  Deposit USDT
-                </>
-              )}
-            </Button>
+                <Button
+                  onClick={handleDeposit}
+                  disabled={
+                    loading ||
+                    !isConnected ||
+                    !isInitialized ||
+                    !amount ||
+                    !signer
+                  }
+                  className="w-full"
+                  size="lg"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowDownToLine className="mr-2 h-4 w-4" />
+                      Deposit USDT
+                    </>
+                  )}
+                </Button>
               </>
             )}
           </TabsContent>
@@ -425,22 +494,26 @@ export function ProvideLiquidityForm({
               <p className="text-sm text-muted-foreground">
                 Available: ${maxWithdraw.toFixed(2)} USDT
                 {userShares > 0n && (
-                  <span className="block text-xs mt-1">
+                  <span className="mt-1 block text-xs">
                     ({Number(formatUnits(userShares, 18)).toFixed(4)} shares)
                   </span>
                 )}
               </p>
             </div>
 
-            <div className="rounded-lg bg-muted p-4 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">You will withdraw:</span>
+            <div className="space-y-2 rounded-lg bg-muted p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  You will withdraw:
+                </span>
                 <span className="font-medium">
                   ${parseFloat(withdrawAmount || "0").toFixed(2)} USDT
                 </span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Shares to burn:</span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  Shares to burn:
+                </span>
                 <span className="font-medium text-orange-600">
                   {estimatedSharesForWithdrawal} shares
                 </span>
@@ -449,7 +522,14 @@ export function ProvideLiquidityForm({
 
             <Button
               onClick={handleWithdraw}
-              disabled={loading || !isConnected || !isInitialized || !withdrawAmount || userShares === 0n || !signer}
+              disabled={
+                loading ||
+                !isConnected ||
+                !isInitialized ||
+                !withdrawAmount ||
+                userShares === 0n ||
+                !signer
+              }
               className="w-full"
               size="lg"
             >
@@ -485,7 +565,7 @@ export function ProvideLiquidityForm({
                   href={`https://kairos.kaiascope.com/tx/${txHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block mt-1 underline"
+                  className="mt-1 block underline"
                 >
                   View transaction
                 </a>
@@ -499,7 +579,7 @@ export function ProvideLiquidityForm({
             Please connect your wallet to manage liquidity
           </p>
         )}
-        
+
         {isConnected && !isInitialized && (
           <p className="text-center text-sm text-muted-foreground">
             Loading contracts...

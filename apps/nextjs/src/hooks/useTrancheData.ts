@@ -1,6 +1,7 @@
-import { ACTIVE_NETWORK, ProductCatalogService } from "@dinsure/contracts";
-import { ethers } from "ethers";
 import { useEffect, useState } from "react";
+import { ethers } from "ethers";
+
+import { ACTIVE_NETWORK, ProductCatalogService } from "@dinsure/contracts";
 
 export interface RoundEconomics {
   totalBuyerPurchases: bigint;
@@ -48,11 +49,14 @@ interface UseTrancheDataProps {
 const createDefaultProvider = () => {
   return new ethers.JsonRpcProvider(ACTIVE_NETWORK.rpcUrl, {
     chainId: ACTIVE_NETWORK.chainId,
-    name: ACTIVE_NETWORK.name
+    name: ACTIVE_NETWORK.name,
   });
 };
 
-export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps) {
+export function useTrancheData({
+  factory,
+  currentBTCPrice,
+}: UseTrancheDataProps) {
   const [tranches, setTranches] = useState<TrancheDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -65,37 +69,47 @@ export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps
       const provider = factory?.provider || createDefaultProvider();
       const catalogService = new ProductCatalogService(
         ACTIVE_NETWORK.contracts.ProductCatalog,
-        provider
+        provider,
       );
       setService(catalogService);
-      console.log('ProductCatalogService initialized for tranche data');
+      console.log("ProductCatalogService initialized for tranche data");
     } catch (error) {
-      console.error('Failed to initialize ProductCatalogService for tranches:', error);
-      setError(error instanceof Error ? error : new Error('Failed to initialize service'));
+      console.error(
+        "Failed to initialize ProductCatalogService for tranches:",
+        error,
+      );
+      setError(
+        error instanceof Error
+          ? error
+          : new Error("Failed to initialize service"),
+      );
       setLoading(false);
     }
   }, [factory]);
 
   const fetchTrancheData = async () => {
     if (!service) {
-      console.log('ProductCatalogService not initialized for tranche data');
+      console.log("ProductCatalogService not initialized for tranche data");
       setLoading(false);
-      setError(new Error('Contract service not initialized'));
+      setError(new Error("Contract service not initialized"));
       return;
     }
 
     try {
-      console.log('Starting tranche data fetch...');
+      console.log("Starting tranche data fetch...");
       setLoading(true);
       setError(null);
 
       // Get active tranches
       const activeTranches = await service.getActiveTrancheIds();
-      console.log(`Found ${activeTranches.length} active tranches:`, activeTranches);
+      console.log(
+        `Found ${activeTranches.length} active tranches:`,
+        activeTranches,
+      );
 
       // If no active tranches, return empty array immediately
       if (activeTranches.length === 0) {
-        console.log('No active tranches found, returning empty array');
+        console.log("No active tranches found, returning empty array");
         setTranches([]);
         setLoading(false);
         return;
@@ -112,7 +126,7 @@ export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps
             console.log(`Tranche ${trancheId} not found`);
             continue;
           }
-          
+
           // Reduce console logging to avoid spam
           // console.log(`Tranche ${trancheId}:`, {
           //   tranche,
@@ -129,9 +143,16 @@ export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps
                 console.log(`Round ${roundId} not found`);
                 continue;
               }
-              
-              const roundState = ['ANNOUNCED', 'OPEN', 'ACTIVE', 'MATURED', 'SETTLED', 'CANCELED'][roundInfo.state];
-              
+
+              const roundState = [
+                "ANNOUNCED",
+                "OPEN",
+                "ACTIVE",
+                "MATURED",
+                "SETTLED",
+                "CANCELED",
+              ][roundInfo.state];
+
               // Skip settled/canceled rounds
               if (roundInfo.state === 5 || roundInfo.state === 6) continue;
 
@@ -140,13 +161,19 @@ export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps
               let triggerPrice: number | undefined;
               let triggerDirection: string | undefined;
 
-              if (currentBTCPrice && (roundInfo.state >= 2 && roundInfo.state <= 3)) {
+              if (
+                currentBTCPrice &&
+                roundInfo.state >= 2 &&
+                roundInfo.state <= 3
+              ) {
                 triggerPrice = Number(ethers.formatEther(tranche.threshold));
-                
-                if (tranche.triggerType === 0) { // PRICE_BELOW
+
+                if (tranche.triggerType === 0) {
+                  // PRICE_BELOW
                   isTriggered = currentBTCPrice <= triggerPrice;
                   triggerDirection = "BELOW";
-                } else if (tranche.triggerType === 1) { // PRICE_ABOVE
+                } else if (tranche.triggerType === 1) {
+                  // PRICE_ABOVE
                   isTriggered = currentBTCPrice >= triggerPrice;
                   triggerDirection = "ABOVE";
                 }
@@ -155,8 +182,12 @@ export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps
               // Calculate time to maturity
               const maturityTime = tranche.maturityTimestamp;
               const timeToMaturity = maturityTime - now;
-              const days = Math.floor(Math.abs(timeToMaturity) / (24 * 60 * 60));
-              const hours = Math.floor((Math.abs(timeToMaturity) % (24 * 60 * 60)) / 3600);
+              const days = Math.floor(
+                Math.abs(timeToMaturity) / (24 * 60 * 60),
+              );
+              const hours = Math.floor(
+                (Math.abs(timeToMaturity) % (24 * 60 * 60)) / 3600,
+              );
 
               // Create economics from round data
               const economics: RoundEconomics = {
@@ -164,7 +195,7 @@ export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps
                 totalSellerCollateral: roundInfo.totalSellerCollateral,
                 matchedAmount: roundInfo.matchedAmount,
                 lockedCollateral: 0n, // Not available in Round interface
-                premiumPool: 0n // Not available in Round interface
+                premiumPool: 0n, // Not available in Round interface
               };
 
               rounds.push({
@@ -178,15 +209,14 @@ export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps
                 ...(isTriggered !== undefined && {
                   isTriggered,
                   triggerPrice,
-                  triggerDirection
+                  triggerDirection,
                 }),
                 timeToMaturity: {
                   days,
                   hours,
-                  isMatured: timeToMaturity <= 0
-                }
+                  isMatured: timeToMaturity <= 0,
+                },
               });
-
             } catch (roundError) {
               console.error(`Error processing round ${roundId}:`, roundError);
             }
@@ -200,9 +230,8 @@ export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps
             maturityTimestamp: tranche.maturityTimestamp,
             trancheCap: tranche.trancheCap,
             poolAddress: tranche.poolAddress || ethers.ZeroAddress,
-            rounds
+            rounds,
           });
-
         } catch (trancheError) {
           console.error(`Error processing tranche ${trancheId}:`, trancheError);
         }
@@ -211,8 +240,10 @@ export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps
       console.log(`Processed ${trancheDetails.length} tranches successfully`);
       setTranches(trancheDetails);
     } catch (err) {
-      console.error('Error fetching tranche data:', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch tranche data'));
+      console.error("Error fetching tranche data:", err);
+      setError(
+        err instanceof Error ? err : new Error("Failed to fetch tranche data"),
+      );
       setTranches([]); // Set empty array on error
     } finally {
       setLoading(false);
@@ -229,35 +260,37 @@ export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps
   // Update trigger status when BTC price changes (without refetching all data)
   useEffect(() => {
     if (!currentBTCPrice || tranches.length === 0) return;
-    
+
     // Update trigger status for existing tranches
-    setTranches(prevTranches => 
-      prevTranches.map(tranche => ({
+    setTranches((prevTranches) =>
+      prevTranches.map((tranche) => ({
         ...tranche,
-        rounds: tranche.rounds.map(round => {
+        rounds: tranche.rounds.map((round) => {
           // Only update trigger status for active/matured rounds
           if (round.state < 2 || round.state > 3) return round;
-          
+
           const triggerPrice = Number(ethers.formatEther(tranche.threshold));
           let isTriggered: boolean | undefined;
           let triggerDirection: string | undefined;
-          
-          if (tranche.triggerType === 0) { // PRICE_BELOW
+
+          if (tranche.triggerType === 0) {
+            // PRICE_BELOW
             isTriggered = currentBTCPrice <= triggerPrice;
             triggerDirection = "BELOW";
-          } else if (tranche.triggerType === 1) { // PRICE_ABOVE
+          } else if (tranche.triggerType === 1) {
+            // PRICE_ABOVE
             isTriggered = currentBTCPrice >= triggerPrice;
             triggerDirection = "ABOVE";
           }
-          
+
           return {
             ...round,
             isTriggered,
             triggerPrice,
-            triggerDirection
+            triggerDirection,
           };
-        })
-      }))
+        }),
+      })),
     );
   }, [currentBTCPrice]); // Only update trigger status when BTC price changes
 
@@ -265,6 +298,6 @@ export function useTrancheData({ factory, currentBTCPrice }: UseTrancheDataProps
     tranches,
     loading,
     error,
-    refetch: fetchTrancheData
+    refetch: fetchTrancheData,
   };
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { SimpleProductCard } from "@/components/insurance/SimpleProductCard";
 
 import {
@@ -9,8 +11,6 @@ import {
   useProductManagement,
   useWeb3,
 } from "@dinsure/contracts";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 
 // Using any types to avoid TypeScript conflicts
 type Product = any;
@@ -50,7 +50,7 @@ export default function InsurancePage() {
         try {
           const fetchedProducts = await getProducts();
           console.log("Raw products fetched:", fetchedProducts);
-          
+
           // For each product, fetch its tranches
           const productsWithTranches = await Promise.all(
             fetchedProducts.map(async (product) => {
@@ -60,17 +60,19 @@ export default function InsurancePage() {
                 for (let i = 0; i < 5; i++) {
                   try {
                     const tranche = await (productCatalog as any).tranches(
-                      BigInt(product.productId) * 10n + BigInt(i)
+                      BigInt(product.productId) * 10n + BigInt(i),
                     );
                     if (tranche?.active) {
                       productTranches.push({
-                        trancheId: Number(BigInt(product.productId) * 10n + BigInt(i)),
+                        trancheId: Number(
+                          BigInt(product.productId) * 10n + BigInt(i),
+                        ),
                         productId: product.productId,
                         index: i,
                         premiumRateBps: Number(tranche.premiumRateBps || 0),
                         threshold: tranche.threshold?.toString() || "0",
                         poolAddress: tranche.poolAddress || "",
-                        active: true
+                        active: true,
                       });
                     }
                   } catch (err) {
@@ -80,16 +82,21 @@ export default function InsurancePage() {
                 }
                 return { ...product, tranches: productTranches };
               } catch (err) {
-                console.error(`Error fetching tranches for product ${product.productId}:`, err);
+                console.error(
+                  `Error fetching tranches for product ${product.productId}:`,
+                  err,
+                );
                 return { ...product, tranches: [] };
               }
-            })
+            }),
           );
-          
+
           setProducts(productsWithTranches as Product[]);
-          
+
           // Also collect all tranches
-          const allTranches = productsWithTranches.flatMap(p => p.tranches || []);
+          const allTranches = productsWithTranches.flatMap(
+            (p) => p.tranches || [],
+          );
           setTranches(allTranches);
         } catch (productError) {
           console.error("Error fetching products:", productError);
@@ -103,7 +110,9 @@ export default function InsurancePage() {
           activeTrancheIds = await getActiveTranches();
           console.log("Active tranche IDs:", activeTrancheIds);
         } catch (trancheError) {
-          console.log("No active tranches found or function not available, using empty array");
+          console.log(
+            "No active tranches found or function not available, using empty array",
+          );
           activeTrancheIds = [];
         }
 
@@ -157,12 +166,11 @@ export default function InsurancePage() {
     // Navigate to tranche page filtered by product
     router.push(`/tranches?productId=${productId}`);
   };
-  
+
   const handleViewTrancheDetail = (productId: number, tranchId: number) => {
     // Navigate to specific tranche detail page
     router.push(`/tranches/${productId}/${tranchId}`);
   };
-  
 
   // Debug logging
   useEffect(() => {
@@ -190,7 +198,7 @@ export default function InsurancePage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Debug Info */}
-        <div className="mb-4 rounded-lg bg-gray-50 border border-gray-100 p-3 text-xs text-gray-500">
+        <div className="mb-4 rounded-lg border border-gray-100 bg-gray-50 p-3 text-xs text-gray-500">
           Debug: isInitialized={String(isInitialized)} | productsLoading=
           {String(productsLoading)} | products={products.length} | tranches=
           {tranches.length} | error={productsError ? "Yes" : "No"}
@@ -199,34 +207,44 @@ export default function InsurancePage() {
         {/* Header */}
         <div className="mb-8">
           <div className="mb-16">
-            <h1 className="text-[40px] mobile:text-[42px] font-bold text-gray-900 mb-4 font-display break-words leading-tight">
-              Protect Your Assets,<br />Secure Your Future
+            <h1 className="mobile:text-[42px] font-display mb-4 break-words text-[40px] font-bold leading-tight text-gray-900">
+              Protect Your Assets,
+              <br />
+              Secure Your Future
             </h1>
-            <p className="text-gray-600 text-[18px] mobile:text-[20px] mb-8 break-words leading-tight">
-              <span className="font-bold bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent">As an insurance buyer</span>, you can protect<br />yourself against the risks of asset price fluctuations.
+            <p className="mobile:text-[20px] mb-8 break-words text-[18px] leading-tight text-gray-600">
+              <span className="bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text font-bold text-transparent">
+                As an insurance buyer
+              </span>
+              , you can protect
+              <br />
+              yourself against the risks of asset price fluctuations.
             </p>
           </div>
           <div className="mt-4 flex items-center gap-4 text-sm">
-            <span className="text-green-600 bg-green-100 px-3 py-1 rounded-full font-medium">
+            <span className="rounded-full bg-green-100 px-3 py-1 font-medium text-green-600">
               ● Connected to {ACTIVE_NETWORK.name}
             </span>
             <a
               href={`${ACTIVE_NETWORK.blockExplorer}/address/${ACTIVE_NETWORK.contracts.ProductCatalog}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+              className="font-medium text-gray-600 transition-colors hover:text-gray-900"
             >
               View Contracts ↗
             </a>
           </div>
         </div>
-        
+
         <div className="mb-8">
-          <h2 className="text-[30px] font-bold text-gray-900 mb-4 font-display">Insurance Catalog</h2>
-          <p className="text-gray-600 mb-8">
-            Choose from our parametric insurance products to protect your crypto assets
+          <h2 className="font-display mb-4 text-[30px] font-bold text-gray-900">
+            Insurance Catalog
+          </h2>
+          <p className="mb-8 text-gray-600">
+            Choose from our parametric insurance products to protect your crypto
+            assets
           </p>
-          <div className="w-full h-px bg-gray-200"></div>
+          <div className="h-px w-full bg-gray-200"></div>
         </div>
 
         {/* Contract Error */}
@@ -236,8 +254,12 @@ export default function InsurancePage() {
               <div className="text-xl text-red-500">⚠️</div>
               <div>
                 <h3 className="font-medium text-red-700">Contract Error</h3>
-                <p className="text-sm text-red-600">{(contractError)?.message || "Unknown error"}</p>
-                <code className="text-xs text-red-500">{(contractError)?.stack || ""}</code>
+                <p className="text-sm text-red-600">
+                  {contractError?.message || "Unknown error"}
+                </p>
+                <code className="text-xs text-red-500">
+                  {contractError?.stack || ""}
+                </code>
               </div>
             </div>
           </div>
@@ -277,7 +299,7 @@ export default function InsurancePage() {
                   {tranches.map((tranche) => (
                     <div
                       key={tranche.trancheId}
-                      className="rounded-2xl bg-white border border-gray-100 shadow-sm p-6"
+                      className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
                     >
                       <h3 className="mb-4 text-lg font-semibold text-gray-900">
                         Tranche #{tranche.trancheId}
@@ -285,19 +307,19 @@ export default function InsurancePage() {
                       <div className="space-y-2 text-sm">
                         <p className="text-gray-600">
                           Product ID:{" "}
-                          <span className="text-gray-900 font-medium">
+                          <span className="font-medium text-gray-900">
                             {tranche.productId}
                           </span>
                         </p>
                         <p className="text-gray-600">
                           Premium Rate:{" "}
-                          <span className="text-gray-900 font-medium">
+                          <span className="font-medium text-gray-900">
                             {tranche.premiumRateBps / 100}%
                           </span>
                         </p>
                         <p className="text-gray-600">
                           Trigger:{" "}
-                          <span className="text-gray-900 font-medium">
+                          <span className="font-medium text-gray-900">
                             {tranche.triggerType === 0
                               ? "Price Below"
                               : "Price Above"}
@@ -305,7 +327,7 @@ export default function InsurancePage() {
                         </p>
                         <p className="text-gray-600">
                           Threshold:{" "}
-                          <span className="text-gray-900 font-medium">
+                          <span className="font-medium text-gray-900">
                             ${tranche.threshold}
                           </span>
                         </p>
@@ -321,12 +343,17 @@ export default function InsurancePage() {
                           // If we have productId, navigate to the tranche detail page
                           if (tranche.productId) {
                             // Assuming trancheId encodes the index, we can extract it
-                            handleViewTrancheDetail(tranche.productId, tranche.trancheId % 10);
+                            handleViewTrancheDetail(
+                              tranche.productId,
+                              tranche.trancheId % 10,
+                            );
                           } else {
-                            router.push(`/tranches?trancheId=${tranche.trancheId}`);
+                            router.push(
+                              `/tranches?trancheId=${tranche.trancheId}`,
+                            );
                           }
                         }}
-                        className="mt-4 rounded-xl bg-gradient-to-br from-[#86D99C] to-[#00B1B8] px-4 py-2 text-sm text-white font-semibold hover:scale-95 transition-all duration-300"
+                        className="mt-4 rounded-xl bg-gradient-to-br from-[#86D99C] to-[#00B1B8] px-4 py-2 text-sm font-semibold text-white transition-all duration-300 hover:scale-95"
                       >
                         View Details
                       </button>

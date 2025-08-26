@@ -5,12 +5,14 @@ The main web application for the DIN decentralized insurance platform, built wit
 ## Features
 
 ### Core Functionality
+
 - **Insurance Marketplace**: Browse and purchase parametric insurance products
 - **Liquidity Provision**: Provide collateral to earn premiums and yields
 - **Portfolio Management**: Track insurance positions and liquidity investments
 - **Real-time Monitoring**: Live price feeds and position updates via oracles
 
 ### Technical Features
+
 - **Web3 Integration**: Direct interaction with Kaia blockchain
 - **Multi-wallet Support**: MetaMask, Kaikas, and WalletConnect
 - **Session Persistence**: Maintains wallet state across page refreshes
@@ -63,26 +65,33 @@ src/
 ## Available Pages
 
 ### `/` - Home
+
 Landing page with platform overview and featured products
 
 ### `/insurance` - Insurance Marketplace
+
 Browse all available insurance products and tranches
 
 ### `/tranches` - Tranche Listing
+
 View and filter all tranches across products
 
 ### `/tranches/[productId]/[trancheId]` - Tranche Details
+
 Detailed view with buy/sell forms for specific tranche
 
 ### `/portfolio` - User Portfolio
+
 Dashboard showing user's insurance positions and liquidity provisions
 
 ### `/debug` - Debug Tools
+
 Development tools for contract state inspection (dev mode only)
 
 ## Key Components
 
 ### Insurance Components
+
 - **ProductCard**: Displays insurance product with key metrics
 - **TrancheCard**: Shows tranche details with risk/reward information
 - **BuyInsuranceForm**: Purchase interface with premium calculation
@@ -91,17 +100,20 @@ Development tools for contract state inspection (dev mode only)
 - **PositionCard**: Displays user's active positions
 
 ### Web3 Components
+
 - **WalletButton**: Wallet connection with network switching
 - **AppProviders**: Web3 context and session persistence
 
 ## Development
 
 ### Prerequisites
+
 - Node.js 20+
 - pnpm 9.6.0+
 - MetaMask or Kaikas wallet
 
 ### Setup
+
 ```bash
 # Install dependencies (from root)
 pnpm install
@@ -114,7 +126,9 @@ pnpm dev
 ```
 
 ### Environment Variables
+
 Create `.env` file with:
+
 ```bash
 # Kaia Network
 NEXT_PUBLIC_CHAIN_ID=1001  # Testnet
@@ -130,6 +144,7 @@ NEXT_PUBLIC_SHOW_DEBUG_INFO=true
 ```
 
 ### Commands
+
 ```bash
 # Development
 pnpm dev              # Start in dev mode
@@ -148,6 +163,7 @@ pnpm build           # Production build
 The app uses the `@dinsure/contracts` package for smart contract interaction:
 
 ### Available Hooks
+
 - `useContracts()` - Contract instances
 - `useProductManagement()` - Product/tranche operations
 - `useRoundManagement()` - Round lifecycle
@@ -158,20 +174,21 @@ The app uses the `@dinsure/contracts` package for smart contract interaction:
 - `useUserPortfolio()` - User positions
 
 ### Example Usage
+
 ```typescript
-import { useBuyerOperations } from '@dinsure/contracts';
+import { useBuyerOperations } from "@dinsure/contracts";
 
 function BuyInsurance() {
   const { buyInsurance, calculatePremium } = useBuyerOperations();
-  
+
   // Calculate premium for coverage
   const premium = await calculatePremium(roundId, coverageAmount);
-  
+
   // Purchase insurance
   const tx = await buyInsurance({
     roundId,
     amount: coverageAmount,
-    maxPremium: premium
+    maxPremium: premium,
   });
 }
 ```
@@ -179,6 +196,7 @@ function BuyInsurance() {
 ## Deployment
 
 ### Production Build
+
 ```bash
 # Build the application
 pnpm build
@@ -188,6 +206,7 @@ pnpm start
 ```
 
 ### Deployment Platforms
+
 - **Vercel**: Recommended for Next.js apps
 - **AWS Amplify**: Alternative with CI/CD
 - **Docker**: Self-hosted deployment

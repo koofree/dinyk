@@ -1,11 +1,11 @@
 /* Google Fonts Import */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap");
 
 /* Outfit 폰트를 Display/Header용으로 사용 */
 @font-face {
-  font-family: 'Marlin Soft SQ';
-  src: local('Outfit'), local('Georgia'), local('serif');
+  font-family: "Marlin Soft SQ";
+  src: local("Outfit"), local("Georgia"), local("serif");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -16,22 +16,22 @@
 @tailwind utilities;
 
 :root {
-  --font-sans: 'Pretendard', 'Outfit', system-ui, sans-serif;
-  --font-display: 'Outfit', 'Pretendard', system-ui, sans-serif;
-  --font-header: 'Outfit', 'Pretendard', system-ui, sans-serif;
+  --font-sans: "Pretendard", "Outfit", system-ui, sans-serif;
+  --font-display: "Outfit", "Pretendard", system-ui, sans-serif;
+  --font-header: "Outfit", "Pretendard", system-ui, sans-serif;
 }
 
 /* Language-specific font variables */
 [data-language="ko"] {
-  --font-sans: 'Pretendard', system-ui, sans-serif;
-  --font-display: 'Pretendard', system-ui, sans-serif;
-  --font-header: 'Pretendard', system-ui, sans-serif;
+  --font-sans: "Pretendard", system-ui, sans-serif;
+  --font-display: "Pretendard", system-ui, sans-serif;
+  --font-header: "Pretendard", system-ui, sans-serif;
 }
 
 [data-language="en"] {
-  --font-sans: 'Pretendard', 'Outfit', system-ui, sans-serif;
-  --font-display: 'Outfit', 'Pretendard', system-ui, sans-serif;
-  --font-header: 'Outfit', 'Pretendard', system-ui, sans-serif;
+  --font-sans: "Pretendard", "Outfit", system-ui, sans-serif;
+  --font-display: "Outfit", "Pretendard", system-ui, sans-serif;
+  --font-header: "Outfit", "Pretendard", system-ui, sans-serif;
 }
 
 @layer base {
@@ -79,7 +79,7 @@
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
   }
-  
+
   * {
     @apply border-border;
   }
