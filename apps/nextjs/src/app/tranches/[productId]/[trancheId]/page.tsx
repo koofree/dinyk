@@ -7,7 +7,9 @@ import { formatUnits } from "ethers";
 import { motion } from "framer-motion";
 import { AlertCircle, ArrowLeft, Loader2, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+import type { ProductCatalog } from "@dinsure/contracts";
 
 
 import {
@@ -84,19 +86,9 @@ export default function TrancheDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedRound, setSelectedRound] = useState<RoundData | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [
-    productId,
-    trancheId,
-    isConnected,
-    productCatalog,
-    tranchePoolFactory,
-    isInitialized,
-    loadData
-  ]);
+  
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (
       !productId ||
       !trancheId ||
@@ -128,7 +120,8 @@ export default function TrancheDetailPage() {
       }
 
       // Get tranche data directly from contract
-      let trancheData: any;
+      // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+      let trancheData: ProductCatalog.TrancheSpecStructOutput | null;
       try {
         trancheData = await productCatalog.getTranche(
           Number(trancheId),
@@ -182,7 +175,7 @@ export default function TrancheDetailPage() {
 
       // Handle the tranche data carefully - it might be null or have different field names
       const trancheInfo = {
-        productId: BigInt(trancheData?.productId || productId),
+        productId: BigInt(trancheData.productId || productId),
         trancheId: Number(trancheId),
         trigger: BigInt(
           trancheData?.threshold ||
@@ -234,16 +227,16 @@ export default function TrancheDetailPage() {
 
           // Get rounds for this tranche using the correct API
           try {
-            const roundsData = await (productCatalog as any).getTrancheRounds(
+            const roundsData = await (productCatalog).getTrancheRounds(
               Number(trancheId),
             );
             console.log("Rounds data for tranche", trancheId, ":", roundsData);
 
             // Fetch detailed round information for each round
             const formattedRounds = await Promise.all(
-              roundsData?.map(async (roundId: any) => {
+              roundsData.map(async (roundId: bigint) => {
                 try {
-                  const roundInfo = await (productCatalog as any).getRound(
+                  const roundInfo = await (productCatalog).getRound(
                     roundId,
                   );
                   return {
@@ -334,7 +327,20 @@ export default function TrancheDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [productCatalog, getProducts, getPoolAccounting, tranchePoolFactory, isInitialized, productId, trancheId]);
+
+  useEffect(() => {
+    void loadData();
+    // eslint-disable-next-line react-hooks/react-compiler
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    productId,
+    trancheId,
+    isConnected,
+    productCatalog,
+    tranchePoolFactory,
+    isInitialized,
+  ]);
 
   const getTrancheName = (trancheId: number) => {
     // Convert trancheId to index (assuming sequential IDs starting from 0 or 1)

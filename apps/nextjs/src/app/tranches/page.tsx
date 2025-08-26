@@ -87,9 +87,7 @@ function TrancheContent() {
   // Get user's liquidity positions
   const {
     liquidityPositions,
-    insurancePositions,
     isLoading: portfolioLoading,
-    refetch: refetchPortfolio,
   } = useUserPortfolio();
 
   const searchParams = useSearchParams();
@@ -129,7 +127,7 @@ function TrancheContent() {
     refetch,
   } = useTrancheData({
     factory,
-    currentBTCPrice: btcPrice || undefined,
+    currentBTCPrice: btcPrice ?? undefined,
   });
 
   // Fetch products and tranches

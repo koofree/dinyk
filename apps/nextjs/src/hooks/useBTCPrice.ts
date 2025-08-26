@@ -18,7 +18,7 @@ const createDefaultProvider = () => {
 
 export function useBTCPrice({
   factory,
-  refreshInterval = 10000,
+  refreshInterval = 60000,
 }: UseBTCPriceProps) {
   const [price, setPrice] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);

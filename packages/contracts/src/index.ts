@@ -49,3 +49,4 @@ export type { Web3ContextType } from "./providers/Web3Provider";
 
 // Configuration
 export * from "./config/constants";
+export * from "./types/generated";
