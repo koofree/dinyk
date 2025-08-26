@@ -92,15 +92,15 @@ export function ContractProvider({ children, provider, chainId }: ContractProvid
   );
 }
 
-export function useContracts() {
+export const useContracts = (): ContractState => {
   const context = useContext(ContractContext);
   if (!context) {
     throw new Error('useContracts must be used within a ContractProvider');
   }
   return context;
-}
+};
 
-export function useContractFactory() {
+export const useContractFactory = (): ContractFactory | null => {
   const { factory, isInitialized } = useContracts();
   return isInitialized ? factory : null;
-}
+};

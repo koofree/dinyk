@@ -237,9 +237,9 @@ export function useSellerOperations() {
 
             // Check for RPC errors that might be temporary
             if (
-              roundError.message?.includes("missing trie node") ||
-              roundError.code === -32603 ||
-              roundError.code === "NETWORK_ERROR"
+              (roundError as any).message?.includes("missing trie node") ||
+              (roundError as any).code === -32603 ||
+              (roundError as any).code === "NETWORK_ERROR"
             ) {
               if (retries > 0) {
                 console.log(
@@ -257,7 +257,7 @@ export function useSellerOperations() {
                     await productCatalog.getAddress(),
                     ProductCatalogABI.abi,
                     fallbackProvider,
-                  );
+                  ) as any;
                   console.log("Switched to fallback RPC provider");
                 } catch (fallbackError) {
                   console.error(
@@ -277,7 +277,7 @@ export function useSellerOperations() {
             }
 
             // Check if it's a revert error (round doesn't exist)
-            if (roundError.code === "CALL_EXCEPTION") {
+            if ((roundError as any).code === "CALL_EXCEPTION") {
               // The round might not exist or the contract call failed
               throw new Error(
                 `Round ${params.roundId} does not exist. Please ensure you're on the correct network (should be Kaia Testnet, chain ID 1001) and the round ID is valid.`,

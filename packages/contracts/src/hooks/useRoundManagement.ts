@@ -82,7 +82,7 @@ export function useRoundManagement() {
       const receipt = await tx.wait();
       
       // Extract round ID from events
-      const roundAnnouncedEvent = receipt.logs.find((log: any) => {
+      const roundAnnouncedEvent = receipt?.logs.find((log: any) => {
         try {
           const parsed = contract.interface.parseLog({
             topics: log.topics as string[],
@@ -192,15 +192,15 @@ export function useRoundManagement() {
       }
       
       // Get pool address
-      const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
+      const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
       if (poolAddress === ethers.ZeroAddress) {
         throw new Error(`No pool found for tranche ${trancheId}`);
       }
       
-      const pool = new Contract(poolAddress, TranchePoolCoreABI, signer);
+      const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, signer);
       
       // Get round economics before matching
-      const economicsBefore = await pool.getRoundEconomics(roundId);
+      const economicsBefore = await (pool as any).getRoundEconomics(roundId);
       const totalBuyers = economicsBefore[0];
       const totalSellers = economicsBefore[1];
       
@@ -210,17 +210,17 @@ export function useRoundManagement() {
       }
       
       // Check OPERATOR_ROLE on pool
-      const POOL_OPERATOR_ROLE = await pool.OPERATOR_ROLE();
-      const hasPoolRole = await pool.hasRole(POOL_OPERATOR_ROLE, account!);
+      const POOL_OPERATOR_ROLE = await (pool as any).OPERATOR_ROLE();
+      const hasPoolRole = await (pool as any).hasRole(POOL_OPERATOR_ROLE, account!);
       
       if (!hasPoolRole) {
         // Try to grant if we're admin
-        const POOL_ADMIN_ROLE = await pool.DEFAULT_ADMIN_ROLE();
-        const hasAdminRole = await pool.hasRole(POOL_ADMIN_ROLE, account!);
+        const POOL_ADMIN_ROLE = await (pool as any).DEFAULT_ADMIN_ROLE();
+        const hasAdminRole = await (pool as any).hasRole(POOL_ADMIN_ROLE, account!);
         
         if (hasAdminRole) {
           console.log('Granting OPERATOR_ROLE on pool...');
-          const grantTx = await pool.grantRole(POOL_OPERATOR_ROLE, account!);
+          const grantTx = await (pool as any).grantRole(POOL_OPERATOR_ROLE, account!);
           await grantTx.wait();
         } else {
           throw new Error('Account lacks OPERATOR_ROLE on pool');
@@ -229,11 +229,11 @@ export function useRoundManagement() {
       
       // Close and match the round
       console.log('Closing and matching round:', roundId);
-      const closeTx = await pool.computeMatchAndDistribute(roundId);
+      const closeTx = await (pool as any).computeMatchAndDistribute(roundId);
       await closeTx.wait();
       
       // Get matched amount
-      const economicsAfter = await pool.getRoundEconomics(roundId);
+      const economicsAfter = await (pool as any).getRoundEconomics(roundId);
       const matchedAmount = economicsAfter[2];
       
       // Update catalog state
@@ -305,13 +305,13 @@ export function useRoundManagement() {
       const trancheId = Number(roundInfo.trancheId);
       
       // Get pool address
-      const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
+      const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
       if (poolAddress === ethers.ZeroAddress) {
         return null;
       }
       
-      const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
-      const economics = await pool.getRoundEconomics(roundId);
+      const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, productCatalog.runner);
+      const economics = await (pool as any).getRoundEconomics(roundId);
       
       return {
         totalBuyerPurchases: economics[0],
@@ -343,7 +343,7 @@ export function useRoundManagement() {
       }
       
       console.log('Canceling round:', roundId);
-      const tx = await contract.cancelRound(roundId);
+      const tx = await (contract as any).cancelRound(roundId);
       
       toast.promise(tx.wait(), {
         loading: 'Canceling round...',

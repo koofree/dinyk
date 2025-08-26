@@ -4,23 +4,25 @@ import { Web3Provider as KaiaWeb3Provider } from "@kaiachain/ethers-ext/v6";
 import { ethers } from "ethers";
 import type { ReactNode } from "react";
 import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useState,
 } from "react";
 
 import DinUSDTABI from "../config/abis/DinUSDT.json";
 import { ACTIVE_NETWORK, KAIA_RPC_ENDPOINTS, ProviderType, STORAGE_KEYS, switchToKaiaNetwork } from "../config/constants";
 
 // Ethereum provider interface
+type ProviderEventHandler = (...args: unknown[]) => void;
+
 interface EthereumProvider {
   isMetaMask?: boolean;
   isKaikas?: boolean;
   request: (request: { method: string; params?: unknown[] }) => Promise<unknown>;
-  on?: (event: string, handler: (...args: unknown[]) => void) => void;
-  removeListener?: (event: string, handler: (...args: unknown[]) => void) => void;
+  on?: (event: string, handler: ProviderEventHandler) => void;
+  removeListener?: (event: string, handler: ProviderEventHandler) => void;
 }
 
 // Global window type extensions
@@ -101,7 +103,8 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const handleAccountsChanged = (accounts: string[]) => {
+    const handleAccountsChanged: ProviderEventHandler = (...args) => {
+      const accounts = args[0] as string[];
       if (accounts.length === 0) {
         disconnectWallet();
       } else if (accounts[0] && accounts[0] !== account) {
@@ -112,7 +115,8 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
       }
     };
 
-    const handleChainChanged = (chainId: string) => {
+    const handleChainChanged: ProviderEventHandler = (...args) => {
+      const chainId = args[0] as string;
       const newChainId = parseInt(chainId, 16);
       setChainId(newChainId);
 
@@ -133,7 +137,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
       }
     };
 
-    const handleDisconnect = () => {
+    const handleDisconnect: ProviderEventHandler = () => {
       disconnectWallet();
     };
 
@@ -149,7 +153,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
       targetProvider = window.ethereum;
     }
 
-    if (targetProvider) {
+    if (targetProvider?.on) {
       targetProvider.on("accountsChanged", handleAccountsChanged);
       targetProvider.on("chainChanged", handleChainChanged);
       targetProvider.on("disconnect", handleDisconnect);
@@ -298,9 +302,9 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
       }
 
       // First check and switch network if needed BEFORE creating provider
-      const currentChainIdHex = await detectedProvider.request({
+      const currentChainIdHex = (await detectedProvider.request({
         method: "eth_chainId",
-      });
+      })) as string;
       const currentChainId = parseInt(currentChainIdHex, 16);
 
       if (currentChainId !== ACTIVE_NETWORK.chainId) {

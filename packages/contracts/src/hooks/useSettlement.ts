@@ -77,7 +77,7 @@ export function useSettlement() {
 
         const targetSymbol = routeMapping[oracleRouteId] || "BTC-USDT";
         const priceIdentifier = ethers.keccak256(
-          ethers.toUtf8Bytes(targetSymbol),
+          ethers.toUtf8Bytes(targetSymbol || "BTC-USDT"),
         );
 
         let currentPrice = 0;
@@ -111,7 +111,7 @@ export function useSettlement() {
             if (!settled && settlementInfo.livenessDeadline > 0n) {
               const deadline = Number(settlementInfo.livenessDeadline);
               timeUntilFinalize = Math.max(deadline - now, 0);
-              livenessWindow = await settlementEngine.livenessWindow();
+              livenessWindow = Number(await settlementEngine.livenessWindow());
             }
           }
         } catch {}
@@ -119,7 +119,7 @@ export function useSettlement() {
         return {
           roundId,
           trancheId,
-          state: stateNames[state],
+          state: stateNames[state] || "unknown",
           isMatured,
           canSettle,
           currentPrice,
@@ -189,7 +189,7 @@ export function useSettlement() {
 
         const targetSymbol = routeMapping[oracleRouteId];
         const priceIdentifier = ethers.keccak256(
-          ethers.toUtf8Bytes(targetSymbol),
+          ethers.toUtf8Bytes(targetSymbol || "BTC-USDT"),
         );
 
         console.log("Requesting oracle observation...", {
@@ -381,7 +381,7 @@ export function useSettlement() {
         });
 
         // Dispute the settlement
-        const tx = await settlementContract.disputeSettlement(roundId, reason);
+        const tx = await (settlementContract as any).disputeSettlement(roundId, reason);
 
         toast.promise(tx.wait(), {
           loading: "Submitting dispute...",

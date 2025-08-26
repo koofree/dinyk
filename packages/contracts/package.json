@@ -32,7 +32,7 @@
     "test:watch": "vitest --watch",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "generate-types": "typechain --target ethers-v6 --out-dir src/types/contracts 'src/config/abis/**/*.json'"
+    "generate-types": "typechain --target ethers-v6 --out-dir src/types/generated 'src/config/abis/**/*.json'"
   },
   "dependencies": {
     "@kaiachain/ethers-ext": "1.1.1",

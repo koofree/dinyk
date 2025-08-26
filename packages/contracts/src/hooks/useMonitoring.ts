@@ -1,8 +1,10 @@
-import { ethers, Contract } from 'ethers';
-import { useCallback, useEffect, useState } from 'react';
-import { useContracts } from './useContracts';
-import TranchePoolCoreABI from '../config/abis/TranchePoolCore.json';
-import { useWeb3 } from '../providers/Web3Provider';
+import { useCallback, useEffect, useState } from "react";
+import { Contract, ethers } from "ethers";
+
+import TranchePoolCoreABI from "../config/abis/TranchePoolCore.json";
+import { useWeb3 } from "../providers/Web3Provider";
+import { TranchePoolCore__factory } from "../types/generated";
+import { useContracts } from "./useContracts";
 
 export interface PoolHealth {
   poolAddress: string;
@@ -14,16 +16,16 @@ export interface PoolHealth {
   navPerShare: bigint;
   utilization: number; // percentage
   usdtBalance: bigint;
-  healthStatus: 'healthy' | 'warning' | 'critical';
+  healthStatus: "healthy" | "warning" | "critical";
 }
 
 export interface TrancheRiskAnalysis {
   trancheId: number;
   triggerPrice: bigint;
-  triggerType: 'BELOW' | 'ABOVE' | 'OTHER';
+  triggerType: "BELOW" | "ABOVE" | "OTHER";
   currentPrice: number;
   distanceToTrigger: number; // percentage
-  riskLevel: 'low' | 'medium' | 'high' | 'triggered';
+  riskLevel: "low" | "medium" | "high" | "triggered";
   premiumRate: number;
   trancheCap: bigint;
   maturityTime: bigint;
@@ -58,11 +60,12 @@ export interface SystemMetrics {
   activeRounds: number;
   activeTranches: number;
   totalPools: number;
-  healthStatus: 'healthy' | 'warning' | 'critical';
+  healthStatus: "healthy" | "warning" | "critical";
 }
 
 export function useMonitoring() {
-  const { productCatalog, tranchePoolFactory, oracleRouter, usdt } = useContracts();
+  const { productCatalog, tranchePoolFactory, oracleRouter, usdt } =
+    useContracts();
   const { provider } = useWeb3();
   const [isLoading, setIsLoading] = useState(false);
   const [marketPrices, setMarketPrices] = useState<Record<string, number>>({});
@@ -72,7 +75,7 @@ export function useMonitoring() {
     if (!oracleRouter) return {};
 
     try {
-      const symbols = ['BTC-USDT', 'ETH-USDT', 'KAIA-USDT'];
+      const symbols = ["BTC-USDT", "ETH-USDT", "KAIA-USDT"];
       const prices: Record<string, number> = {};
 
       for (const symbol of symbols) {
@@ -88,7 +91,7 @@ export function useMonitoring() {
       setMarketPrices(prices);
       return prices;
     } catch (error) {
-      console.error('Error fetching market prices:', error);
+      console.error("Error fetching market prices:", error);
       return {};
     }
   }, [oracleRouter]);
@@ -96,7 +99,7 @@ export function useMonitoring() {
   // Monitor pool health
   const monitorPoolHealth = useCallback(async (): Promise<PoolHealth[]> => {
     if (!tranchePoolFactory || !usdt) {
-      throw new Error('Contracts not initialized');
+      throw new Error("Contracts not initialized");
     }
 
     setIsLoading(true);
@@ -107,28 +110,34 @@ export function useMonitoring() {
       for (let i = 0; i < Number(poolCount); i++) {
         try {
           const poolAddress = await tranchePoolFactory.allPools(i);
-          const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
-          
+          const pool = TranchePoolCore__factory.connect(poolAddress, provider);
+
           const trancheInfo = await pool.getTrancheInfo();
           const accounting = await pool.getPoolAccounting();
           const usdtBalance = await usdt.balanceOf(poolAddress);
-          
-          const utilization = accounting.totalAssets > 0n ? 
-            Number((accounting.lockedAssets * 10000n) / accounting.totalAssets) / 100 : 0;
-          
+
+          const utilization =
+            accounting.totalAssets > 0n
+              ? Number(
+                  (accounting.lockedAssets * 10000n) / accounting.totalAssets,
+                ) / 100
+              : 0;
+
           // Determine health status
-          let healthStatus: 'healthy' | 'warning' | 'critical' = 'healthy';
+          let healthStatus: "healthy" | "warning" | "critical" = "healthy";
           const balanceMismatch = accounting.totalAssets - usdtBalance;
-          
+
           if (balanceMismatch !== 0n) {
-            healthStatus = 'warning';
+            healthStatus = "warning";
           }
           if (utilization > 90) {
-            healthStatus = 'critical';
+            healthStatus = "critical";
           }
-          if (accounting.navPerShare < ethers.parseEther('0.5') || 
-              accounting.navPerShare > ethers.parseEther('2.0')) {
-            healthStatus = 'warning';
+          if (
+            accounting.navPerShare < ethers.parseEther("0.5") ||
+            accounting.navPerShare > ethers.parseEther("2.0")
+          ) {
+            healthStatus = "warning";
           }
 
           pools.push({
@@ -136,7 +145,8 @@ export function useMonitoring() {
             trancheId: Number(trancheInfo.trancheId),
             totalAssets: accounting.totalAssets,
             lockedAssets: accounting.lockedAssets,
-            availableLiquidity: accounting.totalAssets - accounting.lockedAssets,
+            availableLiquidity:
+              BigInt(accounting.totalAssets) - BigInt(accounting.lockedAssets),
             totalShares: accounting.totalShares,
             navPerShare: accounting.navPerShare,
             utilization,
@@ -150,7 +160,7 @@ export function useMonitoring() {
 
       return pools;
     } catch (error) {
-      console.error('Error monitoring pools:', error);
+      console.error("Error monitoring pools:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -158,83 +168,106 @@ export function useMonitoring() {
   }, [tranchePoolFactory, usdt]);
 
   // Analyze tranche risk
-  const analyzeTranchesRisk = useCallback(async (): Promise<TrancheRiskAnalysis[]> => {
+  const analyzeTranchesRisk = useCallback(async (): Promise<
+    TrancheRiskAnalysis[]
+  > => {
     if (!productCatalog || !tranchePoolFactory) {
-      throw new Error('Contracts not initialized');
+      throw new Error("Contracts not initialized");
     }
 
     setIsLoading(true);
     try {
       // Get current prices
       const prices = await fetchMarketPrices();
-      
+
       const activeTranches = await productCatalog.getActiveTranches();
       const analyses: TrancheRiskAnalysis[] = [];
 
       for (const trancheId of activeTranches) {
         try {
           const trancheSpec = await productCatalog.getTranche(trancheId);
-          const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
-          
-          const triggerPrice = Number(ethers.formatEther(trancheSpec.threshold));
+          const poolAddress =
+            await tranchePoolFactory.getTranchePool(trancheId);
+
+          const triggerPrice = Number(
+            ethers.formatEther(trancheSpec.threshold),
+          );
           const triggerType = Number(trancheSpec.triggerType);
           const oracleRouteId = Number(trancheSpec.oracleRouteId || 1);
-          
+
           // Map oracle route to symbol
           const routeMapping: Record<number, string> = {
-            1: 'BTC-USDT',
-            2: 'ETH-USDT',
-            3: 'KAIA-USDT',
+            1: "BTC-USDT",
+            2: "ETH-USDT",
+            3: "KAIA-USDT",
           };
-          
-          const targetSymbol = routeMapping[oracleRouteId] || 'BTC-USDT';
+
+          const targetSymbol = routeMapping[oracleRouteId] || "BTC-USDT";
           const currentPrice = prices[targetSymbol] || 0;
-          
+
           // Calculate distance to trigger
           let distanceToTrigger = 0;
-          let riskLevel: 'low' | 'medium' | 'high' | 'triggered' = 'low';
-          
+          let riskLevel: "low" | "medium" | "high" | "triggered" = "low";
+
           if (currentPrice > 0) {
-            if (triggerType === 0) { // PRICE_BELOW
-              distanceToTrigger = ((currentPrice - triggerPrice) / currentPrice) * 100;
-            } else if (triggerType === 1) { // PRICE_ABOVE
-              distanceToTrigger = ((triggerPrice - currentPrice) / currentPrice) * 100;
+            if (triggerType === 0) {
+              // PRICE_BELOW
+              distanceToTrigger =
+                ((currentPrice - triggerPrice) / currentPrice) * 100;
+            } else if (triggerType === 1) {
+              // PRICE_ABOVE
+              distanceToTrigger =
+                ((triggerPrice - currentPrice) / currentPrice) * 100;
             }
-            
+
             if (distanceToTrigger <= 0) {
-              riskLevel = 'triggered';
+              riskLevel = "triggered";
             } else if (distanceToTrigger < 5) {
-              riskLevel = 'high';
+              riskLevel = "high";
             } else if (distanceToTrigger < 15) {
-              riskLevel = 'medium';
+              riskLevel = "medium";
             } else {
-              riskLevel = 'low';
+              riskLevel = "low";
             }
           }
-          
+
           // Calculate yields
           const now = Math.floor(Date.now() / 1000);
           const maturityTime = Number(trancheSpec.maturityTimestamp);
-          const daysToMaturity = Math.max((maturityTime - now) / (24 * 60 * 60), 1);
+          const daysToMaturity = Math.max(
+            (maturityTime - now) / (24 * 60 * 60),
+            1,
+          );
           const premiumRate = Number(trancheSpec.premiumRateBps) / 100;
           const annualizedYield = premiumRate * (365 / daysToMaturity);
-          
+
           // Get utilization if pool exists
           let utilizationRate = 0;
           if (poolAddress !== ethers.ZeroAddress) {
             try {
-              const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
-              const accounting = await pool.getPoolAccounting();
+              const pool = new Contract(
+                poolAddress,
+                TranchePoolCoreABI.abi,
+                provider,
+              );
+              const accounting = await (pool as any).getPoolAccounting();
               const trancheCap = trancheSpec.trancheCap;
-              utilizationRate = trancheCap > 0n ? 
-                Number((accounting.totalAssets * 10000n) / trancheCap) / 100 : 0;
+              utilizationRate =
+                trancheCap > 0n
+                  ? Number((accounting.totalAssets * 10000n) / trancheCap) / 100
+                  : 0;
             } catch {}
           }
-          
+
           analyses.push({
             trancheId: Number(trancheId),
             triggerPrice: trancheSpec.threshold,
-            triggerType: triggerType === 0 ? 'BELOW' : triggerType === 1 ? 'ABOVE' : 'OTHER',
+            triggerType:
+              triggerType === 0
+                ? "BELOW"
+                : triggerType === 1
+                  ? "ABOVE"
+                  : "OTHER",
             currentPrice,
             distanceToTrigger,
             riskLevel,
@@ -253,7 +286,7 @@ export function useMonitoring() {
 
       return analyses;
     } catch (error) {
-      console.error('Error analyzing tranches:', error);
+      console.error("Error analyzing tranches:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -261,9 +294,11 @@ export function useMonitoring() {
   }, [productCatalog, tranchePoolFactory, fetchMarketPrices]);
 
   // Monitor active rounds
-  const monitorActiveRounds = useCallback(async (): Promise<RoundMonitoring[]> => {
+  const monitorActiveRounds = useCallback(async (): Promise<
+    RoundMonitoring[]
+  > => {
     if (!productCatalog || !tranchePoolFactory) {
-      throw new Error('Contracts not initialized');
+      throw new Error("Contracts not initialized");
     }
 
     setIsLoading(true);
@@ -276,17 +311,25 @@ export function useMonitoring() {
       for (const trancheId of activeTranches) {
         const trancheRounds = await productCatalog.getTrancheRounds(trancheId);
         const trancheSpec = await productCatalog.getTranche(trancheId);
-        
+
         for (const roundId of trancheRounds) {
           try {
             const roundInfo = await productCatalog.getRound(roundId);
             const state = Number(roundInfo.state);
-            
+
             // Skip settled/canceled rounds
             if (state >= 5) continue;
-            
-            const stateNames = ['ANNOUNCED', 'OPEN', 'MATCHED', 'ACTIVE', 'MATURED', 'SETTLED', 'CANCELED'];
-            
+
+            const stateNames = [
+              "ANNOUNCED",
+              "OPEN",
+              "MATCHED",
+              "ACTIVE",
+              "MATURED",
+              "SETTLED",
+              "CANCELED",
+            ];
+
             // Get pool economics
             let economics = {
               totalBuyerPurchases: 0n,
@@ -295,11 +338,19 @@ export function useMonitoring() {
               lockedCollateral: 0n,
               premiumPool: 0n,
             };
-            
-            const poolAddress = await tranchePoolFactory.getTranchePool(Number(trancheId));
+
+            const poolAddress = await tranchePoolFactory.getTranchePool(
+              Number(trancheId),
+            );
             if (poolAddress !== ethers.ZeroAddress) {
-              const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
-              const poolEconomics = await pool.getRoundEconomics(roundId);
+              const pool = new Contract(
+                poolAddress,
+                TranchePoolCoreABI.abi,
+                provider,
+              );
+              const poolEconomics = await (pool as any).getRoundEconomics(
+                roundId,
+              );
               economics = {
                 totalBuyerPurchases: poolEconomics[0],
                 totalSellerCollateral: poolEconomics[1],
@@ -308,51 +359,55 @@ export function useMonitoring() {
                 premiumPool: poolEconomics[4],
               };
             }
-            
+
             // Check trigger status for active rounds
             let isTriggered = false;
             if (state >= 2 && state <= 4) {
-              const triggerPrice = Number(ethers.formatEther(trancheSpec.threshold));
+              const triggerPrice = Number(
+                ethers.formatEther(trancheSpec.threshold),
+              );
               const triggerType = Number(trancheSpec.triggerType);
               const oracleRouteId = Number(trancheSpec.oracleRouteId || 1);
-              
+
               const routeMapping: Record<number, string> = {
-                1: 'BTC-USDT',
-                2: 'ETH-USDT',
-                3: 'KAIA-USDT',
+                1: "BTC-USDT",
+                2: "ETH-USDT",
+                3: "KAIA-USDT",
               };
-              
+
               const targetSymbol = routeMapping[oracleRouteId];
-              const currentPrice = prices[targetSymbol] || 0;
-              
+              const currentPrice = targetSymbol ? prices[targetSymbol] || 0 : 0;
+
               if (currentPrice > 0) {
-                if (triggerType === 0) { // PRICE_BELOW
+                if (triggerType === 0) {
+                  // PRICE_BELOW
                   isTriggered = currentPrice <= triggerPrice;
-                } else if (triggerType === 1) { // PRICE_ABOVE
+                } else if (triggerType === 1) {
+                  // PRICE_ABOVE
                   isTriggered = currentPrice >= triggerPrice;
                 }
               }
             }
-            
+
             // Determine if action is needed
             let needsAction: string | undefined;
             if (state === 1 && now > Number(roundInfo.salesEndTime)) {
-              needsAction = 'NEEDS_CLOSURE';
+              needsAction = "NEEDS_CLOSURE";
             } else if (state >= 2 && state <= 3) {
               const maturityTime = Number(trancheSpec.maturityTimestamp);
               if (now >= maturityTime) {
-                needsAction = 'NEEDS_SETTLEMENT';
+                needsAction = "NEEDS_SETTLEMENT";
               }
             }
-            
+
             // Calculate time to maturity
             const maturityTime = Number(trancheSpec.maturityTimestamp);
             const timeToMaturity = maturityTime - now;
-            
+
             rounds.push({
               roundId: Number(roundId),
               trancheId: Number(trancheId),
-              state: stateNames[state],
+              state: stateNames[state] || "unknown",
               salesStartTime: roundInfo.salesStartTime,
               salesEndTime: roundInfo.salesEndTime,
               ...economics,
@@ -368,7 +423,7 @@ export function useMonitoring() {
 
       return rounds;
     } catch (error) {
-      console.error('Error monitoring rounds:', error);
+      console.error("Error monitoring rounds:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -378,7 +433,7 @@ export function useMonitoring() {
   // Get system-wide metrics
   const getSystemMetrics = useCallback(async (): Promise<SystemMetrics> => {
     if (!tranchePoolFactory || !productCatalog || !usdt) {
-      throw new Error('Contracts not initialized');
+      throw new Error("Contracts not initialized");
     }
 
     setIsLoading(true);
@@ -391,10 +446,14 @@ export function useMonitoring() {
       for (let i = 0; i < Number(poolCount); i++) {
         try {
           const poolAddress = await tranchePoolFactory.allPools(i);
-          const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
-          const accounting = await pool.getPoolAccounting();
+          const pool = new Contract(
+            poolAddress,
+            TranchePoolCoreABI.abi,
+            provider,
+          );
+          const accounting = await (pool as any).getPoolAccounting();
           const usdtBalance = await usdt.balanceOf(poolAddress);
-          
+
           totalTVL += usdtBalance;
           totalAssets += accounting.totalAssets;
           totalLockedAssets += accounting.lockedAssets;
@@ -402,13 +461,15 @@ export function useMonitoring() {
       }
 
       const totalAvailable = totalAssets - totalLockedAssets;
-      const overallUtilization = totalAssets > 0n ? 
-        Number((totalLockedAssets * 10000n) / totalAssets) / 100 : 0;
+      const overallUtilization =
+        totalAssets > 0n
+          ? Number((totalLockedAssets * 10000n) / totalAssets) / 100
+          : 0;
 
       // Count active rounds and tranches
       const activeTranches = await productCatalog.getActiveTranches();
       let activeRounds = 0;
-      
+
       for (const trancheId of activeTranches) {
         const rounds = await productCatalog.getTrancheRounds(trancheId);
         for (const roundId of rounds) {
@@ -421,15 +482,15 @@ export function useMonitoring() {
       }
 
       // Determine overall health
-      let healthStatus: 'healthy' | 'warning' | 'critical' = 'healthy';
+      let healthStatus: "healthy" | "warning" | "critical" = "healthy";
       if (overallUtilization > 80) {
-        healthStatus = 'warning';
+        healthStatus = "warning";
       }
       if (overallUtilization > 95) {
-        healthStatus = 'critical';
+        healthStatus = "critical";
       }
       if (overallUtilization < 10 && totalAssets > 0n) {
-        healthStatus = 'warning'; // Under-utilized
+        healthStatus = "warning"; // Under-utilized
       }
 
       return {
@@ -444,7 +505,7 @@ export function useMonitoring() {
         healthStatus,
       };
     } catch (error) {
-      console.error('Error getting system metrics:', error);
+      console.error("Error getting system metrics:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -467,10 +528,10 @@ export function useMonitoring() {
     monitorActiveRounds,
     getSystemMetrics,
     fetchMarketPrices,
-    
+
     // Data
     marketPrices,
-    
+
     // State
     isLoading,
   };

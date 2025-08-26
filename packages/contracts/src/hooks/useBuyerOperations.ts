@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useWeb3 } from "../providers/Web3Provider";
 import { useContracts } from "./useContracts";
 import TranchePoolCoreABI from '../config/abis/TranchePoolCore.json';
+import { KAIA_RPC_ENDPOINTS } from "../config/constants";
 
 export interface BuyInsuranceParams {
   roundId: number;
@@ -41,6 +42,19 @@ export function useBuyerOperations() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
 
+  // Get a provider for read-only operations
+  const getProvider = useCallback(() => {
+    // If we have a signer, use its provider
+    if (signer?.provider) {
+      return signer.provider;
+    }
+    // Otherwise, create a read-only provider
+    return new ethers.JsonRpcProvider(KAIA_RPC_ENDPOINTS[0], {
+      chainId: 1001,
+      name: "Kaia Kairos",
+    });
+  }, [signer]);
+
   // Calculate premium for a coverage amount
   const calculatePremium = useCallback(
     async (
@@ -50,7 +64,7 @@ export function useBuyerOperations() {
       if (!productCatalog) throw new Error("Product catalog not initialized");
 
       try {
-        const trancheSpec = await productCatalog.getTranche(trancheId);
+        const trancheSpec = await (productCatalog as any).getTranche(trancheId);
         const premiumRateBps = Number(trancheSpec.premiumRateBps);
 
         const coverageAmountWei = ethers.parseUnits(coverageAmount, 6);
@@ -90,7 +104,7 @@ export function useBuyerOperations() {
       setIsLoading(true);
       try {
         // Get round info
-        const roundInfo = await productCatalog.getRound(params.roundId);
+        const roundInfo = await (productCatalog as any).getRound(params.roundId);
         const trancheId = Number(roundInfo.trancheId);
         const roundState = Number(roundInfo.state);
 
@@ -121,7 +135,7 @@ export function useBuyerOperations() {
         }
 
         // Get tranche details
-        const trancheSpec = await productCatalog.getTranche(trancheId);
+        const trancheSpec = await (productCatalog as any).getTranche(trancheId);
 
         // Calculate costs
         const calculation = await calculatePremium(
@@ -157,24 +171,24 @@ export function useBuyerOperations() {
         }
 
         // Get pool address
-        const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
+        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
         if (poolAddress === ethers.ZeroAddress) {
           throw new Error(`No pool found for tranche ${trancheId}`);
         }
 
         // Approve USDT if needed
         setIsPreparing(true);
-        const currentAllowance = await usdt.allowance(account, poolAddress);
+        const currentAllowance = await (usdt as any).allowance(account, poolAddress);
         if (currentAllowance < calculation.totalCost) {
           console.log("Approving USDT...");
 
           // Reset to zero first if needed (for tokens like USDT that require it)
           if (currentAllowance > 0n) {
-            const resetTx = await usdt.connect(signer).approve(poolAddress, 0);
+            const resetTx = await (usdt as any).connect(signer).approve(poolAddress, 0);
             await resetTx.wait();
           }
 
-          const approveTx = await usdt
+          const approveTx = await (usdt as any)
             .connect(signer)
             .approve(poolAddress, calculation.totalCost);
           await approveTx.wait();
@@ -212,7 +226,7 @@ export function useBuyerOperations() {
         }
         
         // Use manual gas limit instead of estimation
-        const tx = await pool.placeBuyerOrder(
+        const tx = await (pool as any).placeBuyerOrder(
           params.roundId,
           calculation.coverageAmount,
           {
@@ -270,15 +284,15 @@ export function useBuyerOperations() {
 
       try {
         // Get round info to find tranche
-        const roundInfo = await productCatalog.getRound(roundId);
+        const roundInfo = await (productCatalog as any).getRound(roundId);
         const trancheId = Number(roundInfo.trancheId);
 
         // Get pool
-        const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
+        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
         if (poolAddress === ethers.ZeroAddress) return null;
 
-        const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
-        const order = await pool.getBuyerOrder(roundId, buyerAddress);
+        const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, getProvider());
+        const order = await (pool as any).getBuyerOrder(roundId, buyerAddress);
 
         return {
           purchaseAmount: order.purchaseAmount,
@@ -360,7 +374,7 @@ export function useBuyerOperations() {
 
       try {
         // Get round info
-        const roundInfo = await productCatalog.getRound(roundId);
+        const roundInfo = await (productCatalog as any).getRound(roundId);
         const trancheId = Number(roundInfo.trancheId);
         const roundState = Number(roundInfo.state);
 
@@ -377,10 +391,10 @@ export function useBuyerOperations() {
         }
 
         // Get pool to check buyer order
-        const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
-        const pool = new Contract(poolAddress, TranchePoolCoreABI, provider);
+        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
+        const pool = new Contract(poolAddress, TranchePoolCoreABI.abi, getProvider());
 
-        const buyerOrder = await pool.getBuyerOrder(roundId, account);
+        const buyerOrder = await (pool as any).getBuyerOrder(roundId, account);
 
         // Check if settlement was triggered (would need to check SettlementEngine)
         // For now, assume triggered if buyer has filled amount
@@ -423,18 +437,18 @@ export function useBuyerOperations() {
         }
 
         // Get pool
-        const roundInfo = await productCatalog.getRound(roundId);
+        const roundInfo = await (productCatalog as any).getRound(roundId);
         const trancheId = Number(roundInfo.trancheId);
-        const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
+        const poolAddress = await (tranchePoolFactory as any).getTranchePool(trancheId);
         const pool = new Contract(
           poolAddress,
-          TranchePoolCoreABI,
+          TranchePoolCoreABI.abi,
           signer,
         );
 
         // Claim payout
         console.log("Claiming payout for round:", roundId);
-        const tx = await pool.claimBuyerPayout(roundId);
+        const tx = await (pool as any).claimBuyerPayout(roundId);
 
         toast.promise(tx.wait(), {
           loading: "Claiming insurance payout...",
@@ -467,7 +481,7 @@ export function useBuyerOperations() {
         const activeInsurances = [];
 
         for (const token of tokens) {
-          const roundInfo = await productCatalog.getRound(token.roundId);
+          const roundInfo = await (productCatalog as any).getRound(token.roundId);
           const roundState = Number(roundInfo.state);
 
           // Include ACTIVE and MATURED states

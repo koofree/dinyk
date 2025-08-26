@@ -1,28 +1,40 @@
-import { ethers } from "ethers";
 import { useEffect, useState } from "react";
+import { ethers } from "ethers";
 
-import DinRegistryABI from "../config/abis/DinRegistry.json";
-import DinUSDTABI from "../config/abis/DinUSDT.json";
-import FeeTreasuryABI from "../config/abis/FeeTreasury.json";
-import InsuranceTokenABI from "../config/abis/InsuranceToken.json";
-import OracleRouterABI from "../config/abis/OracleRouter.json";
-import ProductCatalogABI from "../config/abis/ProductCatalog.json";
-import SettlementEngineABI from "../config/abis/SettlementEngine.json";
+import type {
+  DinRegistry,
+  DinUSDT,
+  FeeTreasury,
+  InsuranceToken,
+  OracleRouter,
+  ProductCatalog,
+  SettlementEngine,
+  TranchePoolFactory,
+} from "../types/generated";
 import TranchePoolCoreABI from "../config/abis/TranchePoolCore.json";
-import TranchePoolFactoryABI from "../config/abis/TranchePoolFactory.json";
 import { ACTIVE_NETWORK, KAIA_RPC_ENDPOINTS } from "../config/constants";
 import { useWeb3 } from "../providers/Web3Provider";
+import {
+  DinRegistry__factory,
+  DinUSDT__factory,
+  FeeTreasury__factory,
+  InsuranceToken__factory,
+  OracleRouter__factory,
+  ProductCatalog__factory,
+  SettlementEngine__factory,
+  TranchePoolFactory__factory,
+} from "../types/generated";
 
 export interface ContractsState {
-  productCatalog: ethers.Contract | null;
-  tranchePoolFactory: ethers.Contract | null;
-  insuranceToken: ethers.Contract | null;
-  settlementEngine: ethers.Contract | null;
-  oracleRouter: ethers.Contract | null;
-  usdt: ethers.Contract | null;
-  usdtContract?: ethers.Contract | null; // Alias for usdt
-  registry: ethers.Contract | null;
-  feeTreasury: ethers.Contract | null;
+  productCatalog: ProductCatalog | null;
+  tranchePoolFactory: TranchePoolFactory | null;
+  insuranceToken: InsuranceToken | null;
+  settlementEngine: SettlementEngine | null;
+  oracleRouter: OracleRouter | null;
+  usdt: DinUSDT | null;
+  usdtContract?: DinUSDT | null; // Alias for usdt
+  registry: DinRegistry | null;
+  feeTreasury: FeeTreasury | null;
   isInitialized: boolean;
   error: Error | null;
 }
@@ -43,75 +55,80 @@ export function useContracts(): ContractsState {
   });
 
   // Debug logging
-  if (typeof window !== 'undefined' && process.env.DEBUG) {
-    console.log('[useContracts] Hook called, provider:', !!provider, 'signer:', !!signer);
+  if (typeof window !== "undefined" && process.env.DEBUG) {
+    console.log(
+      "[useContracts] Hook called, provider:",
+      !!provider,
+      "signer:",
+      !!signer,
+    );
   }
 
   useEffect(() => {
     if (!provider) {
-      if (typeof window !== 'undefined' && process.env.DEBUG) {
-        console.log('[useContracts] No provider available, creating read-only provider');
+      if (typeof window !== "undefined" && process.env.DEBUG) {
+        console.log(
+          "[useContracts] No provider available, creating read-only provider",
+        );
       }
-      
+
       // Create a read-only provider for contract calls when no wallet is connected
-      console.log('[useContracts] Creating read-only provider with RPC:', KAIA_RPC_ENDPOINTS[0]);
-      const readOnlyProvider = new ethers.JsonRpcProvider(KAIA_RPC_ENDPOINTS[0], {
-        chainId: ACTIVE_NETWORK.chainId,
-        name: ACTIVE_NETWORK.name
-      });
-      
+      console.log(
+        "[useContracts] Creating read-only provider with RPC:",
+        KAIA_RPC_ENDPOINTS[0],
+      );
+      const readOnlyProvider = new ethers.JsonRpcProvider(
+        KAIA_RPC_ENDPOINTS[0],
+        {
+          chainId: ACTIVE_NETWORK.chainId,
+          name: ACTIVE_NETWORK.name,
+        },
+      );
+
       const initializeReadOnlyContracts = async () => {
         try {
-          if (typeof window !== 'undefined' && process.env.DEBUG) {
-            console.log('[useContracts] Initializing read-only contracts...');
+          if (typeof window !== "undefined" && process.env.DEBUG) {
+            console.log("[useContracts] Initializing read-only contracts...");
           }
 
           // Initialize all contracts with read-only provider
-          const productCatalog = new ethers.Contract(
+          const productCatalog = ProductCatalog__factory.connect(
             ACTIVE_NETWORK.contracts.ProductCatalog,
-            ProductCatalogABI.abi,
             readOnlyProvider,
           );
 
-          const tranchePoolFactory = new ethers.Contract(
+          const tranchePoolFactory = TranchePoolFactory__factory.connect(
             ACTIVE_NETWORK.contracts.TranchePoolFactory,
-            TranchePoolFactoryABI.abi,
             readOnlyProvider,
           );
 
-          const insuranceToken = new ethers.Contract(
+          const insuranceToken = InsuranceToken__factory.connect(
             ACTIVE_NETWORK.contracts.InsuranceToken,
-            InsuranceTokenABI.abi,
             readOnlyProvider,
           );
 
-          const settlementEngine = new ethers.Contract(
+          const settlementEngine = SettlementEngine__factory.connect(
             ACTIVE_NETWORK.contracts.SettlementEngine,
-            SettlementEngineABI.abi,
             readOnlyProvider,
           );
 
-          const oracleRouter = new ethers.Contract(
+          const oracleRouter = OracleRouter__factory.connect(
             ACTIVE_NETWORK.contracts.OracleRouter,
-            OracleRouterABI.abi,
             readOnlyProvider,
           );
 
-          const usdt = new ethers.Contract(
+          const usdt = DinUSDT__factory.connect(
             ACTIVE_NETWORK.contracts.DinUSDT,
-            DinUSDTABI.abi,
             readOnlyProvider,
           );
 
-          const registry = new ethers.Contract(
+          const registry = DinRegistry__factory.connect(
             ACTIVE_NETWORK.contracts.DinRegistry,
-            DinRegistryABI.abi,
             readOnlyProvider,
           );
 
-          const feeTreasury = new ethers.Contract(
+          const feeTreasury = FeeTreasury__factory.connect(
             ACTIVE_NETWORK.contracts.FeeTreasury,
-            FeeTreasuryABI.abi,
             readOnlyProvider,
           );
 
@@ -143,59 +160,51 @@ export function useContracts(): ContractsState {
 
     const initializeContracts = async () => {
       try {
-        if (typeof window !== 'undefined' && process.env.DEBUG) {
-          console.log('[useContracts] Initializing contracts...');
+        if (typeof window !== "undefined" && process.env.DEBUG) {
+          console.log("[useContracts] Initializing contracts...");
         }
-        
+
         // Use signer if available, otherwise use provider
         const signerOrProvider = signer || provider;
 
         // Initialize all contracts
-        const productCatalog = new ethers.Contract(
+        const productCatalog = ProductCatalog__factory.connect(
           ACTIVE_NETWORK.contracts.ProductCatalog,
-          ProductCatalogABI.abi,
           signerOrProvider,
         );
 
-        const tranchePoolFactory = new ethers.Contract(
+        const tranchePoolFactory = TranchePoolFactory__factory.connect(
           ACTIVE_NETWORK.contracts.TranchePoolFactory,
-          TranchePoolFactoryABI.abi,
           signerOrProvider,
         );
 
-        const insuranceToken = new ethers.Contract(
+        const insuranceToken = InsuranceToken__factory.connect(
           ACTIVE_NETWORK.contracts.InsuranceToken,
-          InsuranceTokenABI.abi,
           signerOrProvider,
         );
 
-        const settlementEngine = new ethers.Contract(
+        const settlementEngine = SettlementEngine__factory.connect(
           ACTIVE_NETWORK.contracts.SettlementEngine,
-          SettlementEngineABI.abi,
           signerOrProvider,
         );
 
-        const oracleRouter = new ethers.Contract(
+        const oracleRouter = OracleRouter__factory.connect(
           ACTIVE_NETWORK.contracts.OracleRouter,
-          OracleRouterABI.abi,
           signerOrProvider,
         );
 
-        const usdt = new ethers.Contract(
+        const usdt = DinUSDT__factory.connect(
           ACTIVE_NETWORK.contracts.DinUSDT,
-          DinUSDTABI.abi,
           signerOrProvider,
         );
 
-        const registry = new ethers.Contract(
+        const registry = DinRegistry__factory.connect(
           ACTIVE_NETWORK.contracts.DinRegistry,
-          DinRegistryABI.abi,
           signerOrProvider,
         );
 
-        const feeTreasury = new ethers.Contract(
+        const feeTreasury = FeeTreasury__factory.connect(
           ACTIVE_NETWORK.contracts.FeeTreasury,
-          FeeTreasuryABI.abi,
           signerOrProvider,
         );
 
@@ -227,7 +236,7 @@ export function useContracts(): ContractsState {
   // Add alias for backward compatibility
   return {
     ...contracts,
-    usdtContract: contracts.usdt  // Alias for easier use
+    usdtContract: contracts.usdt, // Alias for easier use
   };
 }
 

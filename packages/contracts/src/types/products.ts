@@ -83,7 +83,7 @@ export interface ProductMetadata {
   description: string;
   category: string;
   tags: string[];
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  riskLevel: "LOW" | "MEDIUM" | "HIGH";
   underlyingAsset: string;
   imageUrl?: string;
   documentUrl?: string;
@@ -109,7 +109,7 @@ export interface Tranche {
   rounds?: number[]; // Array of round IDs
   currentRound?: Round;
   name?: string; // Optional tranche name
-  
+
   // Derived fields
   premiumRate?: number;
   maturityDate?: Date;
@@ -134,7 +134,7 @@ export interface Round {
   matchedAmount: bigint;
   createdAt?: number;
   stateChangedAt?: number;
-  
+
   // Derived fields
   salesStartDate?: Date;
   salesEndDate?: Date;
