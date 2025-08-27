@@ -20,16 +20,14 @@ export const env = createEnv({
    * For them to be exposed to the client, prefix them with `NEXT_PUBLIC_`.
    */
   client: {
-    NEXT_PUBLIC_ENABLE_TESTNETS: z.coerce.boolean().default(true),
-    NEXT_PUBLIC_SHOW_DEBUG_INFO: z.coerce.boolean().default(true),
+    NEXT_PUBLIC_NETWORK_ENV: z.enum(["mainnet", "testnet"]).default("mainnet"),
   },
   /**
    * Destructure all variables from `process.env` to make sure they aren't tree-shaken away.
    */
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
-    NEXT_PUBLIC_ENABLE_TESTNETS: process.env.NEXT_PUBLIC_ENABLE_TESTNETS,
-    NEXT_PUBLIC_SHOW_DEBUG_INFO: process.env.NEXT_PUBLIC_SHOW_DEBUG_INFO,
+    NEXT_PUBLIC_NETWORK_ENV: process.env.NEXT_PUBLIC_NETWORK_ENV,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
