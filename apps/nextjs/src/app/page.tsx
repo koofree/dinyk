@@ -6,10 +6,10 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import {
-    ACTIVE_NETWORK,
-    ORACLE_ROUTE_ID_TO_TYPE,
-    useContracts,
-    useProductManagement
+  ACTIVE_NETWORK,
+  ORACLE_ROUTE_ID_TO_TYPE,
+  useContracts,
+  useProductManagement
 } from "@dinsure/contracts";
 
 import { useLanguage } from "~/context/LanguageProvider";
@@ -98,7 +98,7 @@ export default function HomePage() {
 
       try {
         // Get active products from contract
-        const activeProductIds = await productCatalog.getActiveProducts();
+        const activeProductIds = await productCatalog.getActiveProducts().then(ids => ids.filter(id => id > BigInt(1)));
         const fetchedProducts: InsuranceProduct[] = [];
         let totalCap = BigInt(0);
         let minPremium = 100;

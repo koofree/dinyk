@@ -126,7 +126,7 @@ export default function InsurancePage() {
           });
 
           const batchResults = await Promise.all(batchPromises);
-          const validTranches = batchResults.filter(Boolean) as Tranche[];
+          const validTranches = batchResults.filter(Boolean).filter(tranche => tranche?.productId && tranche.productId > 1) as Tranche[];
           fetchedTranches.push(...validTranches);
           
           console.log(`Batch ${Math.floor(i / BATCH_SIZE) + 1} completed. Fetched ${validTranches.length} tranches.`);
@@ -146,7 +146,7 @@ export default function InsurancePage() {
 
         // Step 4: Fetch products and map them to their tranches
         try {
-          const fetchedProducts = await getProducts();
+          const fetchedProducts = await getProducts().then(products => products.filter(product => product.productId > 1));
           console.log("Raw products fetched:", fetchedProducts);
 
           // Map products to their tranches using the grouped data
@@ -166,7 +166,7 @@ export default function InsurancePage() {
         } catch (productError) {
           console.error("Error fetching products:", productError);
           // If products fail, create product objects from tranche data
-          const productIds = [...new Set(fetchedTranches.map(t => t.productId))];
+          const productIds = [...new Set(fetchedTranches.map(t => t.productId).filter(id => id > 1))];
           const productsFromTranches: Product[] = productIds.map(productId => ({
             productId,
              

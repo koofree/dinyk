@@ -225,7 +225,7 @@ function TrancheContent() {
         );
 
         // Step 4: Fetch product details for each unique product
-        for (const productId of uniqueProductIds) {
+        for (const productId of uniqueProductIds.filter(id => id > 1)) {
           try {
             const productInfo = await productCatalog.getProduct(productId);
             
