@@ -12,25 +12,25 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import type {
-  ProductCatalog
+    ProductCatalog
 } from "@dinsure/contracts";
 import {
-  ORACLE_ROUTE_ID_TO_TYPE,
-  useContracts,
-  useProductManagement,
-  useSellerOperations,
-  useWeb3
+    ORACLE_ROUTE_ID_TO_TYPE,
+    useContracts,
+    useProductManagement,
+    useSellerOperations,
+    useWeb3
 } from "@dinsure/contracts";
 
 import type { ProductSpec } from "@dinsure/contracts/hooks";
 import { Badge } from "@dinsure/ui/badge";
 import { Button } from "@dinsure/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
 } from "@dinsure/ui/card";
 import { ScrollArea } from "@dinsure/ui/scroll-area";
 
@@ -278,31 +278,29 @@ export default function TrancheDetailPage() {
   }
 
   return (
-    <div className="container mx-auto space-y-6 py-8">
-      <div className="mb-6 flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push("/insurance")}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold">
-            {tranche.asset} - Tranche #{tranche.trancheId}
-          </h1>
-          <p className="mt-1 text-muted-foreground">{product.description}</p>
+    <div className="py-8">
+      <div className="mb-16">
+        <div className="mb-6 flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/insurance")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
         </div>
+        <h1 className="mobile:text-[42px] font-display mb-4 break-words text-[40px] font-bold leading-tight text-gray-900">
+          {tranche.asset} - Tranche #{tranche.trancheId}
+        </h1>
+        <p className="mobile:text-[20px] mb-8 break-words text-[18px] leading-tight text-gray-600">
+          {product.description}
+        </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Trigger Price
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="flex h-full flex-col justify-between p-4">
+            <div className="mb-2 text-sm text-gray-600">Trigger Price</div>
             <div className="text-2xl font-bold text-red-600">
               {getTriggerDisplay(tranche.trigger)}
             </div>
@@ -310,12 +308,8 @@ export default function TrancheDetailPage() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Premium Rate
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="flex h-full flex-col justify-between p-4">
+            <div className="mb-2 text-sm text-gray-600">Premium Rate</div>
             <div className="text-2xl font-bold text-green-600">
               {getPremiumDisplay(tranche.premiumBps)}
             </div>
@@ -323,12 +317,8 @@ export default function TrancheDetailPage() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Value Locked
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="flex h-full flex-col justify-between p-4">
+            <div className="mb-2 text-sm text-gray-600">Total Value Locked</div>
             <div className="text-2xl font-bold">
               $
               {navInfo
@@ -339,19 +329,20 @@ export default function TrancheDetailPage() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Rounds
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="flex h-full flex-col justify-between p-4">
+            <div className="mb-2 text-sm text-gray-600">Active Rounds</div>
             <div className="text-2xl font-bold">{rounds.length}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Current Round Actions - Show forms based on availability */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="mb-8">
+        <h2 className="font-display mb-4 text-[30px] font-bold text-gray-900">
+          Actions
+        </h2>
+        <div className="mb-8 h-px w-full bg-gray-200"></div>
+        <div className="grid gap-6 lg:grid-cols-2">
         <BuyInsuranceForm
           productId={BigInt(productId)}
           trancheId={tranche.trancheId}
@@ -398,52 +389,61 @@ export default function TrancheDetailPage() {
             </CardContent>
           </Card>
         )}
+        </div>
       </div>
 
       {/* No Active Round Message */}
       {!selectedRound && rounds.length > 0 && (
-        <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-950/20">
-          <CardContent className="py-6">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-              <div>
-                <h3 className="font-semibold text-yellow-900 dark:text-yellow-100">
-                  Select a Round
-                </h3>
-                <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
-                  Please select a round from the list below. Only rounds with
-                  "OPEN" status (highlighted in green) can accept new deposits.
-                </p>
+        <div className="mb-8">
+          <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-950/20">
+            <CardContent className="py-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                <div>
+                  <h3 className="font-semibold text-yellow-900 dark:text-yellow-100">
+                    Select a Round
+                  </h3>
+                  <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
+                    Please select a round from the list below. Only rounds with
+                    "OPEN" status (highlighted in green) can accept new deposits.
+                  </p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       )}
       {!selectedRound && rounds.length === 0 && (
-        <Card className="border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950/20">
-          <CardContent className="py-6">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                  No Rounds Available
-                </h3>
-                <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                  There are no rounds available for this tranche yet. Please
-                  check back later.
-                </p>
+        <div className="mb-8">
+          <Card className="border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950/20">
+            <CardContent className="py-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                    No Rounds Available
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                    There are no rounds available for this tranche yet. Please
+                    check back later.
+                  </p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Rounds List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Insurance Rounds</CardTitle>
-          <CardDescription>View all rounds for this tranche</CardDescription>
-        </CardHeader>
+      <div className="mb-8">
+        <h2 className="font-display mb-4 text-[30px] font-bold text-gray-900">
+          Insurance Rounds
+        </h2>
+        <div className="mb-8 h-px w-full bg-gray-200"></div>
+        <Card>
+          <CardHeader>
+            <CardTitle>View all rounds for this tranche</CardTitle>
+          </CardHeader>
         <CardContent>
           <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-4">
@@ -534,10 +534,16 @@ export default function TrancheDetailPage() {
           </ScrollArea>
         </CardContent>
       </Card>
+      </div>
 
-      {/* Pool Statistics */}
+            {/* Pool Statistics */}
       {poolInfo && (
-        <Card>
+        <div className="mb-8">
+          <h2 className="font-display mb-4 text-[30px] font-bold text-gray-900">
+            Pool Statistics
+          </h2>
+          <div className="mb-8 h-px w-full bg-gray-200"></div>
+          <Card>
           <CardHeader>
             <CardTitle>Pool Statistics</CardTitle>
           </CardHeader>
@@ -589,6 +595,7 @@ export default function TrancheDetailPage() {
             </div>
           </CardContent>
         </Card>
+        </div>
       )}
     </div>
   );
