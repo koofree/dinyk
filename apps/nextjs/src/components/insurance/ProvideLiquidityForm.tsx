@@ -292,7 +292,7 @@ export function ProvideLiquidityForm({
             <p className="text-lg font-bold">
               $
               {navInfo
-                ? (Number(navInfo.sharePrice) / 1e6).toFixed(4)
+                ? (Number(navInfo.sharePrice) / 1e18).toFixed(4)
                 : "1.0000"}
             </p>
             <p className="text-sm text-muted-foreground">Per share value</p>

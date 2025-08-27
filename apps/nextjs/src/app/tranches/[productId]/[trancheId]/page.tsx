@@ -9,7 +9,11 @@ import { AlertCircle, ArrowLeft, Loader2, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import type {
+  ProductCatalog
+} from "@dinsure/contracts";
 import {
+  ORACLE_ROUTE_ID_TO_TYPE,
   useContracts,
   useProductManagement,
   useSellerOperations,
@@ -71,7 +75,7 @@ export default function TrancheDetailPage() {
 
   const [product, setProduct] = useState<ProductSpec | null>(null);
   const [tranche, setTranche] = useState<TrancheData | null>(null);
-  const [rounds, setRounds] = useState<RoundData[]>([]);
+  const [rounds, setRounds] = useState<ProductCatalog.RoundStructOutput[]>([]);
   const [poolInfo, setPoolInfo] = useState<PoolInfo | null>(null);
   const [navInfo, setNavInfo] = useState<NavInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -130,6 +134,8 @@ export default function TrancheDetailPage() {
           trancheData?.premiumRateBps || trancheData?.premiumBps || 0,
         ),
         poolAddress: poolAddress,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        asset: ORACLE_ROUTE_ID_TO_TYPE[String(trancheData.oracleRouteId) as unknown as keyof typeof ORACLE_ROUTE_ID_TO_TYPE]?.split("-")[0],
       };
 
       setTranche(trancheInfo);
@@ -170,51 +176,14 @@ export default function TrancheDetailPage() {
 
           // Get rounds for this tranche using the correct API
           try {
-            const roundsData = await (productCatalog).getTrancheRounds(
-              Number(trancheId),
-            );
-            console.log("Rounds data for tranche", trancheId, ":", roundsData);
+            const roundIds = await productCatalog.getTrancheRounds(Number(trancheId));
+            console.log("Rounds data for tranche", trancheId, ":", roundIds);
 
             // Fetch detailed round information for each round
             const formattedRounds = await Promise.all(
-              roundsData.map(async (roundId: bigint) => {
-                try {
-                  const roundInfo = await (productCatalog).getRound(
-                    roundId,
-                  );
-                  return {
-                    id: roundId,
-                    state: Number(roundInfo.state),
-                    startTime: roundInfo.salesStartTime,
-                    endTime: roundInfo.salesEndTime,
-                    maturityTime: roundInfo.salesEndTime, // Using end time as maturity for now
-                    totalBuyerOrders: roundInfo.totalBuyerPurchases,
-                    totalSellerCollateral: roundInfo.totalSellerCollateral,
-                    matchedAmount: roundInfo.matchedAmount,
-                  };
-                } catch (err: any) {
-                  console.error(`Error fetching round ${roundId}:`, err);
-                  // If the round doesn't exist, return null to filter it out
-                  if (err.code === "CALL_EXCEPTION") {
-                    console.warn(
-                      `Round ${roundId} does not exist on-chain, skipping`,
-                    );
-                    return null;
-                  }
-                  // For other errors, return a disabled state
-                  return {
-                    id: roundId,
-                    state: 6, // CANCELED state - cannot deposit
-                    startTime: 0n,
-                    endTime: 0n,
-                    maturityTime: 0n,
-                    totalBuyerOrders: 0n,
-                    totalSellerCollateral: 0n,
-                    matchedAmount: 0n,
-                    error: true,
-                  };
-                }
-              }) || [],
+              roundIds.map(async (roundId: bigint) => {
+                  return await productCatalog.getRound(roundId);
+              }),
             );
 
             // Use all rounds without filtering
@@ -224,18 +193,18 @@ export default function TrancheDetailPage() {
 
             // Find the most recent OPEN or MATCHED round from valid rounds
             const activeRound = validRounds.find(
-              (r: RoundData) => r.state === 1 || r.state === 2,
+              (r: ProductCatalog.RoundStructOutput) => r.state === 1n || r.state === 2n || r.state === 3n,
             );
 
             console.log("Rounds loaded:", {
               totalRounds: validRounds.length,
               validRounds: validRounds.length,
               filteredOut: formattedRounds.length - validRounds.length,
-              roundStates: validRounds.map((r: RoundData) => ({
-                id: r.id.toString(),
-                state: r.state,
+              roundStates: validRounds.map((r: ProductCatalog.RoundStructOutput) => ({
+                id: r.roundId.toString(),
+                state: Number(r.state),
               })),
-              activeRound: activeRound ? activeRound.id.toString() : null,
+              activeRound: activeRound?.roundId.toString() ?? "",
             });
 
             if (activeRound) {
@@ -285,13 +254,6 @@ export default function TrancheDetailPage() {
     isInitialized,
   ]);
 
-  const getTrancheName = (trancheId: number) => {
-    // Convert trancheId to index (assuming sequential IDs starting from 0 or 1)
-    const index = trancheId % 5; // Adjust based on your actual tranche numbering
-    const names = ["A", "B", "C", "D", "E"];
-    return names[index] ?? `Tranche ${trancheId}`;
-  };
-
   const getTriggerDisplay = (trigger: bigint) => {
     return `$${Number(trigger / BigInt(1e18))}`;
   };
@@ -335,7 +297,7 @@ export default function TrancheDetailPage() {
         </Button>
         <div className="flex-1">
           <h1 className="text-3xl font-bold">
-            {product.name} - Tranche {getTrancheName(tranche.trancheId)}
+            {tranche.asset} - Tranche #{tranche.trancheId}
           </h1>
           <p className="mt-1 text-muted-foreground">{product.description}</p>
         </div>
@@ -500,14 +462,14 @@ export default function TrancheDetailPage() {
               ) : (
                 rounds.map((round) => (
                   <motion.div
-                    key={round.id.toString()}
+                    key={round.roundId.toString()}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
                   >
                     <Card
                       className={`cursor-pointer transition-all hover:shadow-md ${
-                        selectedRound?.id === round.id
+                        selectedRound?.id === round.roundId
                           ? "ring-2 ring-primary"
                           : ""
                       } ${
@@ -520,7 +482,7 @@ export default function TrancheDetailPage() {
                       <CardHeader>
                         <div className="flex items-center justify-between">
                           <CardTitle className="text-lg">
-                            Round #{round.id.toString()}
+                            Round #{round.roundId.toString()}
                           </CardTitle>
                           <Badge className={getRoundStatusColor(round.state)}>
                             {getRoundStatusText(round.state)}
@@ -536,7 +498,7 @@ export default function TrancheDetailPage() {
                             <p className="font-medium">
                               $
                               {Number(
-                                formatUnits(round.totalBuyerOrders, 6),
+                                formatUnits(round.totalBuyerPurchases, 6),
                               ).toLocaleString()}
                             </p>
                           </div>
@@ -566,8 +528,8 @@ export default function TrancheDetailPage() {
                             <p className="text-muted-foreground">End Time</p>
                             <p className="font-medium">
                               {new Date(
-                                Number(round.endTime) * 1000,
-                              ).toLocaleDateString()}
+                                Number(round.salesEndTime) * 1000,
+                              ).toLocaleString()}
                             </p>
                           </div>
                         </div>
@@ -602,7 +564,7 @@ export default function TrancheDetailPage() {
                 <p className="text-lg font-semibold">
                   $
                   {navInfo
-                    ? Number(formatUnits(navInfo.sharePrice ?? 0n, 6)).toFixed(
+                    ? Number(formatUnits(navInfo.sharePrice ?? 0n, 18)).toFixed(
                         4,
                       )
                     : "0"}
