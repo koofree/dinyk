@@ -65,9 +65,9 @@ export default function RootLayout(props: { children: React.ReactNode }) {
         <AppProviders>
           <LanguageProvider>
             
-            <div className="flex min-h-screen flex-col">
+            <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-blue-50">
               <Navbar />
-              <main className="flex flex-1 flex-col items-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
+              <main className="flex flex-1 flex-col items-center">
                 <div className="mx-auto max-w-[720px] px-4 sm:px-6 lg:px-8">
                   {props.children}
                 </div>
