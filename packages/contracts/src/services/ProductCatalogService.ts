@@ -2,17 +2,16 @@ import { ethers } from "ethers";
 
 import type { ProductCatalog, TranchePoolFactory } from "../types/generated";
 import type {
-  PoolAccountingData,
   Product,
   ProductMetadata,
   Round,
   Tranche,
   TriggerType,
 } from "../types/products";
-import TranchePoolCoreABI from "../config/abis/TranchePoolCore.json";
 import { ACTIVE_NETWORK } from "../config/constants";
 import {
   ProductCatalog__factory,
+  TranchePoolCore__factory,
   TranchePoolFactory__factory,
 } from "../types/generated";
 import { RoundState } from "../types/products";
@@ -31,7 +30,7 @@ export class ProductCatalogService {
       ACTIVE_NETWORK.contracts.TranchePoolFactory,
       provider,
     );
-    
+
     // Test provider health on construction
     void this.checkProviderHealth();
   }
@@ -43,7 +42,10 @@ export class ProductCatalogService {
       this.isProviderHealthy = true;
       return true;
     } catch (error) {
-      console.warn('[ProductCatalogService] Provider health check failed:', error);
+      console.warn(
+        "[ProductCatalogService] Provider health check failed:",
+        error,
+      );
       this.isProviderHealthy = false;
       return false;
     }
@@ -56,7 +58,9 @@ export class ProductCatalogService {
       if (!this.isProviderHealthy) {
         const healthy = await this.checkProviderHealth();
         if (!healthy) {
-          console.warn('[ProductCatalogService] Provider not healthy, returning empty array');
+          console.warn(
+            "[ProductCatalogService] Provider not healthy, returning empty array",
+          );
           return [];
         }
       }
@@ -308,16 +312,10 @@ export class ProductCatalogService {
       }
 
       // Get pool contract
-      const pool = new ethers.Contract(
-        poolAddress,
-        TranchePoolCoreABI.abi,
-        this.provider,
-      );
+      const pool = TranchePoolCore__factory.connect(poolAddress, this.provider);
 
       // Get pool accounting data
-      const getPoolAccounting =
-        pool.poolAccounting as () => Promise<PoolAccountingData>;
-      const poolAccounting = await getPoolAccounting();
+      const poolAccounting = await pool.getPoolAccounting();
 
       // Calculate metrics
       const totalAssets = poolAccounting.totalAssets;

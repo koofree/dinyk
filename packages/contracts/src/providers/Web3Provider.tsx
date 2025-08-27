@@ -11,8 +11,8 @@ import React, {
   useState,
 } from "react";
 
-import DinUSDTABI from "../config/abis/DinUSDT.json";
 import { ACTIVE_NETWORK, KAIA_RPC_ENDPOINTS, ProviderType, STORAGE_KEYS, switchToKaiaNetwork } from "../config/constants";
+import { DinUSDT__factory } from "../types/generated";
 
 // Ethereum provider interface
 type ProviderEventHandler = (...args: unknown[]) => void;
@@ -270,9 +270,8 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
   ) => {
     try {
       const reliableProvider = await createJsonRpcProviderWithFallback();
-      const usdtContract = new ethers.Contract(
+      const usdtContract = DinUSDT__factory.connect(
         ACTIVE_NETWORK.contracts.DinUSDT,
-        DinUSDTABI.abi,
         reliableProvider,
       );
       const balanceOf = usdtContract.balanceOf as (
@@ -414,9 +413,8 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
     if (!account) return "0";
     try {
       const reliableProvider = await createJsonRpcProviderWithFallback();
-      const usdtContract = new ethers.Contract(
+      const usdtContract = DinUSDT__factory.connect(
         ACTIVE_NETWORK.contracts.DinUSDT,
-        DinUSDTABI.abi,
         reliableProvider,
       );
       const balanceOf = usdtContract.balanceOf as (

@@ -1,7 +1,7 @@
 import { useCallback } from "react";
-import { Contract, ethers } from "ethers";
+import { ethers } from "ethers";
 
-import TranchePoolCoreABI from "../config/abis/TranchePoolCore.json";
+import { TranchePoolCore__factory } from "../types/generated";
 import { useContracts } from "./useContracts";
 
 export enum RoundState {
@@ -102,19 +102,16 @@ export function useRoundManagement() {
         const trancheId = Number(roundInfo.trancheId);
 
         // Get pool address
-        const poolAddress = await (tranchePoolFactory as any).getTranchePool(
-          trancheId,
-        );
+        const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
         if (poolAddress === ethers.ZeroAddress) {
           return null;
         }
 
-        const pool = new Contract(
+        const pool = TranchePoolCore__factory.connect(
           poolAddress,
-          TranchePoolCoreABI.abi,
           productCatalog.runner,
         );
-        const economics = await (pool as any).getRoundEconomics(roundId);
+        const economics = await pool.getRoundEconomics(roundId);
 
         return {
           totalBuyerPurchases: economics[0],

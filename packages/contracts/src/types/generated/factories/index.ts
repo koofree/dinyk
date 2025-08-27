@@ -17,6 +17,7 @@ export { OracleRouter__factory } from "./OracleRouter__factory";
 export { OraklPriceFeed__factory } from "./OraklPriceFeed__factory";
 export { ProductCatalog__factory } from "./ProductCatalog__factory";
 export { SettlementEngine__factory } from "./SettlementEngine__factory";
+export { TestFaucet__factory } from "./TestFaucet__factory";
 export { TranchePoolCore__factory } from "./TranchePoolCore__factory";
 export { TranchePoolFactory__factory } from "./TranchePoolFactory__factory";
 export { YieldRouter__factory } from "./YieldRouter__factory";

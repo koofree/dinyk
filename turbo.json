@@ -58,6 +58,10 @@
     "test:watch": {
       "cache": false,
       "persistent": true
+    },
+    "generate-types": {
+      "cache": false,
+      "persistent": true
     }
   },
   "globalEnv": [

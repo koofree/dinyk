@@ -9,9 +9,9 @@ import type {
   OracleRouter,
   ProductCatalog,
   SettlementEngine,
+  TranchePoolCore,
   TranchePoolFactory,
 } from "../types/generated";
-import TranchePoolCoreABI from "../config/abis/TranchePoolCore.json";
 import { ACTIVE_NETWORK, KAIA_RPC_ENDPOINTS } from "../config/constants";
 import { useWeb3 } from "../providers/Web3Provider";
 import {
@@ -22,6 +22,7 @@ import {
   OracleRouter__factory,
   ProductCatalog__factory,
   SettlementEngine__factory,
+  TranchePoolCore__factory,
   TranchePoolFactory__factory,
 } from "../types/generated";
 
@@ -233,7 +234,7 @@ export function useContracts(): ContractsState {
 // Helper hook to get a specific pool contract
 export function useTranchePool(poolAddress: string | null) {
   const { provider, signer } = useWeb3();
-  const [pool, setPool] = useState<ethers.Contract | null>(null);
+  const [pool, setPool] = useState<TranchePoolCore | null>(null);
 
   useEffect(() => {
     if (!poolAddress || !provider || poolAddress === ethers.ZeroAddress) {
@@ -243,9 +244,8 @@ export function useTranchePool(poolAddress: string | null) {
 
     try {
       const signerOrProvider = signer ?? provider;
-      const poolContract = new ethers.Contract(
+      const poolContract = TranchePoolCore__factory.connect(
         poolAddress,
-        TranchePoolCoreABI.abi,
         signerOrProvider,
       );
       setPool(poolContract);

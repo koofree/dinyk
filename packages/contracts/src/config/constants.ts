@@ -100,7 +100,7 @@ export const KAIA_MAINNET = {
     OraklBtcUsdtFeedProxy: "",
     OraklEthUsdtFeedProxy: "",
     OraklKaiaUsdtFeedProxy: "",
-    Faucet: "",
+    TestFaucet: "",
   },
 } as const;
 
@@ -119,22 +119,27 @@ export const KAIA_TESTNET = {
   blockExplorer: "https://kairos.kaiascan.io",
   faucet: "https://faucet.kaia.io",
   contracts: {
-    DinRegistry: "0xCD2B28186b257869B3C2946ababB56683F4304C3",
-    DinToken: "0x2e401e83087E96341E292f6B987cB7440860CE53",
-    DinUSDT: "0x3372BE45687b2d85F010f6245d3b6284E13327ea",
-    FeeTreasury: "0xb96D484cB71A5d5C3C3AB1Ac18dF587cC6AC6914",
-    InsuranceToken: "0x3bEDE5f043E8D0597F9F0b60eCfc52B134d8E934",
-    OraklPriceFeed: "0xFa2f0063BAC2e5BA304f50eC54b6EA07aCC534fF",
-    ProductCatalog: "0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D",
-    DinoOracle: "0x6317f2f9271d484548871915DDDff95aD4c45aC3",
-    TranchePoolFactory: "0x3810066EfEAc98F18cF6A1E62FF3f089CC30Fb01",
-    YieldRouter: "0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11",
-    OracleRouter: "0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72",
-    SettlementEngine: "0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8",
-    OraklBtcUsdtFeedProxy: "0x43add670a0e1948c90386d2b972fcaec6ce1be90",
-    OraklEthUsdtFeedProxy: "0x22be5ff1ef09ebf06995da9050d44d23070c2142",
-    OraklKaiaUsdtFeedProxy: "0xc2caa26226585f666ec79f8ecdb0aec17893af1d",
-    Faucet: "0x0000000000000000000000000000000000000000",
+    DinRegistry: "0x029A3a8737f87AA4bFCba746eDe65811C135aA52", // DinRegistry contract address
+    DinToken: "0x9bDD3B401385a6210590CB15313663898c1c6208", // DinToken contract address
+    DinUSDT: "0xd154254c4be2AF3C92CdaE0c60d08fB554445536", // DinUSDT contract address
+    FeeTreasury: "0x05FFF34642F2736055A48bD356a02c7DcA7E4446", // FeeTreasury contract address
+    InsuranceToken: "0x4cd06921A17524514223B4e445b83299B5F1eD1a", // InsuranceToken contract address
+    OraklPriceFeed: "0x2FA183Ce51f63fdB905F5787e3570DE336b89DDB", // OraklPriceFeed contract address
+    ProductCatalog: "0x1eA1611350EAD1f7C99fd70EB50fBf19D2fFC3Ec", // ProductCatalog contract address
+
+    // Oracle and Tranche/Settlement System Addresses (Phase 3 - TO BE FILLED after registry-dependent deployment)
+    DinoOracle: "0x263831761BA898A687B9f109461E91f155c7BF43", // DinoOracle contract address (will be deployed with correct DIN token)
+    TranchePoolFactory: "0x3877C72aa6bB608F12D15087bDE8e46f307D0aB0", // TranchePoolFactory contract address
+    YieldRouter: "0x2D2d2C0317f7b09aA51d750a03FB8C6C8cfFc7F8", // YieldRouter contract address
+    OracleRouter: "0x1EFE5cdf9F7078AfE9480464834A6CEe51E9e3d0", // OracleRouter contract address
+    SettlementEngine: "0x0c4EdFEe5f2860eB8d8B29fDdcfa317fFF33B49F", // SettlementEngine contract address
+
+    // Orakl Network Feed Addresses (Kairos testnet - get from Orakl docs)
+    OraklBtcUsdtFeedProxy: "0x43add670a0e1948c90386d2b972fcaec6ce1be90", // BTC/USD price feed from Orakl Network
+    OraklEthUsdtFeedProxy: "0x22be5ff1ef09ebf06995da9050d44d23070c2142", // ETH/USD price feed from Orakl Network
+    OraklKaiaUsdtFeedProxy: "0xc2caa26226585f666ec79f8ecdb0aec17893af1d", // KAIA/USD price feed from Orakl Network
+
+    TestFaucet: "0xc2b80EB3F65042Aedc0140DE20cBD45097cE54eb", // Faucet contract address
   },
 } as const;
 
