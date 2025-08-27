@@ -11,6 +11,7 @@ import "~/app/globals.css";
 
 import { Footer } from "~/components/common/Footer";
 import { Navbar } from "~/components/common/Navbar";
+import { GoogleAnalytics } from "~/components/GoogleAnalytics";
 import { LanguageProvider } from "~/context/LanguageProvider";
 
 export const metadata: Metadata = {
@@ -64,7 +65,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
       >
         <AppProviders>
           <LanguageProvider>
-            
+            <GoogleAnalytics />
             <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-blue-50">
               <Navbar />
               <main className="flex flex-1 flex-col items-center">
