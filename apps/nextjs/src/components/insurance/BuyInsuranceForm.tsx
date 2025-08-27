@@ -111,7 +111,7 @@ export function BuyInsuranceForm({
       return;
     }
 
-    if (!account) {
+    if (typeof account !== "string") {
       setError({
         userMessage: "No wallet address found",
         action: 'none',

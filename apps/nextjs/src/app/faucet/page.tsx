@@ -31,7 +31,7 @@ export default function FaucetPage() {
   const [timeUntilNextClaim, setTimeUntilNextClaim] = useState<string | null>(null);
 
   useEffect(() => {
-    if (account) {
+    if (typeof account === "string") {
       setRecipientAddress(account);
     }
   }, [account]);
@@ -170,7 +170,7 @@ export default function FaucetPage() {
             </ul>
           </div>
 
-          {!account ? (
+          {typeof account !== "string" ? (
             <Alert className="border-orange-200 dark:border-orange-800">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Wallet Not Connected</AlertTitle>

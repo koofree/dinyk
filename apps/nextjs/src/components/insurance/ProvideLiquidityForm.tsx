@@ -142,7 +142,7 @@ export function ProvideLiquidityForm({
   ]);
 
   const handleDeposit = async () => {
-    if (!isConnected || !account) {
+    if (!isConnected || typeof account !== "string") {
       setError("Please connect your wallet");
       return;
     }

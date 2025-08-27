@@ -3,6 +3,7 @@ import { ethers } from "ethers";
 
 import type { ProductCatalog } from "../types/generated";
 import {
+  ACTIVE_NETWORK,
   KAIA_RPC_ENDPOINTS,
   ORACLE_ROUTE_ID_TO_TYPE,
 } from "../config/constants";
@@ -93,15 +94,15 @@ export function useUserPortfolio() {
     }
 
     return new ethers.JsonRpcProvider(KAIA_RPC_ENDPOINTS[0], {
-      chainId: 1001,
-      name: "Kaia Kairos",
+      chainId: ACTIVE_NETWORK.chainId,
+      name: ACTIVE_NETWORK.name,
     });
   }, [signer]);
 
   // Fetch user's insurance NFT positions
   const fetchInsurancePositions = useCallback(async () => {
     if (
-      !account ||
+      typeof account !== "string" ||
       !insuranceToken ||
       !productCatalog ||
       !settlementEngine ||
@@ -282,7 +283,8 @@ export function useUserPortfolio() {
 
   // Fetch user's liquidity positions
   const fetchLiquidityPositions = useCallback(async () => {
-    if (!account || !productCatalog || !tranchePoolFactory) return [];
+    if (typeof account !== "string" || !productCatalog || !tranchePoolFactory)
+      return [];
 
     const positions: UserLiquidityPosition[] = [];
 
@@ -534,7 +536,7 @@ export function useUserPortfolio() {
 
   // Fetch all positions
   const fetchAllPositions = useCallback(async () => {
-    if (!isInitialized || !account) {
+    if (!isInitialized || typeof account !== "string") {
       console.log("Skipping fetch: not initialized or no account");
       return;
     }

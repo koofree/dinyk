@@ -126,7 +126,7 @@ export function useSellerOperations() {
     async (params: DepositCollateralParams) => {
       console.log("depositCollateral called with:", {
         hasSigner: !!signer,
-        hasAccount: !!account,
+        hasAccount: !(typeof account !== "string"),
         hasProductCatalog: !!productCatalog,
         hasTranchePoolFactory: !!tranchePoolFactory,
         hasUsdt: !!usdt,
@@ -142,7 +142,7 @@ export function useSellerOperations() {
       if (!signer) {
         throw new Error("Signer not available. Please connect your wallet.");
       }
-      if (!account) {
+      if (typeof account !== "string") {
         throw new Error("Account not available. Please connect your wallet.");
       }
       if (!productCatalog) {

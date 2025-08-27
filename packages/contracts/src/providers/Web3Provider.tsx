@@ -380,12 +380,12 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
   };
 
   const getSigner = async (): Promise<ethers.JsonRpcSigner | null> => {
-    if (!provider || !account) return null;
+    if (!provider || typeof account !== "string") return null;
     return provider.getSigner(0);
   };
 
   const getBalance = async (): Promise<string> => {
-    if (!account) return "0";
+    if (typeof account !== "string") return "0";
     // Always use reliable RPC endpoints for balance queries
     try {
       const reliableProvider = await createJsonRpcProviderWithFallback();
@@ -410,7 +410,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
   }, [provider, account]);
 
   const getUSDTBalance = async (): Promise<string> => {
-    if (!account) return "0";
+    if (typeof account !== "string") return "0";
     try {
       const reliableProvider = await createJsonRpcProviderWithFallback();
       const usdtContract = DinUSDT__factory.connect(

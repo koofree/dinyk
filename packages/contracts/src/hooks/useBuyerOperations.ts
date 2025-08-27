@@ -92,7 +92,7 @@ export function useBuyerOperations() {
     async (params: BuyInsuranceParams) => {
       if (
         !signer ||
-        !account ||
+        typeof account !== "string" ||
         !productCatalog ||
         !tranchePoolFactory ||
         !usdt ||
@@ -370,7 +370,11 @@ export function useBuyerOperations() {
       settled: boolean;
       payoutAmount: bigint;
     }> => {
-      if (!productCatalog || !tranchePoolFactory || !account) {
+      if (
+        !productCatalog ||
+        !tranchePoolFactory ||
+        typeof account !== "string"
+      ) {
         throw new Error("Not initialized");
       }
 
@@ -429,7 +433,12 @@ export function useBuyerOperations() {
   // Claim insurance payout (if triggered and settled)
   const claimPayout = useCallback(
     async (roundId: number) => {
-      if (!productCatalog || !tranchePoolFactory || !signer || !account) {
+      if (
+        !productCatalog ||
+        !tranchePoolFactory ||
+        !signer ||
+        typeof account !== "string"
+      ) {
         throw new Error("Not initialized");
       }
 

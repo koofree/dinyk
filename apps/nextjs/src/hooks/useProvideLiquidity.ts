@@ -25,7 +25,7 @@ export function useProvideLiquidity() {
 
   const checkAllowance = useCallback(
     async (poolAddress: string, amount: bigint) => {
-      if (!usdt || !account) return false;
+      if (!usdt || typeof account !== "string") return false;
 
       try {
         console.log("Checking USDT allowance:", {
@@ -121,7 +121,7 @@ export function useProvideLiquidity() {
   );
 
   const checkBalance = useCallback(async (): Promise<bigint> => {
-    if (!usdt || !account) return 0n;
+    if (!usdt || typeof account !== "string") return 0n;
 
     try {
       return await usdt.balanceOf(account);
@@ -161,7 +161,7 @@ export function useProvideLiquidity() {
 
   const provideLiquidity = useCallback(
     async ({ tranche, round, amount }: ProvideLiquidityParams) => {
-      if (!signer || !account) {
+      if (!signer || typeof account !== "string") {
         throw new Error("Wallet not connected");
       }
 
