@@ -6,7 +6,7 @@
 
 ## 🎯 Executive Summary
 
-DIN (Dinyk) is a fully decentralized Web3 insurance platform on the Kaia blockchain. This document combines the complete system architecture, smart contract integration, and implementation guide into a single comprehensive reference.
+DIN is a fully decentralized Web3 insurance platform on the Kaia blockchain. This document combines the complete system architecture, smart contract integration, and implementation guide into a single comprehensive reference.
 
 ### Key Technologies
 
@@ -112,7 +112,7 @@ ANNOUNCED → OPEN → ACTIVE → MATURED → SETTLED/CANCELED
 ## 📁 Complete Project Structure
 
 ```
-dinyk/
+din-app/
 ├── apps/
 │   └── nextjs/
 │       └── src/
@@ -1030,7 +1030,7 @@ await yieldRouter.returnFromYield(poolAddress, amount);
 ### Community
 
 - [Kaia Discord](https://discord.gg/kaia)
-- [GitHub Repository](https://github.com/yourusername/dinyk)
+- [GitHub Repository](https://github.com/dinsure/din-app)
 
 ---
 

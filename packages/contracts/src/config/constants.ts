@@ -165,9 +165,9 @@ export enum ProviderType {
 
 // Storage keys
 export const STORAGE_KEYS = {
-  ACCOUNT: "dinyk_wallet_account",
-  CONNECTED: "dinyk_wallet_connected",
-  PROVIDER_TYPE: "dinyk_provider_type",
+  ACCOUNT: "din_wallet_account",
+  CONNECTED: "din_wallet_connected",
+  PROVIDER_TYPE: "din_provider_type",
 } as const;
 
 // Network switch helper

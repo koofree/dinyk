@@ -1,4 +1,4 @@
-# DIN (Dinyk) - Decentralized Insurance Platform
+# DIN - Decentralized Insurance Platform
 
 A decentralized parametric insurance platform built on the Kaia blockchain, providing automated risk protection through smart contracts and oracle-based settlements.
 
@@ -53,8 +53,8 @@ DIN enables users to:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/dinyk.git
-cd dinyk
+git clone https://github.com/dinsure/din-app.git
+cd din-app
 
 # Install dependencies
 pnpm install
@@ -106,7 +106,7 @@ pnpm ui-add          # Add new shadcn/ui component
 ### Project Structure
 
 ```
-dinyk/
+din-app/
 ├── apps/
 │   ├── nextjs/          # Main web application
 │   │   ├── src/
@@ -284,7 +284,6 @@ Please read our [Contributing Guide](./CONTRIBUTING.md) for details on our code 
 - [Whitepaper](./docs/whitepaper.md)
 - [UI Wireframes](./docs/ui-flow-wireframe.md)
 - [Kaia Documentation](https://docs.kaia.io)
-- [Discord Community](https://discord.gg/dinyk)
 
 ## License
 
@@ -296,7 +295,7 @@ For support and questions:
 
 - Open an issue on GitHub
 - Join our Discord server
-- Email: support@dinyk.io
+- Email: contact@koofree.com
 
 ---
 

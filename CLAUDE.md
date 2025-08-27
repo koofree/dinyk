@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project: DIN (Dinyk) - Decentralized Insurance Platform
+## Project: DIN - Decentralized Insurance Platform
 
 **DIN** is a decentralized insurance platform on the Kaia blockchain that provides parametric insurance products. The platform enables users to purchase insurance for risk hedging or provide liquidity to earn premiums and staking rewards.
 

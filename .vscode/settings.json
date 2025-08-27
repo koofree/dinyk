@@ -70,7 +70,6 @@
   "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
   "editor.formatOnSave": false,
   "cSpell.words": [
-    "Dinyk",
     "prettiercache",
     "topo",
     "Vercel",
