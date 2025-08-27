@@ -133,6 +133,12 @@ export function useSellerOperations() {
         isInitialized,
       });
 
+      if (!isInitialized) {
+        throw new Error(
+          "Contracts are still initializing. Please wait a moment.",
+        );
+      }
+
       if (!signer) {
         throw new Error("Signer not available. Please connect your wallet.");
       }
@@ -152,53 +158,14 @@ export function useSellerOperations() {
       setIsLoading(true);
       try {
         // Check network
-        const network = await signer.provider?.getNetwork();
+        const network = await signer.provider.getNetwork();
         console.log("Current network:", {
-          chainId: network?.chainId.toString(),
-          name: network?.name,
+          chainId: network.chainId.toString(),
         });
 
         // First verify the ProductCatalog contract is accessible
         const catalogAddress = await productCatalog.getAddress();
         console.log("ProductCatalog contract address:", catalogAddress);
-
-        // Check if the contract has code
-        let catalogCode;
-        try {
-          catalogCode = await signer.provider?.getCode(catalogAddress);
-          console.log(
-            "ProductCatalog has code:",
-            catalogCode && catalogCode !== "0x" ? "Yes" : "No",
-          );
-        } catch (codeError) {
-          console.error("Error checking contract code:", codeError);
-          // If we get a trie node error, it's an RPC issue
-          const errorWithCode = codeError as {
-            message?: string;
-            code?: number;
-          };
-          if (
-            errorWithCode.message?.includes("missing trie node") ||
-            errorWithCode.code === -32603
-          ) {
-            console.warn(
-              "RPC node error detected. The Kaia testnet node might be experiencing issues.",
-            );
-            console.warn(
-              "You may need to wait a moment and try again, or switch to a different RPC endpoint.",
-            );
-            // Continue anyway - the contract likely exists
-            catalogCode = "0x1"; // Assume it exists
-          } else {
-            throw codeError;
-          }
-        }
-
-        if (!catalogCode || catalogCode === "0x") {
-          throw new Error(
-            `ProductCatalog contract not deployed at ${catalogAddress} on chain ${network?.chainId}`,
-          );
-        }
 
         // Get round info
         console.log("Getting round info for roundId:", params.roundId);
@@ -349,6 +316,11 @@ export function useSellerOperations() {
         );
 
         // Check USDT balance
+        console.log(
+          "Checking USDT balance for account:",
+          await usdt.getAddress(),
+          account,
+        );
         const balance = await usdt.balanceOf(account);
         if (balance < collateralAmountWei) {
           throw new Error(
@@ -360,24 +332,6 @@ export function useSellerOperations() {
         console.log("Getting pool address for tranche:", trancheId);
         const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
         console.log("Pool address:", poolAddress);
-
-        if (poolAddress === ethers.ZeroAddress) {
-          throw new Error(`No pool found for tranche ${trancheId}`);
-        }
-
-        // Verify pool contract exists, but handle RPC errors gracefully
-        try {
-          const poolCode = await signer.provider.getCode(poolAddress);
-          if (!poolCode || poolCode === "0x") {
-            throw new Error(`Pool contract not deployed at ${poolAddress}`);
-          }
-        } catch (codeError) {
-          // If getCode fails (e.g., RPC error), throw a more specific error
-          console.error("Error checking pool contract:", codeError);
-          throw new Error(
-            `Cannot verify pool contract at ${poolAddress}: RPC error`,
-          );
-        }
 
         // Get pool contract
         const pool = TranchePoolCore__factory.connect(poolAddress, signer);

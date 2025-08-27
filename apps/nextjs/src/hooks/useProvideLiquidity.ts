@@ -1,7 +1,11 @@
 import { useCallback, useState } from "react";
 import { ethers } from "ethers";
 
-import { useContracts, useWeb3 } from "@dinsure/contracts";
+import {
+  TranchePoolCore__factory,
+  useContracts,
+  useWeb3,
+} from "@dinsure/contracts";
 
 import type { RoundDetails, TrancheDetails } from "./useTrancheData";
 import TranchePoolCoreABI from "../../../../packages/contracts/src/config/abis/TranchePoolCore.json";
@@ -221,9 +225,8 @@ export function useProvideLiquidity() {
         }
 
         // Get pool contract
-        const pool = new ethers.Contract(
+        const pool = TranchePoolCore__factory.connect(
           tranche.poolAddress,
-          TranchePoolCoreABI.abi,
           signer,
         );
 

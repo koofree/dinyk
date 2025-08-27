@@ -38,20 +38,20 @@ export function ProvideLiquidityForm({
   roundId,
   onSuccess,
 }: ProvideLiquidityFormProps) {
-  const web3Context = useWeb3();
   const {
     account,
     isConnected,
     usdtBalance: usdtBalanceStr,
     refreshUSDTBalance,
     signer,
-  } = web3Context;
+  } = useWeb3();
   const {
-    depositCollateral,
+    depositCollateral,  
     getPoolAccounting,
     getShareBalance,
   } = useSellerOperations();
   const contracts = useContracts();
+  
   const { isInitialized } = contracts;
 
   // Debug Web3 context
@@ -60,17 +60,15 @@ export function ProvideLiquidityForm({
       account,
       isConnected,
       hasSigner: !!signer,
-      signerType: signer ? typeof signer : "undefined",
-      web3ContextKeys: Object.keys(web3Context),
+      signerType: signer ? typeof signer : "undefined"
     });
-  }, [account, isConnected, signer, web3Context]);
+  }, [account, isConnected, signer]);
 
   // Convert string balance to bigint
   const usdtBalance = usdtBalanceStr ? parseUnits(usdtBalanceStr, 6) : 0n;
 
-  const [activeTab, setActiveTab] = useState("deposit");
+  
   const [amount, setAmount] = useState("");
-  const [withdrawAmount, setWithdrawAmount] = useState(""); // Changed from shares to withdrawAmount (USDT)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -101,7 +99,6 @@ export function ProvideLiquidityForm({
     // Refresh USDT balance
     if (
       isConnected &&
-      refreshUSDTBalance &&
       typeof refreshUSDTBalance === "function"
     ) {
       void refreshUSDTBalance();
@@ -174,9 +171,9 @@ export function ProvideLiquidityForm({
         roundId: Number(roundId),
         amount,
         isInitialized,
-        hasProductCatalog: !!(contracts as any).productCatalog,
-        hasTranchePoolFactory: !!(contracts as any).tranchePoolFactory,
-        hasUsdt: !!(contracts as any).usdt,
+        hasProductCatalog: !!contracts.productCatalog,
+        hasTranchePoolFactory: !!contracts.tranchePoolFactory,
+        hasUsdt: !!contracts.usdt,
         hasSigner: !!signer,
         account,
       });
@@ -218,11 +215,7 @@ export function ProvideLiquidityForm({
   };
 
   const handleSliderChange = (value: number[]) => {
-    if (activeTab === "deposit") {
-      setAmount(value[0]?.toString() ?? "0");
-    } else {
-      setWithdrawAmount(value[0]?.toString() ?? "0");
-    }
+    setAmount(value[0]?.toString() ?? "0");
   };
 
   const maxDeposit = usdtBalance
@@ -238,15 +231,6 @@ export function ProvideLiquidityForm({
   const estimatedShares =
     amount && navInfo?.sharePrice
       ? ((parseFloat(amount) * 1e6) / Number(navInfo.sharePrice)).toFixed(4)
-      : "0";
-
-  // Calculate shares needed for the USDT withdrawal amount
-  const estimatedSharesForWithdrawal =
-    withdrawAmount && navInfo?.sharePrice && navInfo.sharePrice > 0n
-      ? (
-          (parseFloat(withdrawAmount) * 1e6) /
-          Number(navInfo.sharePrice)
-        ).toFixed(6)
       : "0";
 
   return (
