@@ -166,16 +166,6 @@ dinyk/
 
 ## Smart Contracts
 
-### Core Contracts (Deployed on Testnet)
-
-- **DinRegistry** (`0xCD2B28186b257869B3C2946ababB56683F4304C3`): Central registry for all contracts
-- **ProductCatalog** (`0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D`): Product and round management
-- **TranchePoolCore**: Per-tranche pool for economics (deployed via factory)
-- **InsuranceToken** (`0x3bEDE5f043E8D0597F9F0b60eCfc52B134d8E934`): NFT insurance positions
-- **SettlementEngine** (`0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8`): Claim processing
-- **YieldRouter** (`0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11`): Yield generation
-- **OracleRouter** (`0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72`): Price aggregation
-
 ### Contract Repository
 
 The smart contracts are maintained in a separate repository:

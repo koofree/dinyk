@@ -32,27 +32,6 @@ This project is transitioning from a T3 Turbo monorepo to a Web3-focused archite
 - **State Management**: React Context with session persistence
 - **Contract Package**: `@dinsure/contracts` - TypeScript interfaces and hooks for smart contract interaction
 
-#### Smart Contracts (Deployed on Kaia Testnet - Chain ID: 1001)
-
-##### Core Contracts
-- **`DinRegistry`** (`0xCD2B28186b257869B3C2946ababB56683F4304C3`): Central registry for all contract addresses and global parameters. Manages protocol-wide settings with bounded validation (premium rates 0-50%, protocol fees 0-10%, maturity windows 1hr-365days).
-- **`ProductCatalog`** (`0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D`): Manages insurance products, tranches, and rounds. Controls the full round lifecycle (ANNOUNCED → OPEN → ACTIVE → MATURED → SETTLED).
-- **`TranchePoolCore`**: Economics-focused pool contract managing buyer orders, seller collateral, NAV calculation, and premium distribution. Deployed per tranche via factory.
-- **`InsuranceToken`** (`0x3bEDE5f043E8D0597F9F0b60eCfc52B134d8E934`): ERC-721 NFT representing buyer insurance positions with metadata for coverage amount and round details.
-- **`SettlementEngine`** (`0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8`): Handles oracle-based claim processing, dispute resolution, and automatic payout distribution.
-- **`FeeTreasury`** (`0xb96D484cB71A5d5C3C3AB1Ac18dF587cC6AC6914`): Protocol fee collection, distribution to stakers, and treasury management.
-- **`YieldRouter`** (`0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11`): Manages yield generation strategies for idle collateral, integrating with DeFi protocols for conservative returns.
-
-##### Infrastructure Contracts
-- **`TranchePoolFactory`** (`0x3810066EfEAc98F18cF6A1E62FF3f089CC30Fb01`): Deploys isolated pool contracts for each tranche with proper integration.
-- **`OracleRouter`** (`0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72`): Aggregates multiple oracle sources with median calculation and outlier detection.
-- **`OraklPriceFeed`** (`0xFa2f0063BAC2e5BA304f50eC54b6EA07aCC534fF`): Primary oracle integration with Orakl Network for real-time price feeds.
-- **`DinoOracle`** (`0x6317f2f9271d484548871915DDDff95aD4c45aC3`): Secondary optimistic oracle for dispute resolution and special events.
-
-##### Token Contracts
-- **`DinUSDT`** (`0x8C034f0DBA8664DA4242Cb4CF7fCD7e0a3aa5c90`): Test USDT token (6 decimals) for development.
-- **`DinToken`** (`0x7126Dbd15e6888AeDd606A7242C998DBED7530Fd`): Protocol governance token (18 decimals, 100M supply).
-
 #### Oracle System
 - **Primary**: Kaia Price Feed for standard crypto prices
 - **Fallback**: OO-lite (Optimistic Oracle) for special events
