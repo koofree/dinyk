@@ -208,7 +208,7 @@ export default function HomePage() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl py-24">
           <div className="text-center">
             <div
               className={`transition-all duration-700 ${heroAnimations.logo ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
@@ -285,7 +285,7 @@ export default function HomePage() {
       </div>
 
       {/* Key Metrics Dashboard */}
-      <div className="mx-auto max-w-7xl px-4 pt-0 pb-16 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl pt-0 pb-16">
         <div
           className="mb-16 grid grid-cols-1 gap-4 md:grid-cols-3"
           ref={progressRef}

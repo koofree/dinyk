@@ -11,14 +11,14 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 import {
-    INSURANCE_PRODUCTS,
-    ORACLE_ROUTE_ID_TO_TYPE,
-    useContractFactory,
-    useContracts,
-    usePriceStore,
-    useProductManagement,
-    useUserPortfolio,
-    useWeb3,
+  INSURANCE_PRODUCTS,
+  ORACLE_ROUTE_ID_TO_TYPE,
+  useContractFactory,
+  useContracts,
+  usePriceStore,
+  useProductManagement,
+  useUserPortfolio,
+  useWeb3,
 } from "@dinsure/contracts";
 
 // Product and Tranche types
@@ -500,9 +500,9 @@ function TrancheContent() {
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="w-full py-12 lg:py-24">
-      {/* Header */}
-      <div className="mb-16">
-        <h1 className="mobile:text-[42px] font-display mb-4 break-words text-[40px] font-bold leading-tight text-gray-900">
+          {/* Header */}
+          <div className="mb-16">
+            <h1 className="mobile:text-[42px] font-display mb-4 break-words text-[40px] font-bold leading-tight text-gray-900">
           Become a{" "}
           <span className="bg-gradient-to-r from-[#86D99C] to-[#00B1B8] bg-clip-text text-transparent">
             Depositor(Seller)
@@ -638,7 +638,7 @@ function TrancheContent() {
 
       {/* Available Pools Section Title */}
       <div className="mb-6">
-        <h2 className="font-display text-[30px] font-bold text-gray-900">
+        <h2 className="font-display text-[36px] font-extrabold text-gray-900">
           Available Tranche Pools
         </h2>
       </div>
@@ -689,8 +689,8 @@ function TrancheContent() {
 
       {/* Tranches Grid */}
       {!loading && filteredTranches.length > 0 && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {filteredTranches.map((tranche) => {
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {filteredTranches.map((tranche, index) => {
             const product = products.find(
               (p) => p.productId === tranche.productId,
             );
@@ -698,88 +698,39 @@ function TrancheContent() {
             // Show tranche even without product
             if (!product) {
               return (
-                <div
-                  key={tranche.trancheId}
-                  className="relative rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg"
-                >
-                  <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                    Tranche #{tranche.trancheId}
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    <p className="text-gray-600">
-                      Product ID:{" "}
-                      <span className="font-medium text-gray-900">
-                        {tranche.productId}
-                      </span>
-                    </p>
-                    <p className="text-gray-600">
-                      Premium:{" "}
-                      <span className="font-medium text-gray-900">
-                        {tranche.premiumRateBps / 100}%
-                      </span>
-                    </p>
-                    <p className="text-gray-600">
-                      Trigger:{" "}
-                      <span className="font-medium text-gray-900">
-                        {tranche.triggerType === 0
-                          ? "Price Below"
-                          : "Price Above"}{" "}
-                        ${tranche.threshold.toString()}
-                      </span>
-                    </p>
-                    <p className="text-gray-600">
-                      Cap:{" "}
-                      <span className="font-medium text-gray-900">
-                        ${Number(tranche.trancheCap) / 1e6} USDT
-                      </span>
-                    </p>
-                  </div>
-                  <div className="mt-4">
-                    <Link
-                      href={`/tranches/${tranche.productId}/${tranche.trancheId}`}
-                      className="block w-full rounded-xl bg-gradient-to-br from-[#86D99C] to-[#00B1B8] px-4 py-3 text-center font-semibold text-white transition-all duration-300 hover:scale-95 hover:shadow-md"
-                    >
-                      View Details
-                    </Link>
-                  </div>
-                </div>
-              );
-            }
-
-            return (
-              <div
+                              <div
                 key={tranche.trancheId}
-                className="relative rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg"
+                className="relative rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:bg-gray-750"
               >
-                <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                  {tranche.asset} Pools
+                <h3 className="mb-4 text-[20px] font-bold text-white">
+                  Tranche #{tranche.trancheId}
                 </h3>
-                <div className="space-y-2 text-sm">
-                  <p className="text-gray-600">
+                <div className="space-y-1 text-sm">
+                  <p className="text-gray-400">
+                    Product ID:{" "}
+                    <span className="font-medium text-white">
+                      {tranche.productId}
+                    </span>
+                  </p>
+                  <p className="text-gray-400">
                     Premium:{" "}
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-white">
                       {tranche.premiumRateBps / 100}%
                     </span>
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-gray-400">
                     Trigger:{" "}
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-white">
                       {tranche.triggerType === 0
                         ? "Price Below"
                         : "Price Above"}{" "}
                       ${tranche.threshold.toString()}
                     </span>
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-gray-400">
                     Cap:{" "}
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-white">
                       ${Number(tranche.trancheCap) / 1e6} USDT
-                    </span>
-                  </p>
-                  <p className="text-gray-600">
-                    Maturity:{" "}
-                    <span className="font-medium text-gray-900">
-                      {tranche.maturityDays} days
                     </span>
                   </p>
                 </div>
@@ -792,10 +743,63 @@ function TrancheContent() {
                   </Link>
                 </div>
               </div>
-            );
+              );
+            }
+
+            return (
+              <div key={tranche.trancheId}>
+                <div
+                  className="relative rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:bg-gray-750"
+                >
+                <h3 className="mb-4 text-[20px] font-bold text-white">
+                  {tranche.asset} Pools
+                </h3>
+                <div className="space-y-1 text-sm">
+                  <p className="text-gray-400">
+                    Premium:{" "}
+                    <span className="font-medium text-white">
+                      {tranche.premiumRateBps / 100}%
+                    </span>
+                  </p>
+                  <p className="text-gray-400">
+                    Trigger:{" "}
+                    <span className="font-medium text-white">
+                      {tranche.triggerType === 0
+                        ? "Price Below"
+                        : "Price Above"}{" "}
+                      ${tranche.threshold.toString()}
+                    </span>
+                  </p>
+                  <p className="text-gray-400">
+                    Cap:{" "}
+                    <span className="font-medium text-white">
+                      ${Number(tranche.trancheCap) / 1e6} USDT
+                    </span>
+                  </p>
+                  <p className="text-gray-400">
+                    Maturity:{" "}
+                    <span className="font-medium text-white">
+                      {tranche.maturityDays} days
+                    </span>
+                  </p>
+                </div>
+                <div className="mt-4">
+                  <Link
+                    href={`/tranches/${tranche.productId}/${tranche.trancheId}`}
+                    className="block w-full rounded-xl bg-gradient-to-br from-[#86D99C] to-[#00B1B8] px-4 py-3 text-center font-semibold text-white transition-all duration-300 hover:scale-95 hover:shadow-md"
+                  >
+                    View Details
+                  </Link>
+                </div>
+                {index < filteredTranches.length - 1 && (
+                  <div className="my-4 h-px bg-gray-600 lg:hidden"></div>
+                )}
+              </div>
+            </div>);
           })}
-        </div>
-      )}
+          </div>
+        )}
+        
 
       {/* Purchase Modal */}
       <EnhancedPurchaseModal
@@ -834,8 +838,6 @@ function TrancheContent() {
       />
         </div>
       </div>
-
-
     </div>
   );
 }
