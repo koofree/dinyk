@@ -1,8 +1,8 @@
-import { useBTCPrice } from "@/hooks/useBTCPrice";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { usePriceStore } from "@dinsure/contracts";
 
 interface InsuranceProductCardProps {
   product: {
@@ -17,19 +17,31 @@ interface InsuranceProductCardProps {
 
 export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
   const [mounted, setMounted] = useState(false);
-  const { price: btcPrice } = useBTCPrice();
+  const btc = usePriceStore((state) => state.btc);
+  const eth = usePriceStore((state) => state.eth);
+  const kaia = usePriceStore((state) => state.kaia);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // TODO: How to set the name of the asset?
+  const assetName: "BTC" | "ETH" | "KAIA" = product.name.split("-")[0] as "BTC" | "ETH" | "KAIA";
 
   const formatTrigger = () => {
     // Threshold is in wei units (18 decimals)
     // Convert to actual dollar value first
     const thresholdPrice = Number(product.threshold) / 1e18;
 
-    // Use actual BTC price if available, otherwise use a default
-    const basePrice = btcPrice;
+    // Get the appropriate price based on the asset
+    let basePrice = 100000; // default
+    if (assetName === "BTC") {
+      basePrice = btc.value;
+    } else if (assetName === "ETH") {
+      basePrice = eth.value;
+    } else if (assetName === "KAIA") {
+      basePrice = kaia.value;
+    }
 
     const percentageChange = ((basePrice - thresholdPrice) / basePrice) * 100;
 
@@ -37,9 +49,6 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
     const sign = product.triggerType === 0 ? "-" : "+";
     return `${sign}${Math.abs(percentageChange).toFixed(0)}%`;
   };
-
-  // TODO: How to set the name of the asset?
-  const assetName: "BTC" | "ETH" | "KAIA" = product.name.split("-")[0] as "BTC" | "ETH" | "KAIA";
 
   return (
     <div

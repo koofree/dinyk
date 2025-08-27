@@ -4,7 +4,6 @@ import { EnhancedPurchaseModal } from "@/components/insurance/EnhancedPurchaseMo
 import { LiquidityPoolCard } from "@/components/insurance/LiquidityPoolCard";
 import { LiquidityModal } from "@/components/liquidity/LiquidityModal";
 import { TrancheFilters } from "@/components/tranche/TrancheFilters";
-import { useBTCPrice } from "@/hooks/useBTCPrice";
 import type { TrancheDetails } from "@/hooks/useTrancheData";
 import { useTrancheData } from "@/hooks/useTrancheData";
 import Link from "next/link";
@@ -16,6 +15,7 @@ import {
   ORACLE_ROUTE_ID_TO_TYPE,
   useContractFactory,
   useContracts,
+  usePriceStore,
   useProductManagement,
   useUserPortfolio,
   useWeb3,
@@ -80,11 +80,10 @@ function TrancheContent() {
   const [productsError, setProductsError] = useState<Error | null>(null);
 
   // Get real contract data
-  const {
-    price: btcPrice,
-    loading: priceLoading,
-    error: priceError,
-  } = useBTCPrice();
+  const btc = usePriceStore((state) => state.btc);
+  const btcPrice = btc.value;
+  const priceLoading = btc.loading;
+  const priceError = btc.error;
 
   // Get user's liquidity positions
   const {

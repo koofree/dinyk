@@ -16,7 +16,7 @@ function ContractProviderWrapper({ children }: { children: ReactNode }) {
   );
 }
 
-// Main component that combines both providers
+// Main component that combines providers
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <Web3Provider>

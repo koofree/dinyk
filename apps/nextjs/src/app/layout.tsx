@@ -1,6 +1,8 @@
+
+
+import { AppProviders } from "@/components/providers/AppProviders";
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Mono } from "next/font/google";
-import { AppProviders } from "@/components/providers/AppProviders";
 
 import { cn } from "@dinsure/ui";
 import { Toaster } from "@dinsure/ui/toast";
@@ -62,6 +64,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
       >
         <AppProviders>
           <LanguageProvider>
+            
             <div className="flex min-h-screen flex-col">
               <Navbar />
               <main className="flex flex-1 flex-col items-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
@@ -72,6 +75,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
               <Footer />
             </div>
             <Toaster />
+            
           </LanguageProvider>
         </AppProviders>
       </body>

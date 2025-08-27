@@ -36,6 +36,10 @@ export {
   useUserPortfolio,
 } from "./hooks";
 
+// Price store - using Zustand for simplicity
+export { usePriceStore } from "./store/priceStore.zustand";
+export type { PriceData } from "./store/priceStore.zustand";
+
 export type { ContractsState } from "./hooks";
 
 // Export portfolio types
