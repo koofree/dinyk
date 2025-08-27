@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import { getProductName } from "@/utils/productHelpers";
+import React from "react";
 
 interface Product {
   productId: number;
@@ -131,7 +131,7 @@ export const TrancheFilters: React.FC<TrancheFiltersProps> = ({
         <div className="mt-4 flex items-center gap-2 text-sm">
           <span className="text-gray-600">Active filters:</span>
           {filters.insuranceProduct && (
-            <span className="rounded-full bg-gradient-to-r from-[#86D99C] to-[#00B1B8] px-3 py-1 text-xs text-white">
+            <span className="rounded-full bg-gradient-to-r from-[#86D99C] to-[#00B1B8] px-3 py-1 text-sm text-white">
               {(() => {
                 const product = products.find(
                   (p) => p.productId === filters.insuranceProduct,
@@ -141,7 +141,7 @@ export const TrancheFilters: React.FC<TrancheFiltersProps> = ({
             </span>
           )}
           {filters.status !== "all" && (
-            <span className="rounded-full bg-gradient-to-r from-[#86D99C] to-[#00B1B8] px-3 py-1 text-xs capitalize text-white">
+            <span className="rounded-full bg-gradient-to-r from-[#86D99C] to-[#00B1B8] px-3 py-1 text-sm capitalize text-white">
               {filters.status}
             </span>
           )}

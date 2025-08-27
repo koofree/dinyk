@@ -47,7 +47,7 @@ export const Footer = () => {
         <div className="mt-8 border-t border-gray-200 pt-8">
           <div className="flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0">
             <p className="text-sm text-gray-600">
-              © 2024 DIN Insurance. All rights reserved.
+              © 2025 DIN Insurance. All rights reserved.
             </p>
             <div className="flex space-x-6">
               <span className="text-sm text-gray-600">

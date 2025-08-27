@@ -2,12 +2,13 @@
 /* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 "use client";
 
+import { Breadcrumbs } from "@/components/common/Breadcrumbs";
 import { BuyInsuranceForm } from "@/components/insurance/BuyInsuranceForm";
 import { ProvideLiquidityForm } from "@/components/insurance/ProvideLiquidityForm";
 import { getRoundStatusColor, getRoundStatusText } from "@/lib/utils/insurance";
 import { formatUnits } from "ethers";
 import { motion } from "framer-motion";
-import { AlertCircle, ArrowLeft, Loader2, XCircle } from "lucide-react";
+import { AlertCircle, Loader2, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -23,14 +24,10 @@ import {
 } from "@dinsure/contracts";
 
 import type { ProductSpec } from "@dinsure/contracts/hooks";
-import { Badge } from "@dinsure/ui/badge";
-import { Button } from "@dinsure/ui/button";
+
 import {
     Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
+    CardContent
 } from "@dinsure/ui/card";
 import { ScrollArea } from "@dinsure/ui/scroll-area";
 
@@ -71,6 +68,7 @@ export default function TrancheDetailPage() {
   const [navInfo, setNavInfo] = useState<NavInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRound, setSelectedRound] = useState<ProductCatalog.RoundStructOutput | null>(null);
+  const [activeTab, setActiveTab] = useState<"insurance" | "liquidity">("insurance");
 
   
 
@@ -278,16 +276,25 @@ export default function TrancheDetailPage() {
   }
 
   return (
-    <div className="py-8">
+    <div className="pb-10 pt-20 w-full" style={{ 
+      scrollbarGutter: 'stable',
+      width: '100%',
+      maxWidth: '100%',
+      overflowX: 'hidden',
+      position: 'relative',
+      boxSizing: 'border-box'
+    }}>
+      {/* Header */}
       <div className="mb-16">
-        <div className="mb-6 flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push("/insurance")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+        <div className="mb-6">
+          <Breadcrumbs
+            items={[
+              { label: "Insurance", href: "/insurance" },
+              { label: "Tranches", href: "/tranches" },
+              { label: `Product ${productId}`, href: `/tranches/${productId}` },
+              { label: `Tranche ${trancheId}` }
+            ]}
+          />
         </div>
         <h1 className="mobile:text-[42px] font-display mb-4 break-words text-[40px] font-bold leading-tight text-gray-900">
           {tranche.asset} - Tranche #{tranche.trancheId}
@@ -337,58 +344,156 @@ export default function TrancheDetailPage() {
       </div>
 
       {/* Current Round Actions - Show forms based on availability */}
-      <div className="mb-8">
-        <h2 className="font-display mb-4 text-[30px] font-bold text-gray-900">
+      <div className="mb-8 mt-10 w-full" style={{ 
+        width: '100%',
+        maxWidth: '100%',
+        overflow: 'hidden',
+        position: 'relative',
+        boxSizing: 'border-box'
+      }}>
+        <h2 className="font-display mb-5 text-[30px] font-bold text-gray-900">
           Actions
         </h2>
-        <div className="mb-8 h-px w-full bg-gray-200"></div>
-        <div className="grid gap-6 lg:grid-cols-2">
-        <BuyInsuranceForm
-          productId={BigInt(productId)}
-          trancheId={tranche.trancheId}
-          roundId={selectedRound?.id || 0n}
-          tranche={tranche}
-          onSuccess={() => loadData()}
-        />
-        {tranche.poolAddress &&
-        tranche.poolAddress !== "0x0000000000000000000000000000000000000000" ? (
-          <ProvideLiquidityForm
-            poolAddress={tranche.poolAddress}
-            trancheId={tranche.trancheId}
-            roundId={
-              selectedRound && selectedRound.state === 1n
-                ? selectedRound.roundId
-                : undefined
-            }
-            onSuccess={() => loadData()}
-          />
-        ) : (
-          <Card className="border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
-            <CardHeader>
-              <CardTitle>Liquidity Pool</CardTitle>
-              <CardDescription>
-                Pool not yet deployed for this tranche
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>
-                  The liquidity pool for this tranche has not been deployed yet.
-                </p>
-                <p>
-                  Pool deployment is required before liquidity can be provided.
-                </p>
-                {process.env.NODE_ENV === "development" && (
-                  <div className="mt-4 rounded bg-gray-100 p-2 font-mono text-xs dark:bg-gray-800">
-                    <p>Debug Info:</p>
-                    <p>Tranche ID: {trancheId}</p>
-                    <p>Pool Address: {tranche.poolAddress || "null"}</p>
+        <div className="mb-5 h-px w-full bg-gray-200"></div>
+        
+        {/* Tab Navigation */}
+        <div className="mb-5 flex space-x-1 rounded-lg border border-gray-200 bg-white p-1 shadow-sm" style={{
+          width: '100%',
+          maxWidth: '100%',
+          overflow: 'hidden',
+          position: 'relative',
+          boxSizing: 'border-box'
+        }}>
+          <button
+            onClick={() => setActiveTab("insurance")}
+            className={`flex-1 px-4 py-3 text-base font-bold transition-colors ${
+              activeTab === "insurance"
+                ? "bg-[#374151] text-white"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+            style={{ 
+              borderRadius: activeTab === "insurance" ? "12px" : "0px",
+              minWidth: '0',
+              flexShrink: 0
+            }}
+          >
+            Buy Insurance Coverage
+          </button>
+          <button
+            onClick={() => setActiveTab("liquidity")}
+            className={`flex-1 px-4 py-3 text-base font-bold transition-colors ${
+              activeTab === "liquidity"
+                ? "bg-[#374151] text-white"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+            style={{ 
+              borderRadius: activeTab === "liquidity" ? "12px" : "0px",
+              minWidth: '0',
+              flexShrink: 0
+            }}
+          >
+            Deposit(Sell) Insurance
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <div className="min-h-[600px]" style={{ 
+          scrollbarGutter: 'stable',
+          overflowY: 'scroll',
+          overflowX: 'hidden',
+          width: '100%',
+          maxWidth: '100%',
+          position: 'relative',
+          boxSizing: 'border-box'
+        }}>
+          <div style={{ 
+            width: '100%',
+            maxWidth: '100%',
+            overflow: 'hidden',
+            position: 'relative',
+            boxSizing: 'border-box',
+            minWidth: '100%'
+          }}>
+            {activeTab === "insurance" && (
+              <div className="rounded-lg border border-gray-700 bg-gray-800 p-6 transition-colors hover:border-gray-600" style={{ 
+                width: '100%', 
+                maxWidth: '100%', 
+                overflow: 'hidden',
+                position: 'relative',
+                boxSizing: 'border-box',
+                minHeight: '600px',
+                minWidth: '100%'
+              }}>
+                <BuyInsuranceForm
+                  productId={BigInt(productId)}
+                  trancheId={tranche.trancheId}
+                  roundId={selectedRound?.id || 0n}
+                  tranche={tranche}
+                  onSuccess={() => loadData()}
+                />
+              </div>
+            )}
+
+            {activeTab === "liquidity" && (
+              <>
+                {tranche.poolAddress &&
+                tranche.poolAddress !== "0x0000000000000000000000000000000000000000" ? (
+                  <div className="rounded-lg border border-gray-700 bg-gray-800 p-6 transition-colors hover:border-gray-600" style={{ 
+                    width: '100%', 
+                    maxWidth: '100%', 
+                    overflow: 'hidden',
+                    position: 'relative',
+                    boxSizing: 'border-box',
+                    minHeight: '600px',
+                    minWidth: '100%'
+                  }}>
+                    <ProvideLiquidityForm
+                      poolAddress={tranche.poolAddress}
+                      trancheId={tranche.trancheId}
+                      roundId={
+                        selectedRound && selectedRound.state === 1n
+                          ? selectedRound.roundId
+                          : undefined
+                      }
+                      onSuccess={() => loadData()}
+                    />
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-gray-700 bg-gray-800 p-6 transition-colors hover:border-gray-600" style={{ 
+                    width: '100%', 
+                    maxWidth: '100%', 
+                    overflow: 'hidden',
+                    position: 'relative',
+                    boxSizing: 'border-box',
+                    minHeight: '600px',
+                    minWidth: '100%'
+                  }}>
+                    <div className="mb-4">
+                      <h3 className="text-xl font-semibold text-white">Liquidity Pool</h3>
+                      <p className="text-sm text-gray-400">
+                        Pool not yet deployed for this tranche
+                      </p>
+                    </div>
+                    <div className="space-y-2 text-sm text-gray-400">
+                      <p>
+                        The liquidity pool for this tranche has not been deployed yet.
+                      </p>
+                      <p>
+                        Pool deployment is required before liquidity can be provided.
+                      </p>
+                      {process.env.NODE_ENV === "development" && (
+                        <div className="mt-4 rounded bg-gray-900 p-2 font-mono text-sm text-gray-400">
+                          <p>Debug Info:</p>
+                          <p>Tranche ID: {trancheId}</p>
+                          <p>Pool Address: {tranche.poolAddress || "null"}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -436,15 +541,14 @@ export default function TrancheDetailPage() {
 
       {/* Rounds List */}
       <div className="mb-8">
-        <h2 className="font-display mb-4 text-[30px] font-bold text-gray-900">
+        <h2 className="font-display mb-5 text-[30px] font-bold text-gray-900">
           Insurance Rounds
         </h2>
-        <div className="mb-8 h-px w-full bg-gray-200"></div>
-        <Card>
-          <CardHeader>
-            <CardTitle>View all rounds for this tranche</CardTitle>
-          </CardHeader>
-        <CardContent>
+        <div className="mb-5 h-px w-full bg-gray-200"></div>
+        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">View all rounds for this tranche</h3>
+          </div>
           <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-4">
               {rounds.length === 0 ? (
@@ -459,29 +563,29 @@ export default function TrancheDetailPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Card
-                      className={`cursor-pointer transition-all hover:shadow-md ${
+                    <div
+                      className={`rounded-lg p-3 ${
                         selectedRound?.id === round.roundId
-                          ? "ring-2 ring-primary"
-                          : ""
+                          ? "ring-2 ring-primary bg-blue-50"
+                          : "bg-gray-50"
                       } ${
                         round.state === 1
-                          ? "border-green-500 bg-green-50/50 dark:bg-green-950/20"
+                          ? "bg-green-50/50"
                           : ""
                       }`}
                       onClick={() => setSelectedRound(round)}
                     >
-                      <CardHeader>
+                      <div className="mb-4">
                         <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg">
+                          <h4 className="text-lg font-semibold text-gray-900">
                             Round #{round.roundId.toString()}
-                          </CardTitle>
-                          <Badge className={getRoundStatusColor(round.state)}>
+                          </h4>
+                          <div className={getRoundStatusColor(round.state)}>
                             {getRoundStatusText(round.state)}
-                          </Badge>
+                          </div>
                         </div>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
+                      </div>
+                      <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
                             <p className="text-muted-foreground">
@@ -525,29 +629,25 @@ export default function TrancheDetailPage() {
                             </p>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   </motion.div>
                 ))
               )}
             </div>
           </ScrollArea>
-        </CardContent>
-      </Card>
+        </div>
       </div>
 
             {/* Pool Statistics */}
       {poolInfo && (
         <div className="mb-8">
-          <h2 className="font-display mb-4 text-[30px] font-bold text-gray-900">
+          <h2 className="font-display mb-5 text-[30px] font-bold text-gray-900">
             Pool Statistics
           </h2>
-          <div className="mb-8 h-px w-full bg-gray-200"></div>
-          <Card>
-          <CardHeader>
-            <CardTitle>Pool Statistics</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <div className="mb-5 h-px w-full bg-gray-200"></div>
+                    <Card>
+            <CardContent className="p-6">
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <div>
                 <p className="text-sm text-muted-foreground">Total Shares</p>

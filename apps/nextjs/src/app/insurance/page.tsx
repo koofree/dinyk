@@ -226,7 +226,7 @@ export default function InsurancePage() {
     <div className="py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Debug Info */}
-        <div className="mb-4 rounded-lg border border-gray-100 bg-gray-50 p-3 text-xs text-gray-500">
+                    <div className="mb-4 rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm text-gray-500">
           Debug: isInitialized={String(isInitialized)} | productsLoading=
           {String(productsLoading)} | products={products.length} | tranches=
           {tranches.length} | error={productsError ? "Yes" : "No"}
@@ -360,7 +360,7 @@ export default function InsurancePage() {
                         </p>
                         <p className="text-gray-600">
                           Pool:{" "}
-                          <span className="text-xs text-[#00B1B8]">
+                          <span className="text-sm text-[#00B1B8]">
                             {tranche.poolAddress ? tranche.poolAddress : "Not deployed"}
                           </span>
                         </p>
@@ -400,12 +400,12 @@ export default function InsurancePage() {
                   There are currently no active insurance products on the smart
                   contracts.
                 </p>
-                <div className="space-y-1 text-xs text-gray-500">
+                <div className="space-y-1 text-sm text-gray-500">
                   <p>Contract: {ACTIVE_NETWORK.contracts.ProductCatalog}</p>
                   <p>Network: Kaia Testnet (Chain ID: 1001)</p>
                 </div>
                 {productsError && (
-                  <div className="mt-4 rounded border border-red-600 bg-red-900/20 p-3 text-xs text-red-400">
+                  <div className="mt-4 rounded border border-red-600 bg-red-900/20 p-3 text-sm text-red-400">
                     Error:{" "}
                     {productsError ? productsError.message : "Failed to fetch products"}
                   </div>

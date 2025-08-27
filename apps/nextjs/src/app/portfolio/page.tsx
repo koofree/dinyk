@@ -100,13 +100,13 @@ export default function PortfolioPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrency("USDT")}
-                  className={`rounded px-2 py-1 text-xs ${currency === "USDT" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-500"}`}
+                  className={`rounded px-2 py-1 text-sm ${currency === "USDT" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-500"}`}
                 >
                   USDT
                 </button>
                 <button
                   onClick={() => setCurrency("KRW")}
-                  className={`rounded px-2 py-1 text-xs ${currency === "KRW" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-500"}`}
+                  className={`rounded px-2 py-1 text-sm ${currency === "KRW" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-500"}`}
                 >
                   KRW
                 </button>
@@ -145,7 +145,7 @@ export default function PortfolioPage() {
                   {insurancePositions.map((position) => (
                     <div
                       key={position.id}
-                      className="rounded-lg bg-gray-50 p-3 text-xs text-gray-600"
+                      className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600"
                     >
                       <div className="font-medium">
                         Policy #{position.tokenId}
@@ -205,7 +205,7 @@ export default function PortfolioPage() {
                   {liquidityPositions.map((position: any) => (
                     <div
                       key={position.id}
-                      className="rounded-lg bg-gray-50 p-3 text-xs text-gray-600"
+                      className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600"
                     >
                       <div className="font-medium">
                         {position.productName} - {position.trancheName}
@@ -247,7 +247,7 @@ export default function PortfolioPage() {
                 Premiums + Staking rewards
               </div>
               <div className="space-y-2 rounded-lg bg-gray-50 p-3">
-                <div className="text-xs text-gray-500">
+                <div className="text-sm text-gray-500">
                   Earnings vs. capital:{" "}
                   <span className="text-green-600">
                     {currency === "KRW"

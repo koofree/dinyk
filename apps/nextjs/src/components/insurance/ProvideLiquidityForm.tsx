@@ -2,27 +2,16 @@
 
 import { formatUnits, parseUnits } from "ethers";
 import {
-  AlertCircle,
-  ArrowDownToLine,
-  CheckCircle,
-  Loader2,
-  TrendingUp,
-  Wallet
+    AlertCircle,
+    ArrowDownToLine,
+    CheckCircle,
+    Loader2,
+    TrendingUp,
+    Wallet
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useContracts, useSellerOperations, useWeb3 } from "@dinsure/contracts";
-import { Alert, AlertDescription } from "@dinsure/ui/alert";
-import { Button } from "@dinsure/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@dinsure/ui/card";
-import { Input } from "@dinsure/ui/input";
-import { Label } from "@dinsure/ui/label";
 import { Slider } from "@dinsure/ui/slider";
 
 interface ProvideLiquidityFormProps {
@@ -234,24 +223,24 @@ export function ProvideLiquidityForm({
       : "0";
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="space-y-6">
+      <div className="flex flex-col space-y-1.5">
+        <h3 className="text-2xl font-semibold leading-none tracking-tight text-white flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
-          Liquidity Management
-        </CardTitle>
-        <CardDescription>
-          Provide liquidity to earn premiums and rewards
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+          Deposit(Sell) Insurance
+        </h3>
+        <p className="text-sm text-gray-400">
+          Underwrite insurances using USDT to earn premiums and yields
+        </p>
+      </div>
+      <div className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
-          <div className="rounded-lg border p-3">
+          <div className="rounded-lg border border-gray-600 p-3">
             <div className="mb-1 flex items-center gap-2">
               <Wallet className="h-4 w-4 text-blue-500" />
-              <span className="text-sm font-medium">Your Position</span>
+              <span className="text-sm font-medium text-white">Your Position</span>
             </div>
-            <p className="text-lg font-bold">
+            <p className="text-lg font-bold text-white">
               $
               {navInfo && userShares > 0n
                 ? (
@@ -263,46 +252,49 @@ export function ProvideLiquidityForm({
               USDT
             </p>
             {userShares > 0n && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-400">
                 {Number(formatUnits(userShares, 18)).toFixed(4)} shares
               </p>
             )}
           </div>
-          <div className="rounded-lg border p-3">
+          <div className="rounded-lg border border-gray-600 p-3">
             <div className="mb-1 flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-green-500" />
-              <span className="text-sm font-medium">Share Price</span>
+              <span className="text-sm font-medium text-white">Share Price</span>
             </div>
-            <p className="text-lg font-bold">
+            <p className="text-lg font-bold text-white">
               $
               {navInfo
                 ? (Number(navInfo.sharePrice) / 1e18).toFixed(4)
                 : "1.0000"}
             </p>
-            <p className="text-sm text-muted-foreground">Per share value</p>
+            <p className="text-sm text-gray-400">Per share value</p>
           </div>
         </div>
 
         {/* Only show deposit component, no tabs */}
         {!roundId ? (
-          <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
-            <AlertCircle className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-800 dark:text-amber-200">
+          <div className="relative w-full rounded-lg border p-4 border-gray-600 bg-gray-700">
+            <AlertCircle className="absolute left-4 top-4 h-4 w-4 text-amber-400" />
+            <div className="pl-7 text-sm text-amber-400">
               Deposits require an OPEN round. Please select a round with
               "OPEN" status from the rounds list below to provide liquidity.
-            </AlertDescription>
-          </Alert>
+            </div>
+          </div>
         ) : (
           <>
             <div className="space-y-2">
-              <Label htmlFor="deposit-amount">Deposit Amount (USDT)</Label>
-              <Input
+              <label htmlFor="deposit-amount" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white">
+                Deposit Amount (USDT)
+              </label>
+              <input
                 id="deposit-amount"
                 type="number"
                 placeholder="Enter amount to deposit"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 disabled={loading}
+                className="flex h-9 w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 text-white"
               />
               <Slider
                 value={[parseFloat(amount) || 0]}
@@ -312,7 +304,7 @@ export function ProvideLiquidityForm({
                 className="mt-2"
                 disabled={loading}
               />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-400">
                 Available: $
                 {usdtBalance
                   ? Number(formatUnits(usdtBalance, 6)).toLocaleString()
@@ -321,26 +313,26 @@ export function ProvideLiquidityForm({
               </p>
             </div>
 
-            <div className="space-y-2 rounded-lg bg-muted p-4">
+            <div className="space-y-2 rounded-lg bg-gray-700 p-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-gray-400">
                   You will deposit:
                 </span>
-                <span className="font-medium">
+                <span className="font-medium text-white">
                   {parseFloat(amount || "0").toLocaleString()} USDT
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-gray-400">
                   Estimated shares:
                 </span>
-                <span className="font-medium text-green-600">
+                <span className="font-medium text-green-400">
                   {estimatedShares} shares
                 </span>
               </div>
             </div>
 
-            <Button
+            <button
               onClick={handleDeposit}
               disabled={
                 loading ||
@@ -349,8 +341,7 @@ export function ProvideLiquidityForm({
                 !amount ||
                 !signer
               }
-              className="w-full"
-              size="lg"
+              className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white shadow hover:from-[#00B1B8] hover:to-[#86D99C] disabled:bg-gray-600 disabled:hover:from-gray-600 disabled:hover:to-gray-600 h-10 rounded-xl px-8 w-full"
             >
               {loading ? (
                 <>
@@ -363,22 +354,24 @@ export function ProvideLiquidityForm({
                   Deposit USDT
                 </>
               )}
-            </Button>
+            </button>
           </>
         )}
 
         {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <div className="relative w-full rounded-lg border p-4 border-red-200 bg-red-50 dark:bg-red-950/20">
+            <AlertCircle className="absolute left-4 top-4 h-4 w-4 text-red-600" />
+            <div className="pl-7 text-sm text-red-600">
+              {error}
+            </div>
+          </div>
         )}
 
         {success && (
-          <Alert className="border-green-200 bg-green-50 dark:bg-green-950/20">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-600">
-              {activeTab === "deposit" ? "Deposit" : "Withdrawal"} successful!
+          <div className="relative w-full rounded-lg border p-4 border-green-200 bg-green-50 dark:bg-green-950/20">
+            <CheckCircle className="absolute left-4 top-4 h-4 w-4 text-green-600" />
+            <div className="pl-7 text-sm text-green-600">
+              Deposit successful!
               {txHash && (
                 <a
                   href={`https://kairos.kaiascope.com/tx/${txHash}`}
@@ -389,22 +382,22 @@ export function ProvideLiquidityForm({
                   View transaction
                 </a>
               )}
-            </AlertDescription>
-          </Alert>
+            </div>
+          </div>
         )}
 
         {!isConnected && (
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-gray-400">
             Please connect your wallet to manage liquidity
           </p>
         )}
 
         {isConnected && !isInitialized && (
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-gray-400">
             Loading contracts...
           </p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

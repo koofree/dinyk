@@ -3,33 +3,22 @@
 import { calculatePremium } from "@/lib/utils/insurance";
 import { formatUnits, parseUnits } from "ethers";
 import {
-  AlertCircle,
-  Calculator,
-  CheckCircle,
-  Loader2,
-  Shield,
+    AlertCircle,
+    Calculator,
+    CheckCircle,
+    Loader2,
+    Shield,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ErrorAlert } from "@/components/common/ErrorAlert";
 import type { ErrorHandlingResult } from "@dinsure/contracts";
 import {
-  useBuyerOperations,
-  useContracts,
-  useWeb3,
-  Web3ErrorHandler
+    useBuyerOperations,
+    useContracts,
+    useWeb3,
+    Web3ErrorHandler
 } from "@dinsure/contracts";
-import { Alert, AlertDescription } from "@dinsure/ui/alert";
-import { Button } from "@dinsure/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@dinsure/ui/card";
-import { Input } from "@dinsure/ui/input";
-import { Label } from "@dinsure/ui/label";
 import { Slider } from "@dinsure/ui/slider";
 
 interface BuyInsuranceFormProps {
@@ -187,37 +176,41 @@ export function BuyInsuranceForm({
     : 100000;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="space-y-6">
+      <div className="flex flex-col space-y-1.5">
+        <h3 className="text-2xl font-semibold leading-none tracking-tight text-white flex items-center gap-2">
           <Shield className="h-5 w-5" />
           Buy Insurance Coverage
-        </CardTitle>
-        <CardDescription>
-          Purchase insurance protection for your assets
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+        </h3>
+        <p className="text-sm text-gray-400">
+          Underwrite insurances using USDT to earn premiums and yields
+        </p>
+      </div>
+      <div className="space-y-6">
         {roundId === 0n && (
-          <Alert className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20">
-            <AlertCircle className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-600">
+          <div className="relative w-full rounded-lg border p-4 border-gray-600 bg-gray-700">
+            <AlertCircle className="absolute left-4 top-4 h-4 w-4 text-yellow-400" />
+            <div className="pl-7 text-sm text-yellow-400">
               No active insurance round available. Please check back later or
               select a different tranche.
-            </AlertDescription>
-          </Alert>
+            </div>
+          </div>
         )}
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="coverage">Coverage Amount (USDT)</Label>
-            <Input
+            <label htmlFor="coverage" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white">
+              Coverage Amount (USDT)
+            </label>
+            <input
               id="coverage"
               type="number"
               placeholder="Enter coverage amount"
               value={coverageAmount}
               onChange={(e) => setCoverageAmount(e.target.value)}
               disabled={loading || !isConnected}
-            />
+              className="flex h-9 w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 text-white"
+                          />
+            <div className="h-2"></div>
             <Slider
               value={[parseFloat(coverageAmount) ?? 0]}
               onValueChange={handleSliderChange}
@@ -226,40 +219,40 @@ export function BuyInsuranceForm({
               className="mt-2"
               disabled={loading || !isConnected}
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-400">
               {isConnected
                 ? `Available: $${usdtBalance ? Number(formatUnits(usdtBalance, 6)).toLocaleString() : "0"} USDT`
                 : "Connect wallet to view balance"}
             </p>
             {usdtBalance === 0n && isConnected && (
-              <p className="mt-1 text-xs text-yellow-600">
+              <p className="mt-1 text-sm text-yellow-600">
                 No test USDT detected. The contract may not be deployed on this
                 network or you need test tokens.
               </p>
             )}
           </div>
 
-          <div className="space-y-3 rounded-lg bg-muted p-4">
+          <div className="space-y-3 rounded-lg bg-gray-700 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-gray-400">
                 Coverage Amount:
               </span>
-              <span className="font-medium">
+              <span className="font-medium text-white">
                 ${parseFloat(coverageAmount || "0").toLocaleString()} USDT
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-gray-400">
                 Premium ({Number(tranche.premiumBps) / 100}%):
               </span>
-              <span className="font-medium text-green-600">
+              <span className="font-medium text-green-400">
                 ${parseFloat(premiumAmount).toLocaleString()} USDT
               </span>
             </div>
-            <div className="border-t pt-3">
+            <div className="border-t border-gray-600 pt-3">
               <div className="flex items-center justify-between">
-                <span className="font-medium">Total Cost:</span>
-                <span className="text-lg font-bold">
+                <span className="font-medium text-white">Total Cost:</span>
+                <span className="text-lg font-bold text-white">
                   ${parseFloat(totalCost).toLocaleString()} USDT
                 </span>
               </div>
@@ -267,21 +260,21 @@ export function BuyInsuranceForm({
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-lg border p-3">
+            <div className="rounded-lg border border-gray-600 p-3">
               <div className="mb-1 flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-red-500" />
-                <span className="text-sm font-medium">Trigger Price</span>
+                <span className="text-sm font-medium text-white">Trigger Price</span>
               </div>
-              <p className="text-lg font-bold text-red-600">
+              <p className="text-lg font-bold text-red-500">
                 ${tranche.trigger / BigInt(1e18)}
               </p>
             </div>
-            <div className="rounded-lg border p-3">
+            <div className="rounded-lg border border-gray-600 p-3">
               <div className="mb-1 flex items-center gap-2">
                 <Calculator className="h-4 w-4 text-blue-500" />
-                <span className="text-sm font-medium">Max Payout</span>
+                <span className="text-sm font-medium text-white">Max Payout</span>
               </div>
-              <p className="text-lg font-bold text-blue-600">
+              <p className="text-lg font-bold text-blue-500">
                 ${parseFloat(coverageAmount || "0").toLocaleString()}
               </p>
             </div>
@@ -297,9 +290,9 @@ export function BuyInsuranceForm({
         )}
 
         {success && (
-          <Alert className="border-green-200 bg-green-50 dark:bg-green-950/20">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-600">
+          <div className="relative w-full rounded-lg border p-4 border-green-200 bg-green-50 dark:bg-green-950/20">
+            <CheckCircle className="absolute left-4 top-4 h-4 w-4 text-green-600" />
+            <div className="pl-7 text-sm text-green-600">
               Insurance purchased successfully!
               {txHash && (
                 <a
@@ -311,11 +304,11 @@ export function BuyInsuranceForm({
                   View transaction
                 </a>
               )}
-            </AlertDescription>
-          </Alert>
+            </div>
+          </div>
         )}
 
-        <Button
+        <button
           onClick={handleBuyInsurance}
           disabled={
             loading ||
@@ -324,8 +317,7 @@ export function BuyInsuranceForm({
             roundId === 0n ||
             (!coverageAmount && isConnected)
           }
-          className="w-full"
-          size="lg"
+          className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white shadow hover:from-[#00B1B8] hover:to-[#86D99C] disabled:bg-gray-600 disabled:hover:from-gray-600 disabled:hover:to-gray-600 h-10 rounded-xl px-8 w-full"
         >
           {loading ? (
             <>
@@ -342,20 +334,20 @@ export function BuyInsuranceForm({
               Buy Insurance
             </>
           )}
-        </Button>
+        </button>
 
         {!isConnected && (
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-gray-400">
             Connect your wallet to purchase insurance coverage
           </p>
         )}
 
         {isConnected && !isInitialized && (
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-gray-400">
             Loading contracts...
           </p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

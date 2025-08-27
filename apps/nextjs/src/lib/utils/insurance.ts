@@ -13,15 +13,17 @@ export function calculatePremium(
 
 export function getRoundStatusColor(state: number): string {
   const colors = [
-    "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400", // Announced
-    "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400", // Open
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400", // Matched
-    "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400", // Active
-    "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400", // Matured
-    "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400", // Settled
-    "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400", // Canceled
+    "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 text-sm px-2 py-1 rounded-lg", // Announced
+    "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 text-sm px-2 py-1 rounded-lg", // Open
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 text-sm px-2 py-1 rounded-lg", // Matched
+    "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400 text-sm px-2 py-1 rounded-lg", // Active
+    "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 text-sm px-2 py-1 rounded-lg", // Matured
+    "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400 text-sm px-2 py-1 rounded-lg", // Settled
+    "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 text-sm px-2 py-1 rounded-lg", // Canceled
   ];
-  return colors[state] || "bg-gray-100 text-gray-800";
+  return (
+    colors[state] || "bg-gray-100 text-gray-800 text-sm px-2 py-1 rounded-lg"
+  );
 }
 
 export function getRoundStatusText(state: number): string {

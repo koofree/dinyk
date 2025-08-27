@@ -43,7 +43,7 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
           </p>
         </div>
         <div
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
+          className={`rounded-full px-3 py-1 text-sm font-medium ${
             product.active
               ? "bg-green-900 text-green-300"
               : "bg-gray-700 text-gray-400"
@@ -56,7 +56,7 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
       {/* Product Metadata */}
       <div className="mb-4 space-y-2">
         {product.metadataHash && (
-          <div className="text-xs text-gray-500">
+          <div className="text-sm text-gray-500">
             <span className="font-medium">Metadata Hash:</span>
             <span className="ml-2 font-mono">
               {product.metadataHash.slice(0, 10)}...
@@ -64,7 +64,7 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
           </div>
         )}
         {product.createdAt && (
-          <div className="text-xs text-gray-500">
+          <div className="text-sm text-gray-500">
             <span className="font-medium">Created:</span>
             <span className="ml-2">
               {new Date(product.createdAt * 1000).toLocaleDateString()}
@@ -76,7 +76,7 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
       {/* Statistics Grid */}
       <div className="mb-4 grid grid-cols-2 gap-4">
         <div>
-          <p className="mb-1 text-xs text-gray-500">Tranches</p>
+          <p className="mb-1 text-sm text-gray-500">Tranches</p>
           <p className="text-lg font-semibold text-white">
             {totalTranches}{" "}
             <span className="text-sm text-gray-400">/ {totalTranches}</span>
@@ -84,7 +84,7 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
         </div>
 
         <div>
-          <p className="mb-1 text-xs text-gray-500">Premium Range</p>
+          <p className="mb-1 text-sm text-gray-500">Premium Range</p>
           <p className="text-lg font-semibold text-blue-400">
             {minPremium.toFixed(1)}-{maxPremium.toFixed(1)}%
           </p>
@@ -94,19 +94,19 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
       {/* Tranches Preview */}
       {tranches.length > 0 && (
         <div className="mb-4">
-          <p className="mb-2 text-xs text-gray-500">Available Tranches</p>
+          <p className="mb-2 text-sm text-gray-500">Available Tranches</p>
           <div className="flex flex-wrap gap-2">
             {tranches.slice(0, 3).map((tranche) => (
               <div
                 key={tranche.trancheId}
-                className="rounded bg-gray-700 px-2 py-1 text-xs text-gray-300"
+                className="rounded bg-gray-700 px-2 py-1 text-sm text-gray-300"
               >
                 #{tranche.trancheId} -{" "}
                 {(tranche.premiumRateBps / 100).toFixed(1)}%
               </div>
             ))}
             {tranches.length > 3 && (
-              <div className="rounded bg-gray-700 px-2 py-1 text-xs text-gray-400">
+              <div className="rounded bg-gray-700 px-2 py-1 text-sm text-gray-400">
                 +{tranches.length - 3} more
               </div>
             )}
@@ -116,10 +116,10 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
 
       {/* All Product Properties (Debug) */}
       <details className="mb-4">
-        <summary className="cursor-pointer text-xs text-gray-500 hover:text-gray-400">
+        <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-400">
           View All Properties
         </summary>
-        <div className="mt-2 rounded bg-gray-900 p-2 text-xs">
+        <div className="mt-2 rounded bg-gray-900 p-2 text-sm">
           <pre className="overflow-x-auto text-gray-400">
             {JSON.stringify(
               product,

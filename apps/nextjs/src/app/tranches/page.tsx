@@ -648,7 +648,7 @@ function TrancheContent() {
       )}
 
       {/* Debug Info */}
-      <div className="mb-4 overflow-x-auto rounded-lg border border-gray-100 bg-gray-50 p-3 text-xs text-gray-500">
+              <div className="mb-4 overflow-x-auto rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm text-gray-500">
         <div className="whitespace-nowrap">
           Debug: Products={products.length} | Contract Tranches=
           {tranches.length} | Tranches with Data={tranchesData?.length || 0} |
