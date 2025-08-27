@@ -2,12 +2,12 @@
 
 import { formatUnits, parseUnits } from "ethers";
 import {
-    AlertCircle,
-    ArrowDownToLine,
-    CheckCircle,
-    Loader2,
-    TrendingUp,
-    Wallet
+  AlertCircle,
+  ArrowDownToLine,
+  CheckCircle,
+  Loader2,
+  TrendingUp,
+  Wallet
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -223,7 +223,7 @@ export function ProvideLiquidityForm({
       : "0";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mobile:min-w-[620px]">
       <div className="flex flex-col space-y-1.5">
         <h3 className="text-2xl font-semibold leading-none tracking-tight text-white flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />

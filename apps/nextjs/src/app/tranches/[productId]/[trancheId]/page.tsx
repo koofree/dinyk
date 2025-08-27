@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
+ 
+ 
 "use client";
 
 import { Breadcrumbs } from "@/components/common/Breadcrumbs";
@@ -13,21 +13,21 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import type {
-    ProductCatalog
+  ProductCatalog
 } from "@dinsure/contracts";
 import {
-    ORACLE_ROUTE_ID_TO_TYPE,
-    useContracts,
-    useProductManagement,
-    useSellerOperations,
-    useWeb3
+  ORACLE_ROUTE_ID_TO_TYPE,
+  useContracts,
+  useProductManagement,
+  useSellerOperations,
+  useWeb3
 } from "@dinsure/contracts";
 
 import type { ProductSpec } from "@dinsure/contracts/hooks";
 
 import {
-    Card,
-    CardContent
+  Card,
+  CardContent
 } from "@dinsure/ui/card";
 import { ScrollArea } from "@dinsure/ui/scroll-area";
 
@@ -123,7 +123,7 @@ export default function TrancheDetailPage() {
           trancheData?.premiumRateBps || trancheData?.premiumBps || 0,
         ),
         poolAddress: poolAddress,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+         
         asset: ORACLE_ROUTE_ID_TO_TYPE[String(trancheData.oracleRouteId) as unknown as keyof typeof ORACLE_ROUTE_ID_TO_TYPE]?.split("-")[0],
       };
 
@@ -427,7 +427,7 @@ export default function TrancheDetailPage() {
                 <BuyInsuranceForm
                   productId={BigInt(productId)}
                   trancheId={tranche.trancheId}
-                  roundId={selectedRound?.id || 0n}
+                  roundId={selectedRound?.roundId ?? 0n}
                   tranche={tranche}
                   onSuccess={() => loadData()}
                 />

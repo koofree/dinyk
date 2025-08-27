@@ -3,21 +3,21 @@
 import { calculatePremium } from "@/lib/utils/insurance";
 import { formatUnits, parseUnits } from "ethers";
 import {
-    AlertCircle,
-    Calculator,
-    CheckCircle,
-    Loader2,
-    Shield,
+  AlertCircle,
+  Calculator,
+  CheckCircle,
+  Loader2,
+  Shield,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ErrorAlert } from "@/components/common/ErrorAlert";
 import type { ErrorHandlingResult } from "@dinsure/contracts";
 import {
-    useBuyerOperations,
-    useContracts,
-    useWeb3,
-    Web3ErrorHandler
+  useBuyerOperations,
+  useContracts,
+  useWeb3,
+  Web3ErrorHandler
 } from "@dinsure/contracts";
 import { Slider } from "@dinsure/ui/slider";
 
@@ -176,7 +176,7 @@ export function BuyInsuranceForm({
     : 100000;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mobile:min-w-[620px]">
       <div className="flex flex-col space-y-1.5">
         <h3 className="text-2xl font-semibold leading-none tracking-tight text-white flex items-center gap-2">
           <Shield className="h-5 w-5" />
