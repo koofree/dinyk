@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { WalletButton } from "@/components/web3/WalletButton";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { WalletButton } from "@/components/web3/WalletButton";
+import React, { useEffect, useState } from "react";
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
@@ -27,6 +27,7 @@ export const Navbar: React.FC = () => {
     { name: "For Buyer", badge: "Insurance", href: "/insurance" },
     { name: "For Depositor(Seller)", badge: "Liquidity", href: "/tranches" },
     { name: "Portfolio", href: "/portfolio" },
+    { name: "DINGO & DINO (coming soon)", href: "" },
   ];
 
   const isActive = (href: string) => {

@@ -251,15 +251,15 @@ export default function HomePage() {
                 rel="noopener noreferrer"
                 className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
               >
-                View Contracts ↗
+                View Contracts ↗ 
               </a>
               <a
-                href={ACTIVE_NETWORK.faucet}
+                href={`/faucet`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
               >
-                Get Test KAIA ↗
+                Get USDT for Testing ↗
               </a>
             </div>
 
