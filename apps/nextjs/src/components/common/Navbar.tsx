@@ -9,7 +9,6 @@ export const Navbar: React.FC = () => {
   const pathname = usePathname();
   const isTestnet = process.env.NEXT_PUBLIC_NETWORK_ENV === "testnet";
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -27,18 +26,19 @@ export const Navbar: React.FC = () => {
     { name: "For Buyer", badge: "Insurance", href: "/insurance" },
     { name: "For Depositor(Seller)", badge: "Liquidity", href: "/tranches" },
     { name: "Portfolio", href: "/portfolio" },
-    { name: "DINGO & DINO (coming soon)", href: "" },
+    { name: "DINGO & DINO", badge: "coming soon", href: "", disabled: true },
   ];
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
+    if (href === "") return false; // Disabled items are never active
     return pathname.startsWith(href);
   };
 
   // Use consistent styling on initial render to avoid hydration mismatch
   const navClassName =
     mounted && isScrolled
-      ? "fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm transition-all duration-200"
+      ? "fixed top-0 left-0 right-0 z-50 bg-white backdrop-blur-sm shadow-sm transition-all duration-200"
       : "relative bg-transparent transition-all duration-200";
 
   return (
@@ -54,20 +54,27 @@ export const Navbar: React.FC = () => {
           </Link>
 
           {/* Navigation Links - Centered */}
-          <div className="mobile:flex absolute left-1/2 hidden -translate-x-1/2 transform items-center space-x-2">
+          <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 transform items-center space-x-2">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
                 className={`whitespace-nowrap rounded-lg px-4 py-2 text-base font-medium transition-all duration-200 ${
-                  isActive(item.href)
+                  item.disabled
+                    ? "cursor-not-allowed opacity-50 text-gray-400"
+                    : isActive(item.href)
                     ? "bg-gray-100 text-gray-900"
                     : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                 }`}
+                onClick={item.disabled ? (e) => e.preventDefault() : undefined}
               >
                 {item.name}
                 {item.badge && (
-                  <span className="ml-1 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                  <span className={`ml-1 rounded px-1 py-0.5 text-sm font-medium ${
+                    item.disabled 
+                      ? "bg-gray-200 text-gray-500" 
+                      : "bg-[#E0FBE8] text-[#48C6A9]"
+                  }`}>
                     {item.badge}
                   </span>
                 )}
@@ -75,8 +82,10 @@ export const Navbar: React.FC = () => {
             ))}
           </div>
 
+
+
           {/* Right side */}
-          <div className="mobile:flex absolute right-0 hidden items-center space-x-4">
+          <div className="hidden md:flex absolute right-0 items-center space-x-4">
             {isTestnet && (
               <div className="rounded bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800">
                 Testnet
@@ -85,63 +94,35 @@ export const Navbar: React.FC = () => {
             <WalletButton />
           </div>
 
-          {/* Mobile menu button */}
-          <div className="mobile:hidden absolute right-0 flex items-center">
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-gray-600 hover:text-gray-900 focus:outline-none"
-            >
-              <span className="sr-only">Open main menu</span>
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d={
-                    isMobileMenuOpen
-                      ? "M6 18L18 6M6 6l12 12"
-                      : "M4 6h16M4 12h16M4 18h16"
-                  }
-                />
-              </svg>
-            </button>
+          {/* Mobile wallet button */}
+          <div className="md:hidden absolute right-0 flex items-center">
+            <WalletButton />
           </div>
         </div>
-      </div>
 
-      {/* Mobile Navigation */}
-      <div
-        className={`mobile:hidden border-t border-gray-100 ${mounted && isScrolled ? "bg-white" : "bg-transparent"} ${isMobileMenuOpen ? "block" : "hidden"}`}
-      >
-        <div className="px-4 py-2 pb-0">
-          <div
-            className={`flex flex-col space-y-1 p-1 pb-0 ${mounted && isScrolled ? "bg-white" : "bg-transparent"}`}
-          >
-            <div className="my-4 flex items-center justify-center space-x-4">
-              <WalletButton />
-            </div>
+        {/* Mobile Navigation Tabs - Below Navbar */}
+        <div className="md:hidden bg-white shadow-sm">
+          <div className="flex items-center p-2">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`relative rounded-lg px-3 py-3 text-center text-sm font-bold transition-colors ${
-                  isActive(item.href)
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                className={`flex-1 whitespace-nowrap rounded-md px-3 py-2 text-base transition-all duration-200 text-center ${
+                  item.disabled
+                    ? "cursor-not-allowed opacity-50 text-gray-400 font-medium"
+                    : isActive(item.href)
+                    ? "bg-gray-100 text-gray-900 shadow-sm font-bold"
+                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-medium"
                 }`}
+                onClick={item.disabled ? (e) => e.preventDefault() : undefined}
               >
                 {item.name === "For Buyer"
                   ? "Buyer"
-                  : item.name === "For Depositor"
+                  : item.name === "For Depositor(Seller)"
                     ? "Depositor"
-                    : item.name}
+                    : item.name === "Portfolio"
+                      ? "Portfolio"
+                      : "DINGO"}
               </Link>
             ))}
           </div>

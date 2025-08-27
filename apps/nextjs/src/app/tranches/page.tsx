@@ -11,14 +11,14 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 import {
-  INSURANCE_PRODUCTS,
-  ORACLE_ROUTE_ID_TO_TYPE,
-  useContractFactory,
-  useContracts,
-  usePriceStore,
-  useProductManagement,
-  useUserPortfolio,
-  useWeb3,
+    INSURANCE_PRODUCTS,
+    ORACLE_ROUTE_ID_TO_TYPE,
+    useContractFactory,
+    useContracts,
+    usePriceStore,
+    useProductManagement,
+    useUserPortfolio,
+    useWeb3,
 } from "@dinsure/contracts";
 
 // Product and Tranche types
@@ -496,7 +496,7 @@ function TrancheContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 pb-10 pt-20">
+    <div className="pb-10 pt-20">
       {/* Header */}
       <div className="mb-16">
         <h1 className="mobile:text-[42px] font-display mb-4 break-words text-[40px] font-bold leading-tight text-gray-900">

@@ -27,7 +27,7 @@ export default function PortfolioPage() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8">
+      <div className="py-8">
         <div className="py-16 text-center">
           <div className="mb-4 text-6xl">🔗</div>
           <h2 className="font-display mb-4 text-2xl font-bold text-gray-900">
@@ -44,7 +44,7 @@ export default function PortfolioPage() {
   // Show loading state while fetching data
   if (isLoading && !insurancePositions.length && !liquidityPositions.length) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8">
+      <div className="py-8">
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-8 w-8 animate-spin text-[#00B1B8]" />
           <span className="ml-3 text-gray-600">Loading portfolio...</span>
@@ -56,7 +56,7 @@ export default function PortfolioPage() {
   // Show error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8">
+      <div className="py-8">
         <div className="py-16 text-center">
           <div className="mb-4 text-6xl">⚠️</div>
           <h2 className="font-display mb-4 text-2xl font-bold text-gray-900">
@@ -75,7 +75,7 @@ export default function PortfolioPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8">
+    <div className="py-8">
       {/* Header */}
       <div className="mb-16">
         <h1 className="mobile:text-[42px] font-display mb-4 break-words text-[40px] font-bold leading-tight text-gray-900">

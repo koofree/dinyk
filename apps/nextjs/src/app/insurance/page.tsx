@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import type {
-  ProductMetadata
+    ProductMetadata
 } from "@dinsure/contracts";
 import {
-  ACTIVE_NETWORK,
-  ORACLE_ROUTE_ID_TO_TYPE,
-  useContracts,
-  useProductManagement,
-  useWeb3
+    ACTIVE_NETWORK,
+    ORACLE_ROUTE_ID_TO_TYPE,
+    useContracts,
+    useProductManagement,
+    useWeb3
 } from "@dinsure/contracts";
 
 // Using any types to avoid TypeScript conflicts
@@ -223,7 +223,7 @@ export default function InsurancePage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8">
+    <div className="py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Debug Info */}
         <div className="mb-4 rounded-lg border border-gray-100 bg-gray-50 p-3 text-xs text-gray-500">
