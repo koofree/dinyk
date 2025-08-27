@@ -134,7 +134,7 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
       {/* Action Button */}
       <button
         onClick={onViewTranches}
-        className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
+        className="w-full rounded-lg bg-gradient-to-br from-[#86D99C] to-[#00B1B8] px-4 py-2 font-outfit font-medium text-white transition-all duration-300 hover:scale-95 hover:from-[#00B1B8] hover:to-[#86D99C]"
       >
         View Tranches ({totalTranches})
       </button>

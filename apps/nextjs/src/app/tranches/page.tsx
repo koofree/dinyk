@@ -497,7 +497,9 @@ function TrancheContent() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="w-full py-12 lg:py-24">
       {/* Header */}
       <div className="mb-16">
         <h1 className="mobile:text-[42px] font-display mb-4 break-words text-[40px] font-bold leading-tight text-gray-900">
@@ -830,7 +832,10 @@ function TrancheContent() {
           setSelectedRoundId(null);
         }}
       />
+        </div>
       </div>
+
+
     </div>
   );
 }

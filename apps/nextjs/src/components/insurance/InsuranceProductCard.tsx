@@ -91,14 +91,14 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
       </div>
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h3 className="font-display font-header text-xl font-bold text-white">
+          <h3 className="font-display font-header text-2xl font-bold text-white">
             {assetName} Protection
           </h3>
           <p className="text-sm text-gray-500">Product #{product.productId}</p>
         </div>
       </div>
 
-      <div className="mb-6 space-y-4">
+      <div className="mb-6 space-y-2">
         <div className="flex items-center justify-between">
           <span className="font-medium text-gray-400">Trigger:</span>
           <span className="text-lg font-bold text-white">

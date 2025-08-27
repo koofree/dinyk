@@ -277,7 +277,9 @@ export default function TrancheDetailPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-16">
         <div className="mb-6">
@@ -692,6 +694,11 @@ export default function TrancheDetailPage() {
         </Card>
         </div>
       )}
+        </div>
+      </div>
+
+      {/* Main Content Section */}
+      <div className="mx-auto max-w-7xl px-4 pt-0 pb-16 sm:px-6 lg:px-8">
       </div>
     </div>
   );

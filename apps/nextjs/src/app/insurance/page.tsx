@@ -224,7 +224,9 @@ export default function InsurancePage() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="w-full py-12 lg:py-24">
         {/* Debug Info */}
                     <div className="mb-4 rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm text-gray-500">
           Debug: isInitialized={String(isInitialized)} | productsLoading=
@@ -301,15 +303,44 @@ export default function InsurancePage() {
         {/* Products Grid */}
         {!productsLoading && isInitialized  && (
           <>
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-              {products.map((product) => (
-                <SimpleProductCard
-                  key={product.productId}
-                  product={product}
-                  tranches={product.tranches ?? tranches}
-                  onViewTranches={() => handleViewTranches(product.productId)}
-                />
-              ))}
+            <div className="space-y-8">
+              {(() => {
+                // Group products by asset type
+                const groupedProducts = products.reduce((acc, product) => {
+                  const asset = product.asset;
+                  if (!acc[asset]) {
+                    acc[asset] = [];
+                  }
+                  acc[asset].push(product);
+                  return acc;
+                }, {} as Record<string, Product[]>);
+
+                return Object.entries(groupedProducts).map(([asset, assetProducts], index) => (
+                  <div key={asset}>
+                    {/* Asset Section Header */}
+                    <div className="mb-6">
+                      <h3 className="text-2xl font-bold text-gray-900">{asset} Insurance Products</h3>
+                    </div>
+                    
+                    {/* Products Grid for this asset */}
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {assetProducts.map((product) => (
+                        <SimpleProductCard
+                          key={product.productId}
+                          product={product}
+                          tranches={product.tranches ?? tranches}
+                          onViewTranches={() => handleViewTranches(product.productId)}
+                        />
+                      ))}
+                    </div>
+                    
+                    {/* Divider between asset types (except for the last one) */}
+                    {index < Object.keys(groupedProducts).length - 1 && (
+                      <div className="mt-8 h-px w-full bg-gray-200"></div>
+                    )}
+                  </div>
+                ));
+              })()}
             </div>
 
             {products.length === 0 && tranches.length > 0 && (
@@ -320,72 +351,101 @@ export default function InsurancePage() {
                     tranches directly
                   </p>
                 </div>
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                  {tranches.map((tranche) => (
-                    <div
-                      key={tranche.trancheId}
-                      className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
-                    >
-                      <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                        Tranche #{tranche.trancheId}
-                      </h3>
-                      <div className="space-y-2 text-sm">
-                        <p className="text-gray-600">
-                          Product ID:{" "}
-                          <span className="font-medium text-gray-900">
-                            {tranche.productId}
-                          </span>
-                        </p>
-                        <p className="text-gray-600">
-                          Premium Rate:{" "}
-                          <span className="font-medium text-gray-900">
-                            {tranche.premiumRateBps / 100}%
-                          </span>
-                        </p>
-                        {tranche.triggerType !== undefined && (
-                          <p className="text-gray-600">
-                            Trigger:{" "}
-                            <span className="font-medium text-gray-900">
-                              {tranche.triggerType === 0
-                                ? "Price Below"
-                                : "Price Above"}
-                            </span>
-                          </p>
+                <div className="space-y-8">
+                  {(() => {
+                    // Group tranches by asset type
+                    const groupedTranches = tranches.reduce((acc, tranche) => {
+                      const asset = tranche.pairType?.split("-")[0] || "Unknown";
+                      if (!acc[asset]) {
+                        acc[asset] = [];
+                      }
+                      acc[asset].push(tranche);
+                      return acc;
+                    }, {} as Record<string, Tranche[]>);
+
+                    return Object.entries(groupedTranches).map(([asset, assetTranches], index) => (
+                      <div key={asset}>
+                        {/* Asset Section Header */}
+                        <div className="mb-6">
+                          <h3 className="text-2xl font-bold text-gray-900">{asset} Insurance Products</h3>
+                        </div>
+                        
+                        {/* Tranches Grid for this asset */}
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                          {assetTranches.map((tranche) => (
+                            <div
+                              key={tranche.trancheId}
+                              className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
+                            >
+                              <h3 className="mb-4 text-lg font-semibold text-gray-900">
+                                Tranche #{tranche.trancheId}
+                              </h3>
+                              <div className="space-y-2 text-sm">
+                                <p className="text-gray-600">
+                                  Product ID:{" "}
+                                  <span className="font-medium text-gray-900">
+                                    {tranche.productId}
+                                  </span>
+                                </p>
+                                <p className="text-gray-600">
+                                  Premium Rate:{" "}
+                                  <span className="font-medium text-gray-900">
+                                    {tranche.premiumRateBps / 100}%
+                                  </span>
+                                </p>
+                                {tranche.triggerType !== undefined && (
+                                  <p className="text-gray-600">
+                                    Trigger:{" "}
+                                    <span className="font-medium text-gray-900">
+                                      {tranche.triggerType === 0
+                                        ? "Price Below"
+                                        : "Price Above"}
+                                    </span>
+                                  </p>
+                                )}
+                                <p className="text-gray-600">
+                                  Threshold:{" "}
+                                  <span className="font-medium text-gray-900">
+                                    ${tranche.threshold}
+                                  </span>
+                                </p>
+                                <p className="text-gray-600">
+                                  Pool:{" "}
+                                  <span className="text-sm text-[#00B1B8]">
+                                    {tranche.poolAddress ? tranche.poolAddress : "Not deployed"}
+                                  </span>
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  // If we have productId, navigate to the tranche detail page
+                                  if (tranche.productId) {
+                                    // Assuming trancheId encodes the index, we can extract it
+                                    handleViewTrancheDetail(
+                                      tranche.productId,
+                                      tranche.trancheId % 10,
+                                    );
+                                  } else {
+                                    router.push(
+                                      `/tranches?trancheId=${tranche.trancheId}`,
+                                    );
+                                  }
+                                }}
+                                className="mt-4 rounded-xl bg-gradient-to-br from-[#86D99C] to-[#00B1B8] px-4 py-2 text-sm font-semibold text-white transition-all duration-300 hover:scale-95"
+                              >
+                                View Details
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Divider between asset types (except for the last one) */}
+                        {index < Object.keys(groupedTranches).length - 1 && (
+                          <div className="mt-8 h-px w-full bg-gray-200"></div>
                         )}
-                        <p className="text-gray-600">
-                          Threshold:{" "}
-                          <span className="font-medium text-gray-900">
-                            ${tranche.threshold}
-                          </span>
-                        </p>
-                        <p className="text-gray-600">
-                          Pool:{" "}
-                          <span className="text-sm text-[#00B1B8]">
-                            {tranche.poolAddress ? tranche.poolAddress : "Not deployed"}
-                          </span>
-                        </p>
                       </div>
-                      <button
-                        onClick={() => {
-                          // If we have productId, navigate to the tranche detail page
-                          if (tranche.productId) {
-                            // Assuming trancheId encodes the index, we can extract it
-                            handleViewTrancheDetail(
-                              tranche.productId,
-                              tranche.trancheId % 10,
-                            );
-                          } else {
-                            router.push(
-                              `/tranches?trancheId=${tranche.trancheId}`,
-                            );
-                          }
-                        }}
-                        className="mt-4 rounded-xl bg-gradient-to-br from-[#86D99C] to-[#00B1B8] px-4 py-2 text-sm font-semibold text-white transition-all duration-300 hover:scale-95"
-                      >
-                        View Details
-                      </button>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               </div>
             )}
@@ -414,6 +474,7 @@ export default function InsurancePage() {
             )}
           </>
         )}
+        </div>
       </div>
     </div>
   );

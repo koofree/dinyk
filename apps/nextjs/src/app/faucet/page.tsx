@@ -149,8 +149,10 @@ export default function FaucetPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl">
       <div className="mb-8 text-center">
         <h1 className="text-4xl font-bold mb-2 flex items-center justify-center gap-2">
           <Droplets className="h-8 w-8 text-blue-500" />
@@ -286,7 +288,12 @@ export default function FaucetPage() {
           </div>
         </div>
       </Card>
+          </div>
         </div>
+      </div>
+
+      {/* Main Content Section */}
+      <div className="mx-auto max-w-7xl px-4 pt-0 pb-16 sm:px-6 lg:px-8">
       </div>
     </div>
   );

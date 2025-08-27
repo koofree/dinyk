@@ -6,10 +6,10 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import {
-  ACTIVE_NETWORK,
-  ORACLE_ROUTE_ID_TO_TYPE,
-  useContracts,
-  useProductManagement
+    ACTIVE_NETWORK,
+    ORACLE_ROUTE_ID_TO_TYPE,
+    useContracts,
+    useProductManagement
 } from "@dinsure/contracts";
 
 import { useLanguage } from "~/context/LanguageProvider";
@@ -285,9 +285,9 @@ export default function HomePage() {
       </div>
 
       {/* Key Metrics Dashboard */}
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 pt-0 pb-16 sm:px-6 lg:px-8">
         <div
-          className="mb-16 grid grid-cols-1 gap-8 md:grid-cols-3"
+          className="mb-16 grid grid-cols-1 gap-4 md:grid-cols-3"
           ref={progressRef}
         >
           <div className="group rounded-lg border border-gray-200 bg-white p-6 text-left shadow-sm hover:cursor-pointer">
@@ -364,7 +364,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="mb-12 rounded-2xl bg-[#F3FEF6] p-8 text-left">
+        <div className="mb-12 rounded-2xl bg-[#F3FEF6] border border-[#BEF2CC] p-8 text-left">
           <h3 className="font-header mb-2 text-2xl font-bold text-gray-900">
             Hedge your downside risk with simple, on-chain insurance products.
             🚀
@@ -391,7 +391,7 @@ export default function HomePage() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4">
               {insuranceProducts.map((product) => (
                 <InsuranceProductCard
                   key={product.productId}
@@ -408,8 +408,8 @@ export default function HomePage() {
           <h2 className="mb-8 text-3xl font-bold text-gray-900">
             How It Works
           </h2>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div className="rounded-2xl bg-[#F3FEF6] p-8 text-left">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="rounded-2xl bg-[#F3FEF6] border border-[#BEF2CC] p-8 text-left">
               <h3 className="mb-4 text-2xl font-bold text-gray-900">
                 For Insurance Buyers
               </h3>
@@ -421,7 +421,7 @@ export default function HomePage() {
               </ul>
             </div>
 
-            <div className="rounded-2xl bg-[#F3FEF6] p-8 text-left">
+            <div className="rounded-2xl bg-[#F3FEF6] border border-[#BEF2CC] p-8 text-left">
               <h3 className="mb-4 text-2xl font-bold text-gray-900">
                 For Liquidity Providers
               </h3>
