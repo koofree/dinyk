@@ -17,6 +17,7 @@ import { useLanguage } from "~/context/LanguageProvider";
 export interface InsuranceProduct {
   productId: number;
   name: string;
+  asset: string;
   triggerType: number;
   threshold: bigint;
   maturityDays: number;
@@ -104,7 +105,14 @@ export default function HomePage() {
         let maxPremium = 0;
         let totalTranches = 0;
 
-        // Fetch each product and aggregate data
+        // Store products by asset type
+        const productsByAsset: Record<string, InsuranceProduct[]> = {
+          BTC: [],
+          ETH: [],
+          KAIA: []
+        };
+
+        // Fetch each product and collect tranches by asset
         for (const productId of activeProductIds) {
           try {
             const productInfo = await productCatalog.getProduct(
@@ -112,15 +120,7 @@ export default function HomePage() {
             );
 
             if (Number(productInfo.productId) !== 0) {
-              let productCapacity = BigInt(0);
-              let avgPremium = 0;
-              let avgMaturity = 0;
-              let avgThreshold = BigInt(0);
-              let triggerType = 0;
-              let trancheCount = 0;
-              let oracleRouteId: keyof typeof ORACLE_ROUTE_ID_TO_TYPE = 1;
-
-              // Get tranches for this product to calculate averages
+              // Get tranches for this product
               const trancheIds = productInfo.trancheIds;
 
               for (const trancheId of trancheIds) {
@@ -129,16 +129,14 @@ export default function HomePage() {
                     Number(trancheId),
                   );
                   if (Number(tranche.productId) > 0) {
-                    productCapacity += tranche.trancheCap
+                    const oracleRouteId = tranche.oracleRouteId as unknown as keyof typeof ORACLE_ROUTE_ID_TO_TYPE;
+                    const asset = ORACLE_ROUTE_ID_TO_TYPE[oracleRouteId]?.split("-")[0] ?? 'UNKNOWN';
+                    
+                    const productCapacity = tranche.trancheCap
                       ? BigInt(tranche.trancheCap.toString())
                       : BigInt(0);
-                    avgPremium += Number(tranche.premiumRateBps || 0);
-                    avgMaturity += Number(tranche.maturityTimestamp || 0);
-                    avgThreshold += tranche.threshold
-                      ? BigInt(tranche.threshold.toString())
-                      : BigInt(0);
-                    triggerType = Number(tranche.triggerType || 0);
-                    trancheCount++;
+                    
+                    totalCap += productCapacity;
                     totalTranches++;
 
                     const premiumPercent = Number(tranche.premiumRateBps) / 100;
@@ -147,33 +145,29 @@ export default function HomePage() {
                       maxPremium = Math.max(maxPremium, premiumPercent);
                     }
 
-                    oracleRouteId = tranche.oracleRouteId as unknown as keyof typeof ORACLE_ROUTE_ID_TO_TYPE;
+                    // Create product entry for this specific tranche
+                    const product: InsuranceProduct = {
+                      productId: Number(productId),
+                      asset: asset,
+                      name: ORACLE_ROUTE_ID_TO_TYPE[oracleRouteId],
+                      triggerType: Number(tranche.triggerType || 0),
+                      threshold: tranche.threshold
+                        ? BigInt(tranche.threshold.toString())
+                        : BigInt(0),
+                      maturityDays: Math.round(Number(tranche.maturityTimestamp || 0) / 86400 / 1000),
+                      premiumRateBps: Number(tranche.premiumRateBps || 0),
+                      totalCapacity: productCapacity,
+                      active: productInfo.active,
+                    };
+
+                    // Store by asset type
+                    if (asset in productsByAsset) {
+                      productsByAsset[asset]?.push(product);
+                    }
                   }
                 } catch (err) {
                   console.log(`Could not fetch tranche ${trancheId}`, err);
                 }
-              }
-
-              if (trancheCount > 0) {
-                // Calculate averages
-                avgPremium = Math.round(avgPremium / trancheCount);
-                avgMaturity = Math.round(avgMaturity / trancheCount);
-                avgThreshold = avgThreshold / BigInt(trancheCount);
-
-                // Create aggregated product entry
-                fetchedProducts.push({
-                  productId: Number(productId),
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                  name: ORACLE_ROUTE_ID_TO_TYPE[oracleRouteId],
-                  triggerType: triggerType,
-                  threshold: avgThreshold,
-                  maturityDays: Math.round(avgMaturity / 86400 / 1000), // milliseconds to days
-                  premiumRateBps: avgPremium,
-                  totalCapacity: productCapacity,
-                  active: productInfo.active,
-                });
-
-                totalCap += productCapacity;
               }
             }
           } catch (err) {
@@ -181,11 +175,17 @@ export default function HomePage() {
           }
         }
 
-        // Sort by total capacity and take top 3
-        fetchedProducts.sort((a, b) =>
-          Number(b.totalCapacity - a.totalCapacity),
-        );
-        const topProducts = fetchedProducts.slice(0, 3);
+        // Select one random tranche for each asset type
+        const topProducts: InsuranceProduct[] = [];
+        
+        for (const asset of ['BTC', 'ETH', 'KAIA']) {
+          const assetProducts = productsByAsset[asset];
+          if (assetProducts && assetProducts.length > 0) {
+            // Select a random tranche for this asset
+            const randomIndex = Math.floor(Math.random() * assetProducts.length);
+            topProducts.push(assetProducts[randomIndex]!);
+          }
+        }
 
         setInsuranceProducts(topProducts);
         setTotalCapacity(totalCap / BigInt(1e6));

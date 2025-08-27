@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -12,20 +13,28 @@ interface InsuranceProductCardProps {
     threshold: bigint;
     maturityDays: number;
     premiumRateBps: number;
+    asset: string;
   };
 }
 
 export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
   const [mounted, setMounted] = useState(false);
-  const btc = usePriceStore((state) => state.btc);
-  const eth = usePriceStore((state) => state.eth);
-  const kaia = usePriceStore((state) => state.kaia);
+  const [triggerPrice, setTriggerPrice] = useState<string>("");
+
+  const { btc, eth, kaia } = usePriceStore();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const assetName: "BTC" | "ETH" | "KAIA" = product.name.split("-")[0] as "BTC" | "ETH" | "KAIA";
+  useEffect(() => {
+    if (btc.value && eth.value && kaia.value) {
+      
+      formatTrigger();
+    }
+  }, [btc, eth, kaia]);
+
+  const assetName: "BTC" | "ETH" | "KAIA" = product.asset as "BTC" | "ETH" | "KAIA";
 
   const formatTrigger = () => {
     // Threshold is in wei units (18 decimals)
@@ -46,7 +55,7 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
 
     // For price drop protection (triggerType 0), show as negative percentage
     const sign = product.triggerType === 0 ? "-" : "+";
-    return `${sign}${Math.abs(percentageChange).toFixed(0)}%`;
+    setTriggerPrice(`${sign}${Math.abs(percentageChange).toFixed(0)}%`);
   };
 
   return (
@@ -93,7 +102,7 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
         <div className="flex items-center justify-between">
           <span className="font-medium text-gray-400">Trigger:</span>
           <span className="text-lg font-bold text-white">
-            {formatTrigger()}
+            {triggerPrice}
           </span>
         </div>
 
