@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 import type { ProductCatalog } from "../types/generated";
 import { ORACLE_ROUTE_ID_TO_TYPE } from "../config/constants";
 import { useWeb3 } from "../providers/Web3Provider";
+import { usePriceStore } from "../store/priceStore.zustand";
 import { TranchePoolCore__factory } from "../types/generated";
 import { useContracts } from "./useContracts";
 
@@ -81,6 +82,7 @@ export function useUserPortfolio() {
   >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { btc, eth, kaia } = usePriceStore();
 
   // Fetch user's insurance NFT positions
   const fetchInsurancePositions = useCallback(async () => {
@@ -206,21 +208,27 @@ export function useUserPortfolio() {
 
             // Get price information (mock for now, would come from oracle)
             const trancheThreshold = Number(trancheSpec.threshold);
-            const baseline = 110000; // Mock BTC price
-            const triggerLevel =
-              ((baseline - trancheThreshold) / baseline) * 100;
-            const triggerPrice = trancheThreshold / 1e18;
-            const currentPrice = 110000; // Mock current price
-
-            // Extract asset name safely
-            const productId = Number(trancheSpec.productId);
-            const productName = `Product ${productId}`;
             const assetName: string | undefined =
               ORACLE_ROUTE_ID_TO_TYPE[
                 Number(
                   trancheSpec.oracleRouteId,
                 ) as keyof typeof ORACLE_ROUTE_ID_TO_TYPE
               ].split("-")[0];
+
+            const baseline =
+              assetName === "BTC"
+                ? btc.value
+                : assetName === "ETH"
+                  ? eth.value
+                  : kaia.value;
+            const triggerLevel =
+              ((baseline - trancheThreshold) / baseline) * 100;
+            const triggerPrice = trancheThreshold / 1e18;
+            const currentPrice = baseline;
+
+            // Extract asset name safely
+            const productId = Number(trancheSpec.productId);
+            const productName = `Product ${productId}`;
 
             positions.push({
               id: tokenId.toString(),
@@ -328,11 +336,20 @@ export function useUserPortfolio() {
 
               // Skip event checking for now - just check rounds directly
               const trancheThreshold = Number(trancheSpec.threshold) / 1e18;
-              const baseline = 100000; // Assuming baseline
-              const triggerLevel = (
-                ((baseline - trancheThreshold) / baseline) *
-                100
-              ).toFixed(2);
+              const assetName: string | undefined =
+                ORACLE_ROUTE_ID_TO_TYPE[
+                  Number(
+                    trancheSpec.oracleRouteId,
+                  ) as keyof typeof ORACLE_ROUTE_ID_TO_TYPE
+                ].split("-")[0];
+              const baseline =
+                assetName === "BTC"
+                  ? btc.value
+                  : assetName === "ETH"
+                    ? eth.value
+                    : kaia.value;
+              const triggerLevel =
+                ((baseline - trancheThreshold) / baseline) * 100;
 
               // Get active rounds for this tranche
               let roundIds = [];

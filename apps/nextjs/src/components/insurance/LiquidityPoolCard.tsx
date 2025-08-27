@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useNames } from "~/hooks/useNames";
 
 const RISK_COLORS = {
   LOW: "text-green-400",
@@ -44,11 +45,23 @@ interface LiquidityPoolCardProps {
   onDeposit: (pool: LiquidityPool) => void;
 }
 
+/**
+ * This is a card that displays the liquidity pool details.
+ * 
+ * It is used in the *tranches* page to display the liquidity pools.
+ * 
+ * @param pool - The liquidity pool details
+ * @param onDeposit - The function to call when the user clicks the "Provide Liquidity" button
+ * @returns A liquidity pool card
+ */
 export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
   pool,
   onDeposit,
 }) => {
+  const { getTrancheName } = useNames();
   const hasUserShare = parseFloat(pool.userShare) > 0;
+
+  const trancheName = getTrancheName(pool.id) ?? `Tranche #${pool.id}`;
 
   return (
     <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
@@ -58,7 +71,8 @@ export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
             {pool.asset} {pool.triggerType === "PRICE_BELOW" ? "-" : "+"}{pool.triggerRate.toFixed(2)}%
           </h3>
                       <p className="mt-1 text-sm text-gray-500">
-            Tranche #{pool.id} • Product #{pool.productId}
+
+            {trancheName} • #{pool.productId}
           </p>
         </div>
         <div className="space-y-2 text-right">

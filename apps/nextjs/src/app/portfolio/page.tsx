@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { useUserPortfolio, useWeb3 } from "@dinsure/contracts";
+import { useNames } from "~/hooks/useNames";
 
 export default function PortfolioPage() {
   const { isConnected } = useWeb3();
@@ -24,6 +25,8 @@ export default function PortfolioPage() {
     error,
     refetch,
   } = useUserPortfolio();  
+
+  const { getTrancheName } = useNames();
 
   if (!isConnected) {
     return (
@@ -151,19 +154,19 @@ export default function PortfolioPage() {
                       className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600"
                     >
                       <div className="font-medium">
-                        Policy #{position.tokenId}
+                        {getTrancheName(position.trancheId)}
                       </div>
                       <div>
                         {position.productId} - {position.trancheId}
                       </div>
                       <div>
                         Coverage: $
-                        {position.coverageAmount?.toLocaleString() ?? "0"} USDT
+                        {position.coverage?.toLocaleString() ?? "0"} USDT
                       </div>
                       <div className="text-gray-500">
                         Expires:{" "}
-                        {position.expiryDate
-                          ? new Date(position.expiryDate).toLocaleDateString()
+                        {position.endTime
+                          ? new Date(position.endTime).toLocaleDateString()
                           : "N/A"}
                       </div>
                     </div>
@@ -205,17 +208,17 @@ export default function PortfolioPage() {
               </button>
               {isPositionsExpanded && liquidityPositions.length > 0 && (
                 <div className="mt-3 space-y-2">
-                  {liquidityPositions.map((position: any) => (
+                  {liquidityPositions.map((position) => (
                     <div
                       key={position.id}
                       className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600"
                     >
                       <div className="font-medium">
-                        {position.productName} - {position.trancheName}
+                        {getTrancheName(position.trancheId)}
                       </div>
                       <div>
                         Deposited: $
-                        {position.depositAmount?.toLocaleString() ?? "0"} USDT
+                        {position.deposited?.toLocaleString() ?? "0"} USDT
                       </div>
                       <div>
                         Current Value: $

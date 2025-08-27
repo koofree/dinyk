@@ -121,24 +121,6 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
         </div>
       </div>
 
-      {/* 
-        TODO: Add buyer and provider counts I don't know how to get this data from the contract
-
-        <div className="mb-6 grid grid-cols-2 gap-4">
-        <div className="rounded-lg bg-gray-50 p-3">
-          <div className="mb-1 text-2xl font-bold text-gray-900">
-            {product.buyerCount || 0}
-          </div>
-                        <div className="text-sm text-gray-600">Insurance Buyers</div>
-        </div>
-        <div className="rounded-lg bg-gray-50 p-3">
-          <div className="mb-1 text-2xl font-bold text-gray-900">
-            {product.providerCount || 0}
-          </div>
-                        <div className="text-sm text-gray-600">Liquidity Providers</div>
-        </div>
-      </div> */}
-
       <Link
         href={`/tranches?productId=${product.productId}`}
         className="font-outfit relative block w-full overflow-hidden rounded-xl bg-gradient-to-br from-[#86D99C] to-[#00B1B8] py-3 text-center font-semibold text-white transition-all duration-300 group-hover:scale-95 group-hover:shadow-md"

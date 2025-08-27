@@ -1,32 +1,12 @@
 import { ethers } from "ethers";
 
-import type { Product, Tranche, TriggerType } from "@dinsure/contracts";
-
-/**
- * Get the display name for a product
- */
-export function getProductName(product: Product): string {
-  return product.metadata?.name || `Product ${product.productId}`;
-}
+import type { Product, Tranche } from "@dinsure/contracts";
 
 /**
  * Get the display description for a product
  */
 export function getProductDescription(product: Product): string {
   return product.metadata?.description || "No description available";
-}
-
-/**
- * Generate a display name for a tranche based on its configuration
- */
-export function getTrancheName(tranche: Tranche, product?: Product): string {
-  const productName = product
-    ? getProductName(product)
-    : `Product ${tranche.productId}`;
-  const riskLevel = getTrancheRiskLevel(tranche);
-  const triggerText = getTriggerDescription(tranche);
-
-  return `${productName} - ${riskLevel} Risk ${triggerText}`;
 }
 
 /**

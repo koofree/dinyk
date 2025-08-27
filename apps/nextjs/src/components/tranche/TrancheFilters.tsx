@@ -1,7 +1,7 @@
 "use client";
 
-import { getProductName } from "@/utils/productHelpers";
 import React from "react";
+import { useNames } from "~/hooks/useNames";
 
 interface Product {
   productId: number;
@@ -26,6 +26,8 @@ export const TrancheFilters: React.FC<TrancheFiltersProps> = ({
   products,
   onFilterChange,
 }) => {
+  const { getProductName, getTrancheName } = useNames();
+
   const handleInsuranceChange = (value: string) => {
     const productId = value === "all" ? null : parseInt(value);
     onFilterChange({ ...filters, insuranceProduct: productId });
@@ -51,7 +53,7 @@ export const TrancheFilters: React.FC<TrancheFiltersProps> = ({
             Insurance
           </label>
           <select
-            value={filters.insuranceProduct || "all"}
+            value={filters.insuranceProduct ?? "all"}
             onChange={(e) => handleInsuranceChange(e.target.value)}
             className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2 pr-12 text-gray-800 focus:border-[#86D99C] focus:outline-none"
             style={{
@@ -62,10 +64,10 @@ export const TrancheFilters: React.FC<TrancheFiltersProps> = ({
               backgroundSize: "20px",
             }}
           >
-            <option value="all">All Products</option>
+            <option value="all">All Insurances</option>
             {products.map((product) => (
               <option key={product.productId} value={product.productId}>
-                {getProductName(product)}
+                {getProductName(product.productId)}
               </option>
             ))}
           </select>

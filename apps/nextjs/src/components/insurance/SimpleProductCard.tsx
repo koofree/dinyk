@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import type { Product, Tranche } from "@/app/insurance/page";
+import { useNames } from "~/hooks/useNames";
 
 interface SimpleProductCardProps {
   product: Product;
@@ -26,21 +27,27 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
   tranches,
   onViewTranches,
 }) => {
-  
+  const { getProductName } = useNames();
+  const [productName, setProductName] = useState<string>(`${product.asset} Protection`);
+
+  useEffect(() => {
+    const presetInsuranceName = getProductName(product.productId);
+    if (presetInsuranceName) {
+      setProductName(presetInsuranceName);
+    }
+  }, [product.productId, getProductName]);
 
   // Calculate aggregated statistics
   const totalTranches = tranches.length;
 
   // Calculate premium range
-  const premiumRates = tranches.map((t) => t.premiumRateBps ?? 0);
+  const premiumRates = tranches.map((t) => t.premiumRateBps || 0);
   const minPremium =
     premiumRates.length > 0 ? Math.min(...premiumRates) / 100 : 0;
   const maxPremium =
     premiumRates.length > 0 ? Math.max(...premiumRates) / 100 : 0;  
 
-  // Display all product properties dynamically
-  
-  const productName = `${product.asset} Protection`;
+
 
   return (
     <div className="rounded-lg border border-gray-700 bg-gray-800 p-6 transition-colors hover:border-gray-600">

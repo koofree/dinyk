@@ -1,11 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+ 
+ 
+ 
+ 
+ 
 "use client";
 
-import type { UserInsurancePosition, UserLiquidityPosition, UserPosition } from "@dinsure/contracts";
+import type { UserPosition } from "@dinsure/contracts";
 import React from "react";
+import { useNames } from "~/hooks/useNames";
 
 interface PositionCardProps {
   position: UserPosition;
@@ -14,12 +16,25 @@ interface PositionCardProps {
   isProcessing?: boolean;
 }
 
+/**
+ * This is a card that displays the position details.
+ * 
+ * It is used in the *portfolio* page to display the position details.
+ * 
+ * @param position - The position details
+ * @param onClaim - The function to call when the user clicks the "Claim Now" button
+ * @param onWithdraw - The function to call when the user clicks the "Withdraw Available" button
+ * @param isProcessing - Whether the position is being processed
+ * @returns A position card
+ */
 export const PositionCard: React.FC<PositionCardProps> = ({
   position,
   onClaim,
   onWithdraw,
   isProcessing = false,
 }) => {
+  const { getTrancheName } = useNames();
+  
   const getStatusColor = (status?: string) => {
     switch (status) {
       case "active":
@@ -60,13 +75,13 @@ export const PositionCard: React.FC<PositionCardProps> = ({
   };
 
   if (position.type === "insurance") {
-    const insurancePosition = position as UserInsurancePosition;
+    const insurancePosition = position;
     return (
       <div className="min-w-[250px] rounded-lg border border-gray-700 bg-gray-800 p-6">
         <div className="mb-4 flex items-start justify-between">
           <div>
-            <h3 className="font-medium text-white">Tranche #{insurancePosition.trancheId}</h3>
-            <p className="text-sm text-gray-400">{insurancePosition.asset}</p>
+            <h3 className="font-medium text-white">{insurancePosition.asset}</h3>
+            <p className="text-sm text-gray-400">{getTrancheName(insurancePosition.trancheId)}</p>
           </div>
           <div
             className={`flex items-center gap-1 ${getStatusColor(insurancePosition.status)}`}
@@ -100,7 +115,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({
             <div className="mb-2 flex justify-between text-sm">
               <span className="text-gray-400">Current {position.asset}</span>
               <span className="text-white">
-                ${insurancePosition.currentPrice?.toLocaleString()}
+                ${insurancePosition.baseline?.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between text-sm">
@@ -146,13 +161,13 @@ export const PositionCard: React.FC<PositionCardProps> = ({
 
   // Liquidity position
 
-  const liquidityPosition = position as UserLiquidityPosition;
+  const liquidityPosition = position;
   return (
     <div className="min-w-[250px] rounded-lg border border-gray-700 bg-gray-800 p-6">
       <div className="mb-4 flex items-start justify-between">
         <div>
-          <h3 className="font-medium text-white">{liquidityPosition.tranche}</h3>
-          <p className="text-sm text-gray-400">{liquidityPosition.asset}</p>
+          <h3 className="font-medium text-white">{liquidityPosition.asset}</h3>
+          <p className="text-sm text-gray-400">{getTrancheName(liquidityPosition.trancheId)}</p>
         </div>
         <div
           className={`flex items-center gap-1 ${getRoundStatusColor(liquidityPosition.roundStatus)}`}
@@ -195,7 +210,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({
       {position.roundStatus === "active" && (
         <div className="mb-4">
           <div className="text-sm text-gray-400">Round ends in</div>
-          <div className="text-white">{liquidityPosition.daysLeft} days</div>
+          <div className="text-white">{liquidityPosition.endTime.toLocaleDateString()}</div>
         </div>
       )}
 

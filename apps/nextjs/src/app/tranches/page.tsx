@@ -21,6 +21,7 @@ import {
   useUserPortfolio,
   useWeb3,
 } from "@dinsure/contracts";
+import { useNames } from "~/hooks/useNames";
 
 // Product and Tranche types
 interface Product {
@@ -79,6 +80,7 @@ function TrancheContent() {
   const [tranches, setTranches] = useState<Tranche[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [productsError, setProductsError] = useState<Error | null>(null);
+  const { getTrancheName } = useNames();
 
   // Get real contract data
   const btc = usePriceStore((state) => state.btc);
@@ -669,77 +671,9 @@ function TrancheContent() {
       {/* Tranches Grid */}
       {!loading && filteredTranches.length > 0 && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {filteredTranches.map((tranche, index) => {
-            const product = products.find(
+          {filteredTranches.filter(tranche => products.find(
               (p) => p.productId === tranche.productId,
-            );
-
-            // Show tranche even without product
-            if (!product) {
-              return (
-                              <div
-                key={tranche.trancheId}
-                className="relative rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:bg-gray-750"
-              >
-                <h3 className="mb-4 text-[20px] font-bold text-white">
-                  Tranche #{tranche.trancheId}
-                </h3>
-                <div className="space-y-1 text-sm">
-                  <p className="text-gray-400">
-                    Product ID:{" "}
-                    <span className="font-medium text-white">
-                      {tranche.productId}
-                    </span>
-                  </p>
-                  <p className="text-gray-400">
-                    Premium:{" "}
-                    <span className="font-medium text-white">
-                      {tranche.premiumRateBps / 100}%
-                    </span>
-                  </p>
-                  <p className="text-gray-400">
-                    Trigger:{" "}
-                    <span className="font-medium text-[#00B1B8] flex items-center gap-2">
-                      <span className={`flex items-center gap-1 ${tranche.triggerType === 0 ? "text-red-500" : "text-green-500"}`}>
-                        {tranche.triggerType === 0
-                          ? "Price Below"
-                          : "Price Above"}
-                        <svg 
-                          className={`h-4 w-4 ${tranche.triggerType === 0 ? "text-red-500" : "text-green-500"}`}
-                          fill="none" 
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
-                        >
-                          {tranche.triggerType === 0 ? (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                          ) : (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                          )}
-                        </svg>
-                      </span>
-                      <span className="font-bold text-white">
-                        ${Number(tranche.threshold).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                    </span>
-                  </p>
-                  <p className="text-gray-400">
-                    Cap:{" "}
-                    <span className="font-medium text-white">
-                      ${(Number(tranche.trancheCap) / 1e6).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
-                    </span>
-                  </p>
-                </div>
-                <div className="mt-4">
-                  <Link
-                    href={`/tranches/${tranche.productId}/${tranche.trancheId}`}
-                    className="block w-full rounded-xl bg-gradient-to-br from-[#86D99C] to-[#00B1B8] px-4 py-3 text-center font-semibold text-white transition-all duration-300 hover:scale-95 hover:shadow-md"
-                  >
-                    View Details
-                  </Link>
-                </div>
-              </div>
-              );
-            }
+            )).map((tranche, index) => {
 
             return (
               <div key={tranche.trancheId}>
@@ -753,7 +687,7 @@ function TrancheContent() {
                     className={`${tranche.asset === "KAIA" ? "h-6 w-6" : "h-8 w-8"}`}
                     style={{ filter: "brightness(0) invert(1)" }}
                   />
-                  {tranche.asset} Pools
+                  {getTrancheName(tranche.trancheId) ?? `{tranche.asset} Pools`}
                 </h3>
                 <div className="space-y-1 text-sm">
                   <p className="text-gray-400">
