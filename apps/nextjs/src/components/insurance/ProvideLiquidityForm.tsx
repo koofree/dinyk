@@ -339,7 +339,8 @@ export function ProvideLiquidityForm({
                 !isConnected ||
                 !isInitialized ||
                 !amount ||
-                !signer
+                !signer ||
+                userShares > 0n
               }
               className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-gradient-to-br from-[#86D99C] to-[#00B1B8] text-white shadow hover:from-[#00B1B8] hover:to-[#86D99C] disabled:bg-gray-600 disabled:hover:from-gray-600 disabled:hover:to-gray-600 h-10 rounded-xl px-8 w-full"
             >
@@ -351,7 +352,7 @@ export function ProvideLiquidityForm({
               ) : (
                 <>
                   <ArrowDownToLine className="mr-2 h-4 w-4" />
-                  Deposit USDT
+                  {userShares > 0n ? "You already have position" : "Deposit USDT"}
                 </>
               )}
             </button>

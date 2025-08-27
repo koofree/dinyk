@@ -2,13 +2,9 @@ import { useCallback, useState } from "react";
 import { ethers } from "ethers";
 import { toast } from "sonner";
 
-import type { ProductCatalog } from "../types/generated";
 import { KAIA_RPC_ENDPOINTS } from "../config/constants";
 import { useWeb3 } from "../providers/Web3Provider";
-import {
-  ProductCatalog__factory,
-  TranchePoolCore__factory,
-} from "../types/generated";
+import { TranchePoolCore__factory } from "../types/generated";
 import { useContracts } from "./useContracts";
 
 export interface DepositCollateralParams {
@@ -38,25 +34,11 @@ export interface YieldAnalysis {
 }
 
 export function useSellerOperations() {
-  const { signer, account } = useWeb3();
+  const { signer, account, provider } = useWeb3();
   const { productCatalog, tranchePoolFactory, usdt, isInitialized } =
     useContracts();
   const [isLoading, setIsLoading] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
-
-  // Get a provider for read-only operations with fallback support
-  const getProvider = useCallback(() => {
-    // If we have a signer, use its provider
-    if (signer?.provider) {
-      return signer.provider;
-    }
-
-    // Otherwise, create a read-only provider with the first RPC endpoint
-    return new ethers.JsonRpcProvider(KAIA_RPC_ENDPOINTS[0], {
-      chainId: 1001,
-      name: "Kaia Kairos",
-    });
-  }, [signer]);
 
   // Create a provider with fallback RPC endpoints
   const createProviderWithFallback =
@@ -138,7 +120,6 @@ export function useSellerOperations() {
           "Contracts are still initializing. Please wait a moment.",
         );
       }
-
       if (!signer) {
         throw new Error("Signer not available. Please connect your wallet.");
       }
@@ -178,83 +159,10 @@ export function useSellerOperations() {
           console.error("Error checking rounds:", checkError);
         }
 
-        let roundInfo: ProductCatalog.RoundStructOutput | null = null;
-        let retries = 3;
-        let currentProductCatalog = productCatalog;
+        const currentProductCatalog = productCatalog;
 
-        while (retries > 0) {
-          try {
-            roundInfo = await currentProductCatalog.getRound(params.roundId);
-            console.log("Round info retrieved successfully");
-            break; // Success, exit loop
-          } catch (roundError) {
-            retries--;
-            const errorDetails = roundError as {
-              code?: string;
-              message?: string;
-              data?: unknown;
-              transaction?: unknown;
-            };
-            console.error("Failed to get round info:", roundError);
-            console.error("Error details:", {
-              code: errorDetails.code,
-              message: errorDetails.message,
-              data: errorDetails.data,
-              transaction: errorDetails.transaction,
-              retriesLeft: retries,
-            });
-
-            // Check for RPC errors that might be temporary
-            if (
-              (roundError as any).message?.includes("missing trie node") ||
-              (roundError as any).code === -32603 ||
-              (roundError as any).code === "NETWORK_ERROR"
-            ) {
-              if (retries > 0) {
-                console.log(
-                  `RPC error detected, trying fallback RPC... (${retries} attempts left)`,
-                );
-
-                // Try to use a fallback provider
-                try {
-                  const fallbackProvider = await createProviderWithFallback();
-
-                  currentProductCatalog = ProductCatalog__factory.connect(
-                    await productCatalog.getAddress(),
-                    fallbackProvider,
-                  );
-                  console.log("Switched to fallback RPC provider");
-                } catch (fallbackError) {
-                  console.error(
-                    "Failed to create fallback provider:",
-                    fallbackError,
-                  );
-                }
-
-                // Wait a bit before retrying
-                await new Promise((resolve) => setTimeout(resolve, 2000));
-                continue;
-              } else {
-                throw new Error(
-                  "RPC node is experiencing issues. Please try again in a few moments.",
-                );
-              }
-            }
-
-            // Check if it's a revert error (round doesn't exist)
-            if ((roundError as any).code === "CALL_EXCEPTION") {
-              // The round might not exist or the contract call failed
-              throw new Error(
-                `Round ${params.roundId} does not exist. Please ensure you're on the correct network (should be Kaia Testnet, chain ID 1001) and the round ID is valid.`,
-              );
-            }
-            throw roundError;
-          }
-        }
-
-        if (roundInfo === null) {
-          throw new Error(`Round ${params.roundId} does not exist.`);
-        }
+        const roundInfo = await currentProductCatalog.getRound(params.roundId);
+        console.log("Round info retrieved successfully");
 
         const trancheId = Number(roundInfo.trancheId);
         const roundState = Number(roundInfo.state);
@@ -531,25 +439,7 @@ export function useSellerOperations() {
           return 0n;
         }
 
-        // Try to check if the pool contract exists, but handle RPC errors gracefully
-        try {
-          const code = await getProvider().getCode(poolAddress);
-          if (code === "0x" || code === "0x0") {
-            // Contract doesn't exist at this address
-            return 0n;
-          }
-        } catch {
-          // If getCode fails (e.g., RPC error), assume no contract exists
-          console.warn(
-            `Could not verify contract at ${poolAddress}, assuming no pool exists`,
-          );
-          return 0n;
-        }
-
-        const pool = TranchePoolCore__factory.connect(
-          poolAddress,
-          getProvider(),
-        );
+        const pool = TranchePoolCore__factory.connect(poolAddress, provider);
 
         // Get share balance using shareBalances mapping
         const balance = await pool.shareBalances(sellerAddress);
@@ -565,7 +455,7 @@ export function useSellerOperations() {
         return 0n;
       }
     },
-    [tranchePoolFactory, account, getProvider],
+    [tranchePoolFactory, account, provider],
   );
 
   // Get pool accounting info
@@ -573,106 +463,35 @@ export function useSellerOperations() {
     async (trancheId: number): Promise<PoolAccounting | null> => {
       console.log("getPoolAccounting called with trancheId:", trancheId);
       console.log("tranchePoolFactory available:", !!tranchePoolFactory);
-      console.log("provider available:", !!getProvider());
+      console.log("provider available:", !!provider);
 
       if (!tranchePoolFactory) {
         throw new Error("Tranche pool factory not initialized");
       }
 
-      let retries = 3;
-      while (retries > 0) {
-        try {
-          console.log("Getting pool address for tranche:", trancheId);
-          const poolAddress =
-            await tranchePoolFactory.getTranchePool(trancheId);
-          console.log("Pool address:", poolAddress);
+      console.log("Getting pool address for tranche:", trancheId);
+      const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
+      console.log("Pool address:", poolAddress);
 
-          if (!poolAddress || poolAddress === ethers.ZeroAddress) {
-            console.log("No pool found for tranche:", trancheId);
-            return null;
-          }
-
-          // Try with current provider first, then fallback if needed
-          let provider = getProvider();
-
-          // Try to check if the pool contract exists, but handle RPC errors gracefully
-          try {
-            const code = await provider.getCode(poolAddress);
-            if (code === "0x" || code === "0x0") {
-              console.log("No contract deployed at pool address");
-              return null;
-            }
-          } catch {
-            console.warn(
-              `Could not verify contract at ${poolAddress}, assuming no pool exists`,
-            );
-            return null;
-          }
-
-          let pool = TranchePoolCore__factory.connect(poolAddress, provider);
-
-          try {
-            console.log("Calling pool.getPoolAccounting()");
-            const accounting = await pool.getPoolAccounting();
-            console.log("Pool accounting result:", accounting);
-
-            return {
-              totalAssets: accounting.totalAssets,
-              lockedAssets: accounting.lockedAssets,
-              totalShares: accounting.totalShares,
-              navPerShare: accounting.navPerShare,
-            };
-          } catch (poolError) {
-            // If RPC error, try fallback
-            const errorWithCode = poolError as {
-              message?: string;
-              code?: number | string;
-            };
-            if (
-              errorWithCode.message?.includes("missing trie node") ||
-              errorWithCode.code === -32603 ||
-              errorWithCode.code === "NETWORK_ERROR"
-            ) {
-              retries--;
-              if (retries > 0) {
-                console.log(
-                  `RPC error in getPoolAccounting, trying fallback... (${retries} attempts left)`,
-                );
-                try {
-                  provider = await createProviderWithFallback();
-                  pool = TranchePoolCore__factory.connect(
-                    poolAddress,
-                    provider,
-                  );
-                  // Loop will retry with new provider
-                  await new Promise((resolve) => setTimeout(resolve, 1000));
-                  continue;
-                } catch (fallbackError) {
-                  console.error(
-                    "Failed to create fallback provider:",
-                    fallbackError,
-                  );
-                }
-              }
-            }
-            throw poolError;
-          }
-        } catch (error) {
-          retries--;
-          if (retries === 0) {
-            console.error(
-              "Error fetching pool accounting after all retries:",
-              error,
-            );
-            return null;
-          }
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
+      if (!poolAddress || poolAddress === ethers.ZeroAddress) {
+        console.log("No pool found for tranche:", trancheId);
+        return null;
       }
 
-      return null;
+      const pool = TranchePoolCore__factory.connect(poolAddress, provider);
+
+      console.log(`Calling pool.getPoolAccounting() by ${poolAddress}`);
+      const accounting = await pool.getPoolAccounting();
+      console.log("Pool accounting result:", accounting);
+
+      return {
+        totalAssets: accounting.totalAssets,
+        lockedAssets: accounting.lockedAssets,
+        totalShares: accounting.totalShares,
+        navPerShare: accounting.navPerShare,
+      };
     },
-    [tranchePoolFactory, getProvider, createProviderWithFallback],
+    [tranchePoolFactory, provider],
   );
 
   // Get seller's active positions across all rounds
@@ -743,25 +562,7 @@ export function useSellerOperations() {
           return 0n;
         }
 
-        // Try to check if the pool contract exists, but handle RPC errors gracefully
-        try {
-          const code = await getProvider().getCode(poolAddress);
-          if (code === "0x" || code === "0x0") {
-            // Contract doesn't exist at this address
-            return 0n;
-          }
-        } catch {
-          // If getCode fails (e.g., RPC error), assume no contract exists
-          console.warn(
-            `Could not verify contract at ${poolAddress}, assuming no pool exists`,
-          );
-          return 0n;
-        }
-
-        const pool = TranchePoolCore__factory.connect(
-          poolAddress,
-          getProvider(),
-        );
+        const pool = TranchePoolCore__factory.connect(poolAddress, provider);
 
         const available = await pool.getAvailableCollateral(sellerAddress);
         return available;
@@ -776,7 +577,7 @@ export function useSellerOperations() {
         return 0n;
       }
     },
-    [tranchePoolFactory, account, getProvider],
+    [tranchePoolFactory, account, provider],
   );
 
   return {

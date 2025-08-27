@@ -2,11 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ethers } from "ethers";
 
 import type { ProductCatalog } from "../types/generated";
-import {
-  ACTIVE_NETWORK,
-  KAIA_RPC_ENDPOINTS,
-  ORACLE_ROUTE_ID_TO_TYPE,
-} from "../config/constants";
+import { ORACLE_ROUTE_ID_TO_TYPE } from "../config/constants";
 import { useWeb3 } from "../providers/Web3Provider";
 import { TranchePoolCore__factory } from "../types/generated";
 import { useContracts } from "./useContracts";
@@ -69,7 +65,7 @@ const ROUND_STATES = [
 ];
 
 export function useUserPortfolio() {
-  const { account, signer } = useWeb3();
+  const { account, provider } = useWeb3();
   const {
     productCatalog,
     insuranceToken,
@@ -87,18 +83,6 @@ export function useUserPortfolio() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Create a provider for read-only operations
-  const getProvider = useCallback(() => {
-    if (signer?.provider) {
-      return signer.provider;
-    }
-
-    return new ethers.JsonRpcProvider(KAIA_RPC_ENDPOINTS[0], {
-      chainId: ACTIVE_NETWORK.chainId,
-      name: ACTIVE_NETWORK.name,
-    });
-  }, [signer]);
-
   // Fetch user's insurance NFT positions
   const fetchInsurancePositions = useCallback(async () => {
     if (
@@ -107,12 +91,12 @@ export function useUserPortfolio() {
       !productCatalog ||
       !settlementEngine ||
       !tranchePoolFactory
-    )
+    ) {
       return [];
+    }
 
     try {
       const positions: UserInsurancePosition[] = [];
-      const provider = getProvider();
 
       // Get user's NFT balance
       const balance = await insuranceToken.balanceOf(account);
@@ -278,7 +262,6 @@ export function useUserPortfolio() {
     productCatalog,
     settlementEngine,
     tranchePoolFactory,
-    getProvider,
   ]);
 
   // Fetch user's liquidity positions
@@ -289,8 +272,6 @@ export function useUserPortfolio() {
     const positions: UserLiquidityPosition[] = [];
 
     try {
-      const provider = getProvider();
-
       // Try a simple approach: just check known product IDs 1-3
       const productIds = [1, 2, 3];
       console.log(`Checking products: ${productIds.join(", ")}`);
@@ -532,7 +513,7 @@ export function useUserPortfolio() {
       console.error("Error fetching liquidity positions:", error);
       return positions; // Return what we have so far
     }
-  }, [account, productCatalog, tranchePoolFactory, getProvider]);
+  }, [account, productCatalog, tranchePoolFactory]);
 
   // Fetch all positions
   const fetchAllPositions = useCallback(async () => {

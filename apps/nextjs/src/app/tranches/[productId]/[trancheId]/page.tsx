@@ -449,6 +449,7 @@ export default function TrancheDetailPage() {
                           ? selectedRound.roundId
                           : undefined
                       }
+                      
                       onSuccess={() => loadData()}
                     />
                   </div>
