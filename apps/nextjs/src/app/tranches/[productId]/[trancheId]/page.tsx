@@ -13,21 +13,21 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import type {
-  ProductCatalog
+    ProductCatalog
 } from "@dinsure/contracts";
 import {
-  ORACLE_ROUTE_ID_TO_TYPE,
-  useContracts,
-  useProductManagement,
-  useSellerOperations,
-  useWeb3
+    ORACLE_ROUTE_ID_TO_TYPE,
+    useContracts,
+    useProductManagement,
+    useSellerOperations,
+    useWeb3
 } from "@dinsure/contracts";
 
 import type { ProductSpec } from "@dinsure/contracts/hooks";
 
 import {
-  Card,
-  CardContent
+    Card,
+    CardContent
 } from "@dinsure/ui/card";
 import { ScrollArea } from "@dinsure/ui/scroll-area";
 
@@ -522,10 +522,10 @@ export default function TrancheDetailPage() {
               <div className="flex items-center gap-3">
                 <AlertCircle className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                  <h3 className="font-outfit text-[18px] font-semibold text-gray-900 dark:text-gray-100">
                     No Rounds Available
                   </h3>
-                  <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                  <p className="mt-1 text-[14px] text-gray-700 dark:text-gray-300">
                     There are no rounds available for this tranche yet. Please
                     check back later.
                   </p>

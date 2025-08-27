@@ -1,5 +1,6 @@
 "use client";
 
+import { SkeletonCardGrid } from "@/components/common/SkeletonCard";
 import { EnhancedPurchaseModal } from "@/components/insurance/EnhancedPurchaseModal";
 import { LiquidityPoolCard } from "@/components/insurance/LiquidityPoolCard";
 import { LiquidityModal } from "@/components/liquidity/LiquidityModal";
@@ -638,15 +639,15 @@ function TrancheContent() {
 
       {/* Available Pools Section Title */}
       <div className="mb-6">
-        <h2 className="font-display text-[36px] font-extrabold text-gray-900">
+        <h2 className="font-display mb-4 text-[30px] font-bold text-gray-900">
           Available Tranche Pools
         </h2>
       </div>
 
       {/* Loading State */}
       {loading && (
-        <div className="py-12 text-center">
-          <div className="text-gray-600">Loading tranches...</div>
+        <div className="py-12">
+          <SkeletonCardGrid />
         </div>
       )}
 
@@ -720,17 +721,33 @@ function TrancheContent() {
                   </p>
                   <p className="text-gray-400">
                     Trigger:{" "}
-                    <span className="font-medium text-white">
-                      {tranche.triggerType === 0
-                        ? "Price Below"
-                        : "Price Above"}{" "}
-                      ${tranche.threshold.toString()}
+                    <span className="font-medium text-[#00B1B8] flex items-center gap-2">
+                      <span className={`flex items-center gap-1 ${tranche.triggerType === 0 ? "text-red-500" : "text-green-500"}`}>
+                        {tranche.triggerType === 0
+                          ? "Price Below"
+                          : "Price Above"}
+                        <svg 
+                          className={`h-4 w-4 ${tranche.triggerType === 0 ? "text-red-500" : "text-green-500"}`}
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          {tranche.triggerType === 0 ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                          ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                          )}
+                        </svg>
+                      </span>
+                      <span className="font-bold text-white">
+                        ${Number(tranche.threshold).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
                     </span>
                   </p>
                   <p className="text-gray-400">
                     Cap:{" "}
                     <span className="font-medium text-white">
-                      ${Number(tranche.trancheCap) / 1e6} USDT
+                      ${(Number(tranche.trancheCap) / 1e6).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
                     </span>
                   </p>
                 </div>
@@ -751,7 +768,13 @@ function TrancheContent() {
                 <div
                   className="relative rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:bg-gray-750"
                 >
-                <h3 className="mb-4 text-[20px] font-bold text-white">
+                <h3 className="mb-4 flex items-center gap-2 text-[20px] font-bold text-white">
+                  <img
+                    src={`/images/${tranche.asset}.svg`}
+                    alt={tranche.asset}
+                    className={`${tranche.asset === "KAIA" ? "h-6 w-6" : "h-8 w-8"}`}
+                    style={{ filter: "brightness(0) invert(1)" }}
+                  />
                   {tranche.asset} Pools
                 </h3>
                 <div className="space-y-1 text-sm">
@@ -763,17 +786,33 @@ function TrancheContent() {
                   </p>
                   <p className="text-gray-400">
                     Trigger:{" "}
-                    <span className="font-medium text-white">
-                      {tranche.triggerType === 0
-                        ? "Price Below"
-                        : "Price Above"}{" "}
-                      ${tranche.threshold.toString()}
+                    <span className="font-medium text-[#00B1B8] flex items-center gap-2">
+                      <span className={`flex items-center gap-1 ${tranche.triggerType === 0 ? "text-red-500" : "text-green-500"}`}>
+                        {tranche.triggerType === 0
+                          ? "Price Below"
+                          : "Price Above"}
+                        <svg 
+                          className={`h-4 w-4 ${tranche.triggerType === 0 ? "text-red-500" : "text-green-500"}`}
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          {tranche.triggerType === 0 ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                          ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                          )}
+                        </svg>
+                      </span>
+                      <span className="font-bold text-white">
+                        ${Number(tranche.threshold).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
                     </span>
                   </p>
                   <p className="text-gray-400">
                     Cap:{" "}
                     <span className="font-medium text-white">
-                      ${Number(tranche.trancheCap) / 1e6} USDT
+                      ${(Number(tranche.trancheCap) / 1e6).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
                     </span>
                   </p>
                   <p className="text-gray-400">
@@ -791,9 +830,6 @@ function TrancheContent() {
                     View Details
                   </Link>
                 </div>
-                {index < filteredTranches.length - 1 && (
-                  <div className="my-4 h-px bg-gray-600 lg:hidden"></div>
-                )}
               </div>
             </div>);
           })}
