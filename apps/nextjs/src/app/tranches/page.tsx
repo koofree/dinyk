@@ -651,28 +651,6 @@ function TrancheContent() {
         </div>
       )}
 
-      {/* Debug Info */}
-              <div className="mb-4 overflow-x-auto rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm text-gray-500">
-        <div className="whitespace-nowrap">
-          Debug: Products={products.length} | Contract Tranches=
-          {tranches.length} | Tranches with Data={tranchesData?.length || 0} |
-          Filtered={filteredTranches.length} | Filter Product=
-          {filters.insuranceProduct ?? "all"} | Filter Status={filters.status} |
-          Loading={String(loading)}
-        </div>
-        {tranchesData && tranchesData.length > 0 && (
-          <div className="mt-1 whitespace-nowrap">
-            Round States:{" "}
-            {tranchesData
-              .map(
-                (t) =>
-                  `T${t.trancheId}: ${t.rounds.map((r) => r.state).join(",")}`,
-              )
-              .join(" | ")}
-          </div>
-        )}
-      </div>
-
       {/* Empty State */}
       {!loading && filteredTranches.length === 0 && tranches.length === 0 && (
         <div className="py-12 text-center">

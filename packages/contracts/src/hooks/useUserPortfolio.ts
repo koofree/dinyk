@@ -181,7 +181,7 @@ export function useUserPortfolio() {
             let status: UserInsurancePosition["status"] = "active";
             let claimAmount: string | undefined;
 
-            if (roundState === 5) {
+            if (roundState >= 4) {
               // SETTLED
               // Check if settlement was triggered
               const settlementInfo =
@@ -196,10 +196,10 @@ export function useUserPortfolio() {
               } else {
                 status = "expired";
               }
-            } else if (roundState === 4) {
+            } else if (roundState === 3) {
               // MATURED
               status = "matured";
-            } else if (roundState === 3) {
+            } else if (roundState === 2) {
               // ACTIVE
               status = "active";
             }
