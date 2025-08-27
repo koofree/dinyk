@@ -53,12 +53,12 @@ DIN is a decentralized insurance platform on Kaia blockchain providing parametri
 
 #### Contract Functions (Updated Addresses)
 ```solidity
-// DinRegistry.sol (0xCD2B28186b257869B3C2946ababB56683F4304C3)
+// DinRegistry.sol 
 - getParameter(PROTOCOL_FEE_BPS) → protocolFee
 - getProductCatalog() → address
 - getTranchePoolFactory() → address
 
-// ProductCatalog.sol (0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D)  
+// ProductCatalog.sol 
 - getActiveProducts() → Product[]
 - getActiveTranches() → Tranche[]
 - getRoundInfo(roundId) → RoundInfo
@@ -67,7 +67,7 @@ DIN is a decentralized insurance platform on Kaia blockchain providing parametri
 - poolAccounting() → PoolAccounting (TVL, shares, etc.)
 - getNetAssetValue() → uint256
 
-// YieldRouter.sol (0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11)
+// YieldRouter.sol
 - getYieldPosition(poolAddress) → YieldPosition
 - getCurrentAPY() → uint256
 ```
@@ -646,7 +646,7 @@ interface SettlementState {
 // ProductCatalog.sol
 - getRound(roundId) → Round
 - getTrancheRounds(trancheId) → roundIds[]
-// Round states: ANNOUNCED, OPEN, MATCHED, ACTIVE, MATURED, SETTLED
+// Round states: ANNOUNCED, OPEN, ACTIVE, MATURED, SETTLED
 
 // TranchePoolCore.sol
 - roundEconomics(roundId) → RoundEconomics

@@ -49,7 +49,6 @@ export function useSettlement() {
         const stateNames = [
           "ANNOUNCED",
           "OPEN",
-          "MATCHED",
           "ACTIVE",
           "MATURED",
           "SETTLED",

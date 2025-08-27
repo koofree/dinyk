@@ -11,7 +11,6 @@ const RISK_COLORS = {
 const ROUND_STATE_BADGES = {
   ANNOUNCED: { color: "bg-gray-600 text-gray-300", label: "Announced" },
   OPEN: { color: "bg-green-600 text-green-100", label: "Open" },
-  MATCHED: { color: "bg-blue-600 text-blue-100", label: "Matched" },
   ACTIVE: { color: "bg-yellow-600 text-yellow-100", label: "Active" },
   MATURED: { color: "bg-orange-600 text-orange-100", label: "Matured" },
   SETTLED: { color: "bg-purple-600 text-purple-100", label: "Settled" },

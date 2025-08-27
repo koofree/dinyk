@@ -36,7 +36,7 @@ This project is transitioning from a T3 Turbo monorepo to a Web3-focused archite
 
 ##### Core Contracts
 - **`DinRegistry`** (`0xCD2B28186b257869B3C2946ababB56683F4304C3`): Central registry for all contract addresses and global parameters. Manages protocol-wide settings with bounded validation (premium rates 0-50%, protocol fees 0-10%, maturity windows 1hr-365days).
-- **`ProductCatalog`** (`0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D`): Manages insurance products, tranches, and rounds. Controls the full round lifecycle (ANNOUNCED → OPEN → MATCHED → ACTIVE → MATURED → SETTLED).
+- **`ProductCatalog`** (`0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D`): Manages insurance products, tranches, and rounds. Controls the full round lifecycle (ANNOUNCED → OPEN → ACTIVE → MATURED → SETTLED).
 - **`TranchePoolCore`**: Economics-focused pool contract managing buyer orders, seller collateral, NAV calculation, and premium distribution. Deployed per tranche via factory.
 - **`InsuranceToken`** (`0x3bEDE5f043E8D0597F9F0b60eCfc52B134d8E934`): ERC-721 NFT representing buyer insurance positions with metadata for coverage amount and round details.
 - **`SettlementEngine`** (`0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8`): Handles oracle-based claim processing, dispute resolution, and automatic payout distribution.
@@ -244,11 +244,10 @@ Each insurance product offers multiple risk tranches:
 #### States and Transitions
 1. **ANNOUNCED**: Round created, not yet open for sales
 2. **OPEN**: Accepting buyer purchases and seller deposits
-3. **MATCHED**: Sales closed, matching buyers/sellers
-4. **ACTIVE**: Insurance coverage active, monitoring triggers
-5. **MATURED**: Coverage period ended, awaiting settlement
-6. **SETTLED**: Claims processed, payouts distributed
-7. **CANCELED**: Emergency cancellation, full refunds
+3. **ACTIVE**: Insurance coverage active, monitoring triggers
+4. **MATURED**: Coverage period ended, awaiting settlement
+5. **SETTLED**: Claims processed, payouts distributed
+6. **CANCELED**: Emergency cancellation, full refunds
 
 #### Timing Windows
 - **Sales Window**: Typically 3-7 days for deposits
@@ -332,7 +331,7 @@ uint256 maxPremium = registry.getMaxPremiumBps();
 
 #### Round Lifecycle
 ```
-ANNOUNCED → OPEN → MATCHED → ACTIVE → MATURED → SETTLED/CANCELED
+ANNOUNCED → OPEN → ACTIVE → MATURED → SETTLED/CANCELED
 ```
 - ProductCatalog owns the lifecycle state
 - TranchePoolCore handles economics

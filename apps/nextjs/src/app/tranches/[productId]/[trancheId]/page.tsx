@@ -180,7 +180,7 @@ export default function TrancheDetailPage() {
 
             setRounds(validRounds);
 
-            // Find the most recent OPEN or MATCHED round from valid rounds
+            // Find the most recent OPEN round from valid rounds
             const activeRound = validRounds.find(
               (r: ProductCatalog.RoundStructOutput) => r.state === 1n || r.state === 2n,
             );

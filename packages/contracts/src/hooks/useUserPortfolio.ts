@@ -57,7 +57,6 @@ export type UserPosition = UserInsurancePosition | UserLiquidityPosition;
 const ROUND_STATES = [
   "ANNOUNCED",
   "OPEN",
-  "MATCHED",
   "ACTIVE",
   "MATURED",
   "SETTLED",

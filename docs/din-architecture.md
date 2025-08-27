@@ -43,25 +43,6 @@ DIN (Dinyk) is a fully decentralized Web3 insurance platform on the Kaia blockch
 
 ## 🏛️ Smart Contract Architecture
 
-### Deployed Contracts (Kaia Testnet - Active)
-
-All contracts are deployed and verified on Kaia Kairos testnet (Chain ID: 1001).
-
-| Contract               | Address                                      | Purpose                            |
-| ---------------------- | -------------------------------------------- | ---------------------------------- |
-| **DinRegistry**        | `0xCD2B28186b257869B3C2946ababB56683F4304C3` | Central registry and configuration |
-| **ProductCatalog**     | `0x145E2f2e2B9C6Bdd22D8cE21504f6d5fca0Cc72D` | Products, tranches, and rounds     |
-| **InsuranceToken**     | `0x3bEDE5f043E8D0597F9F0b60eCfc52B134d8E934` | ERC721 NFT positions               |
-| **TranchePoolFactory** | `0x3810066EfEAc98F18cF6A1E62FF3f089CC30Fb01` | Pool deployment                    |
-| **SettlementEngine**   | `0x1d3975e61A50e9dd0e4995F837F051A94F36fdd8` | Claims processing                  |
-| **OracleRouter**       | `0x5F54ce2BFE2A63472a9462FFe2Cf89Da59b29D72` | Oracle aggregation                 |
-| **OraklPriceFeed**     | `0xFa2f0063BAC2e5BA304f50eC54b6EA07aCC534fF` | Primary oracle                     |
-| **DinoOracle**         | `0x6317f2f9271d484548871915DDDff95aD4c45aC3` | Fallback oracle                    |
-| **DinUSDT**            | `0x8C034f0DBA8664DA4242Cb4CF7fCD7e0a3aa5c90` | Test USDT (6 decimals)             |
-| **DinToken**           | `0x7126Dbd15e6888AeDd606A7242C998DBED7530Fd` | Governance token                   |
-| **FeeTreasury**        | `0xb96D484cB71A5d5C3C3AB1Ac18dF587cC6AC6914` | Fee collection                     |
-| **YieldRouter**        | `0xC5dB540bca54FAce539AF2d2a7c5ac717795fb11` | Yield generation strategies        |
-
 ### Contract Interaction Flow
 
 ```
@@ -121,9 +102,9 @@ All contracts are deployed and verified on Kaia Kairos testnet (Chain ID: 1001).
 ### Round Lifecycle States
 
 ```
-ANNOUNCED → OPEN → MATCHED → ACTIVE → MATURED → SETTLED/CANCELED
-    ↓        ↓        ↓         ↓        ↓          ↓
-  Created  Sales   Matching  Coverage  Expired  Payout/Refund
+ANNOUNCED → OPEN → ACTIVE → MATURED → SETTLED/CANCELED
+    ↓        ↓       ↓        ↓        ↓          ↓
+  Created  Sales  Coverage  Expired  Payout/Refund
 ```
 
 ---

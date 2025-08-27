@@ -35,7 +35,6 @@ export interface InsuranceTranche {
   roundState?:
     | "ANNOUNCED"
     | "OPEN"
-    | "MATCHED"
     | "ACTIVE"
     | "MATURED"
     | "SETTLED"
@@ -93,7 +92,6 @@ export interface UserPosition {
   roundState?:
     | "ANNOUNCED"
     | "OPEN"
-    | "MATCHED"
     | "ACTIVE"
     | "MATURED"
     | "SETTLED"
@@ -125,14 +123,7 @@ export interface Round {
   trancheId: number;
   salesStartTime: number;
   salesEndTime: number;
-  state:
-    | "ANNOUNCED"
-    | "OPEN"
-    | "MATCHED"
-    | "ACTIVE"
-    | "MATURED"
-    | "SETTLED"
-    | "CANCELED";
+  state: "ANNOUNCED" | "OPEN" | "ACTIVE" | "MATURED" | "SETTLED" | "CANCELED";
   totalBuyerPurchases: string; // Total amount buyers want
   totalSellerCollateral: string; // Total seller collateral
   matchedAmount: string; // Final matched amount

@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { ethers } from "ethers";
 import { toast } from "sonner";
 
-import { KAIA_RPC_ENDPOINTS } from "../config/constants";
+import { ACTIVE_NETWORK, KAIA_RPC_ENDPOINTS } from "../config/constants";
 import { useWeb3 } from "../providers/Web3Provider";
 import { TranchePoolCore__factory } from "../types/generated";
 import { useContracts } from "./useContracts";
@@ -50,10 +50,10 @@ export function useBuyerOperations() {
     }
     // Otherwise, create a read-only provider
     return new ethers.JsonRpcProvider(KAIA_RPC_ENDPOINTS[0], {
-      chainId: 1001,
-      name: "Kaia Kairos",
+      chainId: ACTIVE_NETWORK.chainId,
+      name: ACTIVE_NETWORK.name,
     });
-  }, [signer]);
+  }, [signer, account]);
 
   // Calculate premium for a coverage amount
   const calculatePremium = useCallback(
@@ -114,7 +114,6 @@ export function useBuyerOperations() {
           const stateNames = [
             "ANNOUNCED",
             "OPEN",
-            "MATCHED",
             "ACTIVE",
             "MATURED",
             "SETTLED",
@@ -156,6 +155,7 @@ export function useBuyerOperations() {
         }
 
         console.log("Purchase details:", {
+          account: account,
           coverage: ethers.formatUnits(calculation.coverageAmount, 6),
           premium: ethers.formatUnits(calculation.premiumAmount, 6),
           total: ethers.formatUnits(calculation.totalCost, 6),
@@ -179,8 +179,11 @@ export function useBuyerOperations() {
         // Approve USDT if needed
         setIsPreparing(true);
         const currentAllowance = await usdt.allowance(account, poolAddress);
-        if (currentAllowance < calculation.totalCost) {
-          console.log("Approving USDT...");
+        const approveAmount = BigInt(calculation.totalCost);
+        const coverageAmount = BigInt(calculation.coverageAmount);
+
+        if (currentAllowance < approveAmount) {
+          console.log("Approving USDT... %s", poolAddress);
 
           // Reset to zero first if needed (for tokens like USDT that require it)
           if (currentAllowance > 0n) {
@@ -190,9 +193,11 @@ export function useBuyerOperations() {
 
           const approveTx = await usdt
             .connect(signer)
-            .approve(poolAddress, calculation.totalCost);
+            .approve(poolAddress, approveAmount);
           await approveTx.wait();
-          toast.success("USDT approved");
+          toast.success(`USDT approved ${approveAmount}`);
+
+          console.log("Approved USDT:", approveAmount);
         }
         setIsPreparing(false);
 
@@ -206,16 +211,16 @@ export function useBuyerOperations() {
         console.log("Placing buyer order with:", {
           poolAddress,
           roundId: params.roundId,
-          coverageAmount: ethers.formatUnits(calculation.coverageAmount, 6),
+          coverageAmount,
           totalCost: ethers.formatUnits(calculation.totalCost, 6),
           premium: ethers.formatUnits(calculation.premiumAmount, 6),
           account,
-          allowance: ethers.formatUnits(currentAllowance, 6),
+          currentAllowance,
+          approveAmount,
         });
 
         // Check user's USDT balance
         const userBalance = await usdt.balanceOf(account);
-        console.log("User USDT balance:", ethers.formatUnits(userBalance, 6));
 
         if (userBalance < calculation.totalCost) {
           throw new Error(
@@ -228,7 +233,7 @@ export function useBuyerOperations() {
           params.roundId,
           calculation.coverageAmount,
           {
-            gasLimit: 500000n, // Manual gas limit
+            gasLimit: 1_000_000n, // Manual gas limit
           },
         );
 

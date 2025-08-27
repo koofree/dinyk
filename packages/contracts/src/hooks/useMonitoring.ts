@@ -326,7 +326,6 @@ export function useMonitoring() {
             const stateNames = [
               "ANNOUNCED",
               "OPEN",
-              "MATCHED",
               "ACTIVE",
               "MATURED",
               "SETTLED",

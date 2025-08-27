@@ -60,11 +60,10 @@ export enum TriggerType {
 export enum RoundState {
   ANNOUNCED = 0,
   OPEN = 1,
-  MATCHED = 2,
-  ACTIVE = 3,
-  MATURED = 4,
-  SETTLED = 5,
-  CANCELED = 6,
+  ACTIVE = 2,
+  MATURED = 3,
+  SETTLED = 4,
+  CANCELED = 5,
 }
 
 // Product types

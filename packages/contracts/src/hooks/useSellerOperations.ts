@@ -181,7 +181,6 @@ export function useSellerOperations() {
           const stateNames = [
             "ANNOUNCED",
             "OPEN",
-            "MATCHED",
             "ACTIVE",
             "MATURED",
             "SETTLED",
