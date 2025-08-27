@@ -25,7 +25,7 @@ export const Footer = () => {
 
       {/* Footer Logo */}
       <Image
-        src="/images/bi-symbol.svg"
+        src="/images/BI-symbol.svg"
         alt="DIN Logo"
         className="mx-auto h-12 w-auto"
         width={48}
