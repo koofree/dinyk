@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import type {
-    ProductMetadata
+  ProductMetadata
 } from "@dinsure/contracts";
 import {
-    ACTIVE_NETWORK,
-    ORACLE_ROUTE_ID_TO_TYPE,
-    useContracts,
-    useProductManagement,
-    useWeb3
+  ACTIVE_NETWORK,
+  ORACLE_ROUTE_ID_TO_TYPE,
+  useContracts,
+  useProductManagement,
+  useWeb3
 } from "@dinsure/contracts";
 
 // Using any types to avoid TypeScript conflicts
@@ -116,7 +116,7 @@ export default function InsurancePage() {
                 isExpired: false,
                 availableCapacity: BigInt(0),
                 utilizationRate: 0,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                 
                 pairType: ORACLE_ROUTE_ID_TO_TYPE[tranche.oracleRouteId as unknown as keyof typeof ORACLE_ROUTE_ID_TO_TYPE] as unknown as 'BTC-USDT' | 'ETH-USDT' | 'KAIA-USDT',
               } as Tranche;
             } catch (err) {
@@ -342,136 +342,6 @@ export default function InsurancePage() {
                 ));
               })()}
             </div>
-
-            {products.length === 0 && tranches.length > 0 && (
-              <div className="space-y-6">
-                <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-                  <p className="text-sm text-yellow-700">
-                    ⚠️ Products not loading, showing {tranches.length} active
-                    tranches directly
-                  </p>
-                </div>
-                <div className="space-y-8">
-                  {(() => {
-                    // Group tranches by asset type
-                    const groupedTranches = tranches.reduce((acc, tranche) => {
-                      const asset = tranche.pairType?.split("-")[0] || "Unknown";
-                      if (!acc[asset]) {
-                        acc[asset] = [];
-                      }
-                      acc[asset].push(tranche);
-                      return acc;
-                    }, {} as Record<string, Tranche[]>);
-
-                    return Object.entries(groupedTranches).map(([asset, assetTranches], index) => (
-                      <div key={asset}>
-                        {/* Asset Section Header */}
-                        <div className="mb-6">
-                          <h3 className="text-2xl font-bold text-gray-900">{asset} Insurance Products</h3>
-                        </div>
-                        
-                        {/* Tranches Grid for this asset */}
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                          {assetTranches.map((tranche) => (
-                            <div
-                              key={tranche.trancheId}
-                              className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
-                            >
-                              <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                                Tranche #{tranche.trancheId}
-                              </h3>
-                              <div className="space-y-2 text-sm">
-                                <p className="text-gray-600">
-                                  Product ID:{" "}
-                                  <span className="font-medium text-gray-900">
-                                    {tranche.productId}
-                                  </span>
-                                </p>
-                                <p className="text-gray-600">
-                                  Premium Rate:{" "}
-                                  <span className="font-medium text-gray-900">
-                                    {tranche.premiumRateBps / 100}%
-                                  </span>
-                                </p>
-                                {tranche.triggerType !== undefined && (
-                                  <p className="text-gray-600">
-                                    Trigger:{" "}
-                                    <span className="font-medium text-gray-900">
-                                      {tranche.triggerType === 0
-                                        ? "Price Below"
-                                        : "Price Above"}
-                                    </span>
-                                  </p>
-                                )}
-                                <p className="text-gray-600">
-                                  Threshold:{" "}
-                                  <span className="font-medium text-gray-900">
-                                    ${tranche.threshold}
-                                  </span>
-                                </p>
-                                <p className="text-gray-600">
-                                  Pool:{" "}
-                                  <span className="text-sm text-[#00B1B8]">
-                                    {tranche.poolAddress ? tranche.poolAddress : "Not deployed"}
-                                  </span>
-                                </p>
-                              </div>
-                              <button
-                                onClick={() => {
-                                  // If we have productId, navigate to the tranche detail page
-                                  if (tranche.productId) {
-                                    // Assuming trancheId encodes the index, we can extract it
-                                    handleViewTrancheDetail(
-                                      tranche.productId,
-                                      tranche.trancheId % 10,
-                                    );
-                                  } else {
-                                    router.push(
-                                      `/tranches?trancheId=${tranche.trancheId}`,
-                                    );
-                                  }
-                                }}
-                                className="mt-4 rounded-xl bg-gradient-to-br from-[#86D99C] to-[#00B1B8] px-4 py-2 text-sm font-semibold text-white transition-all duration-300 hover:scale-95"
-                              >
-                                View Details
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                        
-                        {/* Divider between asset types (except for the last one) */}
-                        {index < Object.keys(groupedTranches).length - 1 && (
-                          <div className="mt-8 h-px w-full bg-gray-200"></div>
-                        )}
-                      </div>
-                    ));
-                  })()}
-                </div>
-              </div>
-            )}
-
-            {products.length === 0 && tranches.length === 0 && (
-              <div className="rounded-lg border border-gray-700 bg-gray-800 p-8 text-center">
-                <div className="mb-4 text-4xl text-yellow-400">📋</div>
-                <div className="mb-2 text-lg font-medium text-gray-300">
-                  No Insurance Products Available
-                </div>
-                <p className="mb-4 text-sm text-gray-400">
-                  There are currently no active insurance products on the smart
-                  contracts.
-                </p>
-                <div className="space-y-1 text-sm text-gray-500">
-                  <p>Contract: {ACTIVE_NETWORK.contracts.ProductCatalog}</p>
-                  <p>Network: Kaia Testnet (Chain ID: 1001)</p>
-                </div>
-                {productsError && (
-                  <div className="mt-4 rounded border border-red-600 bg-red-900/20 p-3 text-sm text-red-400">
-                    Error:{" "}
-                    {productsError ? productsError.message : "Failed to fetch products"}
-                  </div>
-                )}
-              </div>
-            )}
           </>
         )}
         </div>

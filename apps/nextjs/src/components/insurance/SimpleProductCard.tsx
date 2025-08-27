@@ -10,6 +10,17 @@ interface SimpleProductCardProps {
   onViewTranches: () => void;
 }
 
+/**
+ * This is a simple product card that displays the product name, product ID, and the number of tranches.
+ * It also displays the premium range and the tranches.
+ * 
+ * It is used in the *insurance* page to display the products.
+ * 
+ * @param product - The product to display
+ * @param tranches - The tranches of the product
+ * @param onViewTranches - The function to call when the user clicks the "View Tranches" button
+ * @returns A simple product card
+ */
 export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
   product,
   tranches,
@@ -28,6 +39,7 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
     premiumRates.length > 0 ? Math.max(...premiumRates) / 100 : 0;  
 
   // Display all product properties dynamically
+  
   const productName = `${product.asset} Protection`;
 
   return (
