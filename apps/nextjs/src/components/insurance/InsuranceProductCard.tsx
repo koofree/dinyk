@@ -81,7 +81,7 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
           />
         ) : (
           <Image
-            src="/images/kaia.svg"
+            src="/images/KAIA.svg"
             alt="Kaia"
             className="h-10 w-10"
             width={40}
