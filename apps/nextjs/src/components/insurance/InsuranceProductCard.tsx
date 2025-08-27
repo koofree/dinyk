@@ -25,7 +25,6 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
     setMounted(true);
   }, []);
 
-  // TODO: How to set the name of the asset?
   const assetName: "BTC" | "ETH" | "KAIA" = product.name.split("-")[0] as "BTC" | "ETH" | "KAIA";
 
   const formatTrigger = () => {

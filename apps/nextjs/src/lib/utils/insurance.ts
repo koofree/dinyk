@@ -28,13 +28,12 @@ export function getRoundStatusText(state: number): string {
   const states = [
     "Announced",
     "Open",
-    "Matched",
     "Active",
     "Matured",
     "Settled",
     "Canceled",
   ];
-  return states[state] || "Unknown";
+  return states[state] ?? "Unknown";
 }
 
 export function formatAddress(address: string): string {

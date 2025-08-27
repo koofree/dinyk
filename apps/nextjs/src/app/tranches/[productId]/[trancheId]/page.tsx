@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 "use client";
 
 import { BuyInsuranceForm } from "@/components/insurance/BuyInsuranceForm";
@@ -39,17 +41,6 @@ interface TrancheData {
   premiumBps: bigint;
   poolAddress: string;
 }
-
-interface RoundData {
-  id: bigint;
-  startTime: bigint;
-  endTime: bigint;
-  maturityTime: bigint;
-  state: number;
-  totalBuyerOrders: bigint;
-  totalSellerCollateral: bigint;
-  matchedAmount: bigint;
-}
 interface PoolInfo {
   totalAssets: bigint;
   totalShares: bigint;
@@ -79,7 +70,7 @@ export default function TrancheDetailPage() {
   const [poolInfo, setPoolInfo] = useState<PoolInfo | null>(null);
   const [navInfo, setNavInfo] = useState<NavInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedRound, setSelectedRound] = useState<RoundData | null>(null);
+  const [selectedRound, setSelectedRound] = useState<ProductCatalog.RoundStructOutput | null>(null);
 
   
 
@@ -134,7 +125,7 @@ export default function TrancheDetailPage() {
           trancheData?.premiumRateBps || trancheData?.premiumBps || 0,
         ),
         poolAddress: poolAddress,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         asset: ORACLE_ROUTE_ID_TO_TYPE[String(trancheData.oracleRouteId) as unknown as keyof typeof ORACLE_ROUTE_ID_TO_TYPE]?.split("-")[0],
       };
 
@@ -193,7 +184,7 @@ export default function TrancheDetailPage() {
 
             // Find the most recent OPEN or MATCHED round from valid rounds
             const activeRound = validRounds.find(
-              (r: ProductCatalog.RoundStructOutput) => r.state === 1n || r.state === 2n || r.state === 3n,
+              (r: ProductCatalog.RoundStructOutput) => r.state === 1n || r.state === 2n,
             );
 
             console.log("Rounds loaded:", {
@@ -212,10 +203,11 @@ export default function TrancheDetailPage() {
               console.log("Selected active round:", activeRound);
             } else if (validRounds.length > 0) {
               // If no active round, select the first valid round
-              setSelectedRound(validRounds[0]);
+              const lastRound = validRounds[validRounds.length - 1];
+              setSelectedRound(lastRound as unknown as ProductCatalog.RoundStructOutput);
               console.log(
                 "No active round, selected first valid round:",
-                validRounds[0],
+                lastRound,
               );
             }
           } catch (err) {
@@ -373,8 +365,8 @@ export default function TrancheDetailPage() {
             poolAddress={tranche.poolAddress}
             trancheId={tranche.trancheId}
             roundId={
-              selectedRound && selectedRound.state === 1
-                ? selectedRound.id
+              selectedRound && selectedRound.state === 1n
+                ? selectedRound.roundId
                 : undefined
             }
             onSuccess={() => loadData()}
