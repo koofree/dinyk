@@ -279,7 +279,7 @@ export default function TrancheDetailPage() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="w-full py-12 lg:py-24">
       {/* Header */}
       <div className="mb-16">
         <div className="mb-6">
@@ -300,7 +300,7 @@ export default function TrancheDetailPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="flex h-full flex-col justify-between p-4">
             <div className="mb-2 text-sm text-gray-600">Trigger Price</div>
@@ -645,7 +645,7 @@ export default function TrancheDetailPage() {
           <div className="mb-5 h-px w-full bg-gray-200"></div>
                     <Card>
             <CardContent className="p-6">
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Total Shares</p>
                 <p className="text-lg font-semibold">
