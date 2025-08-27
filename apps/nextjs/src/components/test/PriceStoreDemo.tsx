@@ -1,6 +1,6 @@
 "use client";
 
-import { usePriceStore, usePrice, usePriceValues } from "@dinsure/contracts";
+import { usePrice, usePriceStore, usePriceValues } from "@dinsure/contracts";
 
 export function PriceStoreDemo() {
   // Method 1: Get all prices with full data
@@ -24,9 +24,9 @@ export function PriceStoreDemo() {
             <p className="font-mono">
               ${btc.loading ? "Loading..." : btc.value.toLocaleString()}
             </p>
-            {btc.error && <p className="text-red-500 text-xs">{btc.error.message}</p>}
+            {btc.error && <p className="text-red-500 text-sm">{btc.error.message}</p>}
             {btc.lastUpdate && (
-              <p className="text-xs text-gray-400">
+              <p className="text-sm text-gray-400">
                 Updated: {new Date(btc.lastUpdate).toLocaleTimeString()}
               </p>
             )}
@@ -37,9 +37,9 @@ export function PriceStoreDemo() {
             <p className="font-mono">
               ${eth.loading ? "Loading..." : eth.value.toLocaleString()}
             </p>
-            {eth.error && <p className="text-red-500 text-xs">{eth.error.message}</p>}
+            {eth.error && <p className="text-red-500 text-sm">{eth.error.message}</p>}
             {eth.lastUpdate && (
-              <p className="text-xs text-gray-400">
+              <p className="text-sm text-gray-400">
                 Updated: {new Date(eth.lastUpdate).toLocaleTimeString()}
               </p>
             )}
@@ -50,9 +50,9 @@ export function PriceStoreDemo() {
             <p className="font-mono">
               ${kaia.loading ? "Loading..." : kaia.value.toFixed(4)}
             </p>
-            {kaia.error && <p className="text-red-500 text-xs">{kaia.error.message}</p>}
+            {kaia.error && <p className="text-red-500 text-sm">{kaia.error.message}</p>}
             {kaia.lastUpdate && (
-              <p className="text-xs text-gray-400">
+              <p className="text-sm text-gray-400">
                 Updated: {new Date(kaia.lastUpdate).toLocaleTimeString()}
               </p>
             )}

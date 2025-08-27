@@ -87,7 +87,7 @@ export const Navbar: React.FC = () => {
           {/* Right side */}
           <div className="hidden md:flex absolute right-0 items-center space-x-4">
             {isTestnet && (
-              <div className="rounded bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800">
+              <div className="rounded bg-yellow-100 px-2 py-1 text-sm font-medium text-yellow-800">
                 Testnet
               </div>
             )}

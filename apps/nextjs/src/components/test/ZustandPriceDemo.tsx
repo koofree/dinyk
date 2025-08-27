@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import { usePriceStore } from "@dinsure/contracts";
+import { useEffect } from "react";
 
 export function ZustandPriceDemo() {
   // Simple direct access to state
@@ -35,10 +35,10 @@ export function ZustandPriceDemo() {
           <p className="text-2xl font-mono">
             ${btc.value.toLocaleString()}
           </p>
-          {btc.loading && <p className="text-xs text-blue-400">Loading...</p>}
-          {btc.error && <p className="text-xs text-red-400">Error</p>}
-          {btc.lastUpdate && (
-            <p className="text-xs text-gray-500">
+                  {btc.loading && <p className="text-sm text-blue-400">Loading...</p>}
+        {btc.error && <p className="text-sm text-red-400">Error</p>}
+        {btc.lastUpdate && (
+          <p className="text-sm text-gray-500">
               {new Date(btc.lastUpdate).toLocaleTimeString()}
             </p>
           )}
@@ -49,10 +49,10 @@ export function ZustandPriceDemo() {
           <p className="text-2xl font-mono">
             ${eth.value.toLocaleString()}
           </p>
-          {eth.loading && <p className="text-xs text-blue-400">Loading...</p>}
-          {eth.error && <p className="text-xs text-red-400">Error</p>}
-          {eth.lastUpdate && (
-            <p className="text-xs text-gray-500">
+                  {eth.loading && <p className="text-sm text-blue-400">Loading...</p>}
+        {eth.error && <p className="text-sm text-red-400">Error</p>}
+        {eth.lastUpdate && (
+          <p className="text-sm text-gray-500">
               {new Date(eth.lastUpdate).toLocaleTimeString()}
             </p>
           )}
@@ -63,10 +63,10 @@ export function ZustandPriceDemo() {
           <p className="text-2xl font-mono">
             ${kaia.value.toFixed(4)}
           </p>
-          {kaia.loading && <p className="text-xs text-blue-400">Loading...</p>}
-          {kaia.error && <p className="text-xs text-red-400">Error</p>}
-          {kaia.lastUpdate && (
-            <p className="text-xs text-gray-500">
+                  {kaia.loading && <p className="text-sm text-blue-400">Loading...</p>}
+        {kaia.error && <p className="text-sm text-red-400">Error</p>}
+        {kaia.lastUpdate && (
+          <p className="text-sm text-gray-500">
               {new Date(kaia.lastUpdate).toLocaleTimeString()}
             </p>
           )}

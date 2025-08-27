@@ -58,13 +58,13 @@ export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
           <h3 className="text-xl font-bold text-white">
             {pool.asset} {pool.triggerType === "PRICE_BELOW" ? "-" : "+"}{pool.triggerRate.toFixed(2)}%
           </h3>
-          <p className="mt-1 text-xs text-gray-500">
+                      <p className="mt-1 text-sm text-gray-500">
             Tranche #{pool.id} • Product #{pool.productId}
           </p>
         </div>
         <div className="space-y-2 text-right">
           <span
-            className={`rounded px-2 py-1 text-xs ${RISK_COLORS[pool.riskLevel]} bg-gray-600`}
+                          className={`rounded px-2 py-1 text-sm ${RISK_COLORS[pool.riskLevel]} bg-gray-600`}
           >
             {pool.riskLevel}
           </span>
@@ -74,7 +74,7 @@ export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
             ] && (
               <div>
                 <span
-                  className={`rounded px-2 py-1 text-xs ${ROUND_STATE_BADGES[pool.roundState as keyof typeof ROUND_STATE_BADGES].color}`}
+                  className={`rounded px-2 py-1 text-sm ${ROUND_STATE_BADGES[pool.roundState as keyof typeof ROUND_STATE_BADGES].color}`}
                 >
                   {
                     ROUND_STATE_BADGES[
@@ -93,14 +93,14 @@ export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
           <div className="text-lg font-bold text-green-400">
             {pool.expectedPremium}%
           </div>
-          <div className="text-xs text-gray-500">{pool.premiumRateBps} bps</div>
+                      <div className="text-sm text-gray-500">{pool.premiumRateBps} bps</div>
         </div>
         <div>
           <div className="text-sm text-gray-400">NAV per Share</div>
           <div className="text-lg font-bold text-blue-400">
             {pool.navPerShare || "1.00"}
           </div>
-          <div className="text-xs text-gray-500">+{pool.stakingAPY}% APY</div>
+                      <div className="text-sm text-gray-500">+{pool.stakingAPY}% APY</div>
         </div>
       </div>
 
@@ -123,7 +123,7 @@ export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
           <div className="font-medium text-white">
             ${parseInt(pool.poolSize).toLocaleString()} USDT
           </div>
-          <div className="text-xs text-gray-500">
+                      <div className="text-sm text-gray-500">
             Total: ${parseInt(pool.totalLiquidity || "0").toLocaleString()}
           </div>
         </div>
@@ -135,7 +135,7 @@ export const LiquidityPoolCard: React.FC<LiquidityPoolCardProps> = ({
               : "No position"}
           </div>
           {hasUserShare && (
-            <div className="text-xs text-gray-500">
+            <div className="text-sm text-gray-500">
               Shares:{" "}
               {(
                 parseFloat(pool.userShare) / parseFloat(pool.navPerShare || "1")

@@ -16,7 +16,7 @@ export const Footer = () => {
             <p className="mb-2 text-sm font-medium text-gray-700">
               Connect your wallet to start using DIN insurance platform
             </p>
-            <p className="text-xs text-gray-600">
+            <p className="text-sm text-gray-600">
               Supports MetaMask, Kaikas, and other Web3 wallets
             </p>
           </div>

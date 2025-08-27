@@ -96,7 +96,7 @@ export const WalletButton: React.FC = () => {
           <div className="font-medium text-gray-700">
             {formatBalance(usdtBalance)} USDT
           </div>
-          <div className="text-xs text-gray-500">{formatAddress(account)}</div>
+                        <div className="text-sm text-gray-500">{formatAddress(account)}</div>
         </div>
         <button
           onClick={disconnectWallet}
@@ -242,7 +242,7 @@ export const WalletButton: React.FC = () => {
               </button>
             </div>
 
-            <div className="mt-4 text-center text-xs text-gray-500">
+            <div className="mt-4 text-center text-sm text-gray-500">
               By connecting, you agree to our Terms of Service
             </div>
           </div>

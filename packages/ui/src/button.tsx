@@ -1,7 +1,7 @@
 import type { VariantProps } from "class-variance-authority";
-import * as React from "react";
 import { cva } from "class-variance-authority";
 import { Slot } from "radix-ui";
+import * as React from "react";
 
 import { cn } from "@dinsure/ui";
 
@@ -22,7 +22,7 @@ export const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        sm: "h-8 rounded-md px-3 text-xs",
+        sm: "h-8 rounded-md px-3 text-sm",
         md: "h-9 px-4 py-2",
         lg: "h-10 rounded-md px-8",
         icon: "size-9",

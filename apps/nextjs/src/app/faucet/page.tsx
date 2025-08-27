@@ -11,12 +11,12 @@ import { Card } from "@dinsure/ui/card";
 import { Input } from "@dinsure/ui/input";
 import { Label } from "@dinsure/ui/label";
 import {
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Droplets,
-  Loader2,
-  XCircle
+    AlertCircle,
+    CheckCircle,
+    Clock,
+    Droplets,
+    Loader2,
+    XCircle
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -148,7 +148,9 @@ export default function FaucetPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <div className="min-h-screen">
+      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl">
       <div className="mb-8 text-center">
         <h1 className="text-4xl font-bold mb-2 flex items-center justify-center gap-2">
           <Droplets className="h-8 w-8 text-blue-500" />
@@ -190,7 +192,7 @@ export default function FaucetPage() {
                   placeholder="0x..."
                   className="font-mono text-sm"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Defaults to your connected wallet address. You can specify a different address if needed.
                 </p>
               </div>
@@ -271,19 +273,21 @@ export default function FaucetPage() {
               href={`${KAIA_TESTNET.blockExplorer}/address/${KAIA_TESTNET.contracts.TestFaucet}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-mono text-blue-500 hover:underline break-all"
+                              className="text-sm font-mono text-blue-500 hover:underline break-all"
             >
               {KAIA_TESTNET.contracts.TestFaucet}
             </a>
           </div>
 
-          <div className="text-xs text-muted-foreground space-y-1">
+                      <div className="text-sm text-muted-foreground space-y-1">
             <p>• Make sure you're connected to Kaia Kairos Testnet</p>
             <p>• The faucet has a 1-hour cooldown per address</p>
             <p>• These are test tokens with no real value</p>
           </div>
         </div>
       </Card>
+        </div>
+      </div>
     </div>
   );
 }

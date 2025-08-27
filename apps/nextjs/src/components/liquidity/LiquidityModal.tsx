@@ -1,19 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { useProvideLiquidity } from "@/hooks/useProvideLiquidity";
 import { ethers } from "ethers";
+import React, { useEffect, useState } from "react";
 
 import type {
-  Product,
-  Tranche} from "@dinsure/contracts";
+    Product,
+    Tranche
+} from "@dinsure/contracts";
 import {
-  formatCurrency,
-  formatPercentage,
-  formatTimeRemaining,
-  TriggerType,
-  useWeb3,
+    TriggerType,
+    useWeb3
 } from "@dinsure/contracts";
 
 interface LiquidityModalProps {
@@ -443,7 +441,7 @@ export const LiquidityModal: React.FC<LiquidityModalProps> = ({
                     href={`https://kairos.kaiascan.io/tx/${txHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="break-all text-xs text-blue-400 hover:text-blue-300"
+                    className="break-all text-sm text-blue-400 hover:text-blue-300"
                   >
                     {txHash}
                   </a>

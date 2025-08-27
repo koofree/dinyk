@@ -276,14 +276,8 @@ export default function TrancheDetailPage() {
   }
 
   return (
-    <div className="pb-10 pt-20 w-full" style={{ 
-      scrollbarGutter: 'stable',
-      width: '100%',
-      maxWidth: '100%',
-      overflowX: 'hidden',
-      position: 'relative',
-      boxSizing: 'border-box'
-    }}>
+    <div className="min-h-screen">
+      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-16">
         <div className="mb-6">
@@ -549,7 +543,7 @@ export default function TrancheDetailPage() {
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-900">View all rounds for this tranche</h3>
           </div>
-          <ScrollArea className="h-[400px] pr-4">
+          <ScrollArea className="h-fit">
             <div className="space-y-4">
               {rounds.length === 0 ? (
                 <div className="py-8 text-center text-muted-foreground">
@@ -697,6 +691,7 @@ export default function TrancheDetailPage() {
         </Card>
         </div>
       )}
+      </div>
     </div>
   );
 }

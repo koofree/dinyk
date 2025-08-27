@@ -1,9 +1,9 @@
 "use client";
 
-import type { RoundDetails, TrancheDetails } from "@/hooks/useTrancheData";
-import React, { useEffect, useState } from "react";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
-import { ethers, ethers as ethersLib } from "ethers";
+import type { TrancheDetails } from "@/hooks/useTrancheData";
+import { ethers } from "ethers";
+import React, { useEffect, useState } from "react";
 
 import { useBuyerOperations, useContracts, useWeb3 } from "@dinsure/contracts";
 
@@ -416,7 +416,7 @@ export const EnhancedPurchaseModal: React.FC<EnhancedPurchaseModalProps> = ({
                     href={`https://kairos.kaiascan.io/tx/${txHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="break-all text-xs text-blue-400 hover:text-blue-300"
+                    className="break-all text-sm text-blue-400 hover:text-blue-300"
                   >
                     {txHash}
                   </a>

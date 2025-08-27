@@ -223,8 +223,8 @@ export default function InsurancePage() {
   ]);
 
   return (
-    <div className="py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen">
+      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
         {/* Debug Info */}
                     <div className="mb-4 rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm text-gray-500">
           Debug: isInitialized={String(isInitialized)} | productsLoading=

@@ -112,8 +112,8 @@ export const ErrorAlert: React.FC<ErrorAlertProps> = ({
           <p className="text-sm font-medium">{error.userMessage}</p>
           {error.technicalDetails && (
             <details className="mt-2">
-              <summary className="cursor-pointer text-xs opacity-70">Technical details</summary>
-              <pre className="mt-1 text-xs opacity-60">{error.technicalDetails}</pre>
+                      <summary className="cursor-pointer text-sm opacity-70">Technical details</summary>
+        <pre className="mt-1 text-sm opacity-60">{error.technicalDetails}</pre>
             </details>
           )}
         </div>

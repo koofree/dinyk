@@ -129,13 +129,13 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
           <div className="mb-1 text-2xl font-bold text-gray-900">
             {product.buyerCount || 0}
           </div>
-          <div className="text-xs text-gray-600">Insurance Buyers</div>
+                        <div className="text-sm text-gray-600">Insurance Buyers</div>
         </div>
         <div className="rounded-lg bg-gray-50 p-3">
           <div className="mb-1 text-2xl font-bold text-gray-900">
             {product.providerCount || 0}
           </div>
-          <div className="text-xs text-gray-600">Liquidity Providers</div>
+                        <div className="text-sm text-gray-600">Liquidity Providers</div>
         </div>
       </div> */}
 

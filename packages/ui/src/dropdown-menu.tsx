@@ -1,12 +1,12 @@
 "use client";
 
-import * as React from "react";
 import {
-  CheckIcon,
-  ChevronRightIcon,
-  DotFilledIcon,
+    CheckIcon,
+    ChevronRightIcon,
+    DotFilledIcon,
 } from "@radix-ui/react-icons";
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
+import * as React from "react";
 
 import { cn } from "@dinsure/ui";
 
@@ -177,7 +177,7 @@ export function DropdownMenuShortcut({
 }: React.ComponentProps<"span">) {
   return (
     <span
-      className={cn("ml-auto text-xs tracking-widest opacity-60", className)}
+      className={cn("ml-auto text-sm tracking-widest opacity-60", className)}
       {...props}
     />
   );
