@@ -65,7 +65,7 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
       <div className="relative mb-4 flex h-20 w-full items-center justify-center overflow-hidden rounded-lg bg-gray-900 p-2">
         {assetName === "BTC" ? (
           <Image
-            src="/images/BTC.svg"
+            src="/images/icon/btc.svg"
             alt="BTC"
             className="h-10 w-10"
             width={40}
@@ -73,7 +73,7 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
           />
         ) : assetName === "ETH" ? (
           <Image
-            src="/images/ETH.svg"
+            src="/images/icon/eth.svg"
             alt="ETH"
             className="h-10 w-10"
             width={40}
@@ -81,7 +81,7 @@ export function InsuranceProductCard({ product }: InsuranceProductCardProps) {
           />
         ) : (
           <Image
-            src="/images/KAIA.svg"
+            src="/images/icon/kaia.svg"
             alt="Kaia"
             className="h-10 w-10"
             width={40}
