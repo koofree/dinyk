@@ -74,8 +74,9 @@ Create a `.env` file with:
 
 ```bash
 # Development Flags
-NEXT_PUBLIC_ENABLE_TESTNETS=true
-NEXT_PUBLIC_SHOW_DEBUG_INFO=true
+NODE_ENV=development
+NEXT_PUBLIC_NETWORK_ENV=testnet
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-
 ```
 
 ## Development
