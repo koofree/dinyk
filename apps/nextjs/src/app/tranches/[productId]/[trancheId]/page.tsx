@@ -13,21 +13,21 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import type {
-    ProductCatalog
+  ProductCatalog
 } from "@dinsure/contracts";
 import {
-    ORACLE_ROUTE_ID_TO_TYPE,
-    useContracts,
-    useProductManagement,
-    useSellerOperations,
-    useWeb3
+  ORACLE_ROUTE_ID_TO_TYPE,
+  useContracts,
+  useProductManagement,
+  useSellerOperations,
+  useWeb3
 } from "@dinsure/contracts";
 
 import type { ProductSpec } from "@dinsure/contracts/hooks";
 
 import {
-    Card,
-    CardContent
+  Card,
+  CardContent
 } from "@dinsure/ui/card";
 import { ScrollArea } from "@dinsure/ui/scroll-area";
 
@@ -37,6 +37,7 @@ interface TrancheData {
   trigger: bigint;
   premiumBps: bigint;
   poolAddress: string;
+  asset: string;
 }
 interface PoolInfo {
   totalAssets: bigint;
@@ -104,13 +105,12 @@ export default function TrancheDetailPage() {
       }
 
       // Get tranche data directly from contract
-      const trancheData = await productCatalog.getTranche(Number(trancheId));
+      const trancheData: ProductCatalog.TrancheSpecStructOutput = await productCatalog.getTranche(Number(trancheId));
       const poolAddress: string = await tranchePoolFactory.getTranchePool(Number(trancheId));
       
-      
-
+    
       // Handle the tranche data carefully - it might be null or have different field names
-      const trancheInfo = {
+      const trancheInfo: TrancheData = {
         productId: BigInt(trancheData.productId || productId),
         trancheId: Number(trancheId),
         trigger: BigInt(
@@ -123,8 +123,8 @@ export default function TrancheDetailPage() {
           trancheData?.premiumRateBps || trancheData?.premiumBps || 0,
         ),
         poolAddress: poolAddress,
-         
         asset: ORACLE_ROUTE_ID_TO_TYPE[String(trancheData.oracleRouteId) as unknown as keyof typeof ORACLE_ROUTE_ID_TO_TYPE]?.split("-")[0],
+        maxCoverage: trancheData.perAccountMax,
       };
 
       setTranche(trancheInfo);

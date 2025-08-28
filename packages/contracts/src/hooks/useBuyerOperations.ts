@@ -179,8 +179,9 @@ export function useBuyerOperations() {
         // Approve USDT if needed
         setIsPreparing(true);
         const currentAllowance = await usdt.allowance(account, poolAddress);
-        const approveAmount = BigInt(calculation.totalCost) * BigInt(1e6);
+
         const coverageAmount = BigInt(calculation.coverageAmount) * BigInt(1e6);
+        const approveAmount = BigInt(calculation.premiumAmount) * BigInt(1e6);
 
         if (currentAllowance < approveAmount) {
           console.log("Approving USDT... %s", poolAddress);

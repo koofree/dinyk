@@ -11,6 +11,15 @@ export function calculatePremium(
   return premium.toFixed(2);
 }
 
+export function calculateMaxCoverage(
+  usdtBalance: string,
+  premiumBps: bigint,
+): string {
+  if (!usdtBalance || parseFloat(usdtBalance) <= 0) return "0";
+  const maxCoverage = (parseFloat(usdtBalance) * 10000) / Number(premiumBps);
+  return maxCoverage.toFixed(2);
+}
+
 export function getRoundStatusColor(state: number): string {
   const colors = [
     "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 text-sm px-2 py-1 rounded-lg", // Announced

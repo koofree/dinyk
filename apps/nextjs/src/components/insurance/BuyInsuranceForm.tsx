@@ -1,7 +1,7 @@
 "use client";
 
-import { calculatePremium } from "@/lib/utils/insurance";
-import { formatUnits, parseUnits } from "ethers";
+import { calculateMaxCoverage, calculatePremium } from "@/lib/utils/insurance";
+import { parseUnits } from "ethers";
 import {
   AlertCircle,
   Calculator,
@@ -26,9 +26,13 @@ interface BuyInsuranceFormProps {
   trancheId: number;
   roundId: bigint;
   tranche: {
+    productId: bigint;
+    trancheId: number;
     trigger: bigint;
     premiumBps: bigint;
     poolAddress: string;
+    asset: string;
+    maxCoverage: bigint;
   };
   onSuccess?: () => void;
 }
@@ -71,9 +75,7 @@ export function BuyInsuranceForm({
   const premiumAmount = coverageAmount
     ? calculatePremium(coverageAmount, tranche.premiumBps)
     : "0";
-  const totalCost = coverageAmount
-    ? (parseFloat(coverageAmount) + parseFloat(premiumAmount)).toFixed(2)
-    : "0";
+  const totalCost = (parseFloat(premiumAmount)).toFixed(2);
 
   // Refresh USDT balance when component mounts or when connection changes
   useEffect(() => {
@@ -171,9 +173,8 @@ export function BuyInsuranceForm({
     setCoverageAmount(value[0]?.toString() ?? "0");
   };
 
-  const maxCoverage = usdtBalance
-    ? Math.min(Number(formatUnits(usdtBalance, 6)), 100000)
-    : 100000;
+  // maxCoverage is the maximum coverage amount such that the premium does not exceed usdtBalance
+  const maxCoverage = Math.min(Number(tranche.maxCoverage / BigInt(1e6)), Number(calculateMaxCoverage(usdtBalanceStr, tranche.premiumBps)));
 
   return (
     <div className="space-y-6 mobile:min-w-[620px]">
@@ -206,6 +207,7 @@ export function BuyInsuranceForm({
               type="number"
               placeholder="Enter coverage amount"
               value={coverageAmount}
+              max={maxCoverage}
               onChange={(e) => setCoverageAmount(e.target.value)}
               disabled={loading || !isConnected}
               className="flex h-9 w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 text-white"
@@ -221,7 +223,7 @@ export function BuyInsuranceForm({
             />
             <p className="text-sm text-gray-400">
               {isConnected
-                ? `Available: $${usdtBalance ? Number(formatUnits(usdtBalance, 6)).toLocaleString() : "0"} USDT`
+                ? `Available: $${maxCoverage} USDT`
                 : "Connect wallet to view balance"}
             </p>
             {usdtBalance === 0n && isConnected && (
@@ -251,7 +253,7 @@ export function BuyInsuranceForm({
             </div>
             <div className="border-t border-gray-600 pt-3">
               <div className="flex items-center justify-between">
-                <span className="font-medium text-white">Total Cost:</span>
+                <span className="font-medium text-white">Amount Due</span>
                 <span className="text-lg font-bold text-white">
                   ${parseFloat(totalCost).toLocaleString()} USDT
                 </span>
