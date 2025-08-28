@@ -616,7 +616,7 @@ function TrancheContent() {
                 className={`mb-4 flex items-center ${asset === "KAIA" ? "gap-4" : "gap-2"}`}
               >
                 <img
-                  src={`/images/icon/${asset.toLowerCase()}.svg`}
+                  src={`/images/icons/${asset.toLowerCase()}.svg`}
                   alt={asset}
                   className={`${asset === "KAIA" ? "h-6 w-6" : "h-10 w-10"}`}
                   style={{ filter: "brightness(0) invert(0.2)" }}
@@ -682,7 +682,7 @@ function TrancheContent() {
                 >
                 <h3 className="mb-4 flex items-center gap-2 text-[20px] font-bold text-white">
                   <img
-                    src={`/images/icon/${tranche.asset.toLowerCase()}.svg`}
+                    src={`/images/icons/${tranche.asset.toLowerCase()}.svg`}
                     alt={tranche.asset}
                     className={`${tranche.asset === "KAIA" ? "h-6 w-6" : "h-8 w-8"}`}
                     style={{ filter: "brightness(0) invert(1)" }}
