@@ -66,6 +66,7 @@
   },
   "globalEnv": [
     "NEXT_PUBLIC_NETWORK_ENV",
+    "NEXT_PUBLIC_GA_MEASUREMENT_ID",
     "PORT",
     "DEBUG"
   ],

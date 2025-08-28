@@ -12,14 +12,13 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 import {
-  INSURANCE_PRODUCTS,
   ORACLE_ROUTE_ID_TO_TYPE,
   useContractFactory,
   useContracts,
   usePriceStore,
   useProductManagement,
   useUserPortfolio,
-  useWeb3,
+  useWeb3
 } from "@dinsure/contracts";
 import { useNames } from "~/hooks/useNames";
 
@@ -31,14 +30,6 @@ interface Product {
   createdAt: number;
   updatedAt: number;
   tranches: Tranche[];
-  metadata?: {
-    name: string;
-    description: string;
-    category: string;
-    tags: string[];
-    riskLevel: string;
-    underlyingAsset: string;
-  };
 }
 
 interface Tranche {
@@ -240,11 +231,6 @@ function TrancheContent() {
                 },
               );
 
-              // Find matching config for metadata
-              const configProduct = INSURANCE_PRODUCTS.find(
-                (p) => p.productId === productId,
-              );
-
               // Get tranches belonging to this product
               const productTranches = allTranches.filter(
                 t => t.productId === productId
@@ -258,16 +244,6 @@ function TrancheContent() {
                 createdAt: Number(productInfo.createdAt ?? Date.now() / 1000),
                 updatedAt: Number(productInfo.updatedAt ?? Date.now() / 1000),
                 tranches: productTranches,
-                metadata: {
-                  name: configProduct?.name ?? `Product ${productId}`,
-                  description:
-                    configProduct?.description ??
-                    `Insurance Product ${productId}`,
-                  category: "Price Protection",
-                  tags: [configProduct?.asset ?? "BTC"],
-                  riskLevel: "MEDIUM" as "LOW" | "MEDIUM" | "HIGH",
-                  underlyingAsset: configProduct?.asset ?? "BTC",
-                },
               };
 
               productMap.set(productId, product);
@@ -275,11 +251,6 @@ function TrancheContent() {
           } catch {
             console.log(
               `[Tranche Page] Could not fetch product ${productId}, creating placeholder`,
-            );
-            
-            // Create placeholder product for orphaned tranches
-            const configProduct = INSURANCE_PRODUCTS.find(
-              (p) => p.productId === productId,
             );
             
             const productTranches = allTranches.filter(
@@ -293,16 +264,6 @@ function TrancheContent() {
               createdAt: Date.now() / 1000,
               updatedAt: Date.now() / 1000,
               tranches: productTranches,
-              metadata: {
-                name: configProduct?.name ?? `Product ${productId}`,
-                description:
-                  configProduct?.description ??
-                  `Insurance Product ${productId}`,
-                category: "Price Protection",
-                tags: [configProduct?.asset ?? "BTC"],
-                riskLevel: "MEDIUM" as "LOW" | "MEDIUM" | "HIGH",
-                underlyingAsset: configProduct?.asset ?? "BTC",
-              },
             };
 
             productMap.set(productId, product);
