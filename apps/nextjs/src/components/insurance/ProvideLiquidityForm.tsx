@@ -39,9 +39,8 @@ export function ProvideLiquidityForm({
     getPoolAccounting,
     getShareBalance,
   } = useSellerOperations();
-  const contracts = useContracts();
   
-  const { isInitialized } = contracts;
+  const { isInitialized, productCatalog, tranchePoolFactory, usdt } = useContracts();
 
   // Debug Web3 context
   useEffect(() => {
@@ -66,6 +65,7 @@ export function ProvideLiquidityForm({
   const [navInfo, setNavInfo] = useState<{
     totalAssets: bigint;
     sharePrice: bigint;
+    premiumRateBps: bigint;
   } | null>(null);
 
   // Debug button state
@@ -94,14 +94,16 @@ export function ProvideLiquidityForm({
     }
 
     const loadUserData = async () => {
-      if (isConnected && account && isInitialized) {
+      if (isConnected && account && isInitialized && productCatalog) {
         try {
           // Get pool accounting data
+          const trancheSpec = await productCatalog.getTranche(trancheId);
           const poolAccounting = await getPoolAccounting(trancheId);
           if (poolAccounting) {
             setNavInfo({
               totalAssets: poolAccounting.totalAssets ?? 0n,
               sharePrice: poolAccounting.navPerShare ?? 0n,
+              premiumRateBps: trancheSpec.premiumRateBps ?? 0n,
             });
           } else {
             // No pool or round exists, clear NAV info
@@ -128,6 +130,7 @@ export function ProvideLiquidityForm({
     getPoolAccounting,
     getShareBalance,
     refreshUSDTBalance,
+    productCatalog
   ]);
 
   const handleDeposit = async () => {
@@ -160,9 +163,9 @@ export function ProvideLiquidityForm({
         roundId: Number(roundId),
         amount,
         isInitialized,
-        hasProductCatalog: !!contracts.productCatalog,
-        hasTranchePoolFactory: !!contracts.tranchePoolFactory,
-        hasUsdt: !!contracts.usdt,
+        hasProductCatalog: !!productCatalog,
+        hasTranchePoolFactory: !!tranchePoolFactory,
+        hasUsdt: !!usdt,
         hasSigner: !!signer,
         account,
       });
@@ -253,22 +256,24 @@ export function ProvideLiquidityForm({
             </p>
             {userShares > 0n && (
               <p className="text-sm text-gray-400">
-                {Number(formatUnits(userShares, 18)).toFixed(4)} shares
+                {((Number(formatUnits(userShares, 18)) *
+                      Number(navInfo?.sharePrice ?? 0n)) /
+                    1e6).toFixed(2)} shares
               </p>
             )}
           </div>
           <div className="rounded-lg border border-gray-600 p-3">
             <div className="mb-1 flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-green-500" />
-              <span className="text-sm font-medium text-white">Share Price</span>
+              <span className="text-sm font-medium text-white">Expected Premium</span>
             </div>
             <p className="text-lg font-bold text-white">
               $
-              {navInfo
-                ? (Number(navInfo.sharePrice) / 1e18).toFixed(4)
-                : "1.0000"}
+              {((Number(formatUnits(userShares, 18)) *
+                      Number(navInfo?.sharePrice ?? 0n)) /
+                    1e6) * (Number(navInfo?.premiumRateBps ?? 0n) / 10000)}
             </p>
-            <p className="text-sm text-gray-400">Per share value</p>
+            <p className="text-sm text-gray-400">{Number(navInfo?.premiumRateBps ?? 0n) / 100}%</p>
           </div>
         </div>
 
@@ -324,10 +329,11 @@ export function ProvideLiquidityForm({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-400">
-                  Estimated shares:
+                  Estimated Premium:
                 </span>
                 <span className="font-medium text-green-400">
-                  {estimatedShares} shares
+                  {amount && navInfo?.sharePrice && navInfo?.premiumRateBps ? (((Number(formatUnits(amount, 18)) *
+                      Number(navInfo?.sharePrice ?? 0n))) * (Number(navInfo?.premiumRateBps ?? 0n) / 10000)).toFixed(2) : "0.00"} USDT
                 </span>
               </div>
             </div>
