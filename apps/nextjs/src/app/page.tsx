@@ -9,7 +9,8 @@ import {
   ACTIVE_NETWORK,
   ORACLE_ROUTE_ID_TO_TYPE,
   useContracts,
-  useProductManagement
+  useProductManagement,
+  useWeb3
 } from "@dinsure/contracts";
 
 import { useLanguage } from "~/context/LanguageProvider";
@@ -27,7 +28,9 @@ export interface InsuranceProduct {
 }
 
 export default function HomePage() {
-  const { isInitialized, productCatalog } = useContracts();
+  const { provider } = useWeb3();
+  const { isInitialized, productCatalog } = useContracts(provider);
+  
   const { getProducts, getActiveTranches } = useProductManagement();
 
   const [insuranceProducts, setInsuranceProducts] = useState<

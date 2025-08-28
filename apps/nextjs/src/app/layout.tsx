@@ -78,7 +78,6 @@ export default function RootLayout(props: { children: React.ReactNode }) {
               <Footer />
             </div>
             <Toaster />
-            
           </LanguageProvider>
         </AppProviders>
       </body>

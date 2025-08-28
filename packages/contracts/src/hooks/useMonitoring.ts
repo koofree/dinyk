@@ -63,9 +63,10 @@ export interface SystemMetrics {
 }
 
 export function useMonitoring() {
+  const { provider } = useWeb3();
   const { productCatalog, tranchePoolFactory, oracleRouter, usdt } =
     useContracts();
-  const { provider } = useWeb3();
+
   const [isLoading, setIsLoading] = useState(false);
   const [marketPrices, setMarketPrices] = useState<Record<string, number>>({});
 

@@ -37,6 +37,7 @@ export function useSellerOperations() {
   const { signer, account, provider } = useWeb3();
   const { productCatalog, tranchePoolFactory, usdt, isInitialized } =
     useContracts();
+
   const [isLoading, setIsLoading] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
 

@@ -36,7 +36,7 @@ declare global {
 // Context type
 export interface Web3ContextType {
   // State
-  provider: KaiaWeb3Provider | undefined;
+  provider: KaiaWeb3Provider | null;
   signer: ethers.JsonRpcSigner | null;
   account: string | null;
   chainId: number | null;
@@ -64,7 +64,7 @@ const Web3Context = createContext<Web3ContextType | undefined>(undefined);
 export const Web3Provider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [provider, setProvider] = useState<KaiaWeb3Provider>();
+  const [provider, setProvider] = useState<KaiaWeb3Provider | null>(null);
   const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
   const [account, setAccount] = useState<string | null>(null);
   const [chainId, setChainId] = useState<number | null>(ACTIVE_NETWORK.chainId);
@@ -84,9 +84,20 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
     );
   }
 
-  // Initialize from session storage
+  // Initialize public provider and session storage
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    // Always initialize public provider for read-only operations
+    const initPublicProvider = async () => {
+      try {
+        const provider = await createJsonRpcProviderWithFallback();
+        setProvider(provider as unknown as KaiaWeb3Provider);
+      } catch (err) {
+        console.error("Failed to initialize public provider:", err);
+      }
+    };
+    void initPublicProvider();
 
     const storedAccount = sessionStorage.getItem(STORAGE_KEYS.ACCOUNT);
     const storedConnected = sessionStorage.getItem(STORAGE_KEYS.CONNECTED);
@@ -95,7 +106,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
     );
 
     if (storedAccount && storedConnected === "true" && window.ethereum) {
-      reconnectWallet(storedProviderType as ProviderType);
+      void reconnectWallet(storedProviderType as ProviderType);
     }
   }, []);
 
@@ -110,8 +121,8 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
       } else if (accounts[0] && accounts[0] !== account) {
         setAccount(accounts[0]);
         sessionStorage.setItem(STORAGE_KEYS.ACCOUNT, accounts[0]);
-        refreshBalance();
-        refreshUSDTBalance();
+        void refreshBalance();
+        void refreshUSDTBalance();
       }
     };
 
@@ -129,8 +140,8 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
         if (detectedProvider) {
           const newProvider = new KaiaWeb3Provider(detectedProvider);
           setProvider(newProvider);
-          updateBalance(newProvider, account);
-          updateUSDTBalance(newProvider, account);
+          void updateBalance(newProvider, account);
+          void updateUSDTBalance(newProvider, account);
         }
       } else if (newChainId !== ACTIVE_NETWORK.chainId) {
         setError(new Error(`Please switch to ${ACTIVE_NETWORK.name} network`));
@@ -357,7 +368,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
   };
 
   const disconnectWallet = () => {
-    setProvider(undefined);
+    setProvider(null);
     setSigner(null);
     setAccount(null);
     setChainId(null);
@@ -385,11 +396,10 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
   };
 
   const getBalance = async (): Promise<string> => {
-    if (typeof account !== "string") return "0";
+    if (typeof account !== "string" || !provider) return "0";
     // Always use reliable RPC endpoints for balance queries
     try {
-      const reliableProvider = await createJsonRpcProviderWithFallback();
-      const balance = await reliableProvider.getBalance(account);
+      const balance = await provider.getBalance(account);
       return ethers.formatEther(balance);
     } catch (err) {
       console.error("Failed to get balance from reliable RPC endpoints:", err);
@@ -412,15 +422,12 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({
   const getUSDTBalance = async (): Promise<string> => {
     if (typeof account !== "string") return "0";
     try {
-      const reliableProvider = await createJsonRpcProviderWithFallback();
       const usdtContract = DinUSDT__factory.connect(
         ACTIVE_NETWORK.contracts.DinUSDT,
-        reliableProvider,
+        provider,
       );
-      const balanceOf = usdtContract.balanceOf as (
-        address: string,
-      ) => Promise<bigint>;
-      const balance = await balanceOf(account);
+      const balance = await usdtContract.balanceOf(account);
+      setUsdtBalance(ethers.formatUnits(balance, 6));
       return ethers.formatUnits(balance, 6);
     } catch (err) {
       console.error("Failed to get USDT balance:", err);

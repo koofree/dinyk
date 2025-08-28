@@ -29,9 +29,10 @@ export interface SettlementStatus {
 }
 
 export function useSettlement() {
-  const { signer, account } = useWeb3();
+  const { signer } = useWeb3();
   const { productCatalog, tranchePoolFactory, settlementEngine, oracleRouter } =
     useContracts();
+
   const [isLoading, setIsLoading] = useState(false);
 
   // Check if a round can be settled

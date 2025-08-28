@@ -9,7 +9,7 @@ import { getRoundStatusColor, getRoundStatusText } from "@/lib/utils/insurance";
 import { formatUnits } from "ethers";
 import { motion } from "framer-motion";
 import { AlertCircle, Loader2, XCircle } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import type {
@@ -53,14 +53,14 @@ interface NavInfo {
 
 export default function TrancheDetailPage() {
   const params = useParams();
-  const router = useRouter();
+  
   const productId = params.productId as string;
   const trancheId = params.trancheId as string;
 
-  const { isConnected } = useWeb3();
+  const { isConnected, provider } = useWeb3();
   const { getProducts } = useProductManagement();
   const { getPoolAccounting } = useSellerOperations();
-  const { productCatalog, tranchePoolFactory, isInitialized } = useContracts();
+  const { productCatalog, tranchePoolFactory, isInitialized } = useContracts(provider);
 
   const [product, setProduct] = useState<ProductSpec | null>(null);
   const [tranche, setTranche] = useState<TrancheData | null>(null);

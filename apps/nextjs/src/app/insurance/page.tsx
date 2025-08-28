@@ -49,10 +49,9 @@ export interface Tranche {
 
 export default function InsurancePage() {
   const { isConnected } = useWeb3();
-  const { isInitialized } = useContracts();
-  
+  const { isInitialized, productCatalog } = useContracts();
   const { getProducts, getActiveTranches } = useProductManagement();
-  const { productCatalog } = useContracts();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [tranches, setTranches] = useState<Tranche[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
@@ -63,11 +62,10 @@ export default function InsurancePage() {
   useEffect(() => {
     const fetchData = async () => {
       if (!isInitialized) {
-        console.log("Waiting for initialization:", {
-          isInitialized,
-          productCatalog: !!productCatalog,
-        });
+        console.log("Waiting for initialization:");
         return;
+      } else {
+        console.log("Initialization complete");
       }
 
       setProductsLoading(true);

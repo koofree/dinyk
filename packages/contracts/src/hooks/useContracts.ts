@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { ethers } from "ethers";
 
 import type {
   DinRegistry,
@@ -9,10 +8,9 @@ import type {
   OracleRouter,
   ProductCatalog,
   SettlementEngine,
-  TranchePoolCore,
   TranchePoolFactory,
 } from "../types/generated";
-import { ACTIVE_NETWORK, KAIA_RPC_ENDPOINTS } from "../config/constants";
+import { ACTIVE_NETWORK } from "../config/constants";
 import { useWeb3 } from "../providers/Web3Provider";
 import {
   DinRegistry__factory,
@@ -22,7 +20,6 @@ import {
   OracleRouter__factory,
   ProductCatalog__factory,
   SettlementEngine__factory,
-  TranchePoolCore__factory,
   TranchePoolFactory__factory,
 } from "../types/generated";
 
@@ -41,7 +38,8 @@ export interface ContractsState {
 }
 
 export function useContracts(): ContractsState {
-  const { provider, signer } = useWeb3();
+  const { provider } = useWeb3();
+
   const [contracts, setContracts] = useState<ContractsState>({
     productCatalog: null,
     tranchePoolFactory: null,
@@ -57,203 +55,81 @@ export function useContracts(): ContractsState {
 
   useEffect(() => {
     if (!provider) {
-      if (typeof window !== "undefined" && process.env.DEBUG) {
-        console.log(
-          "[useContracts] No provider available, creating read-only provider",
-        );
-      }
-
-      // Create a read-only provider for contract calls when no wallet is connected
-      console.log(
-        "[useContracts] Creating read-only provider with RPC:",
-        KAIA_RPC_ENDPOINTS[0],
-      );
-      const readOnlyProvider = new ethers.JsonRpcProvider(
-        KAIA_RPC_ENDPOINTS[0],
-        {
-          chainId: ACTIVE_NETWORK.chainId,
-          name: ACTIVE_NETWORK.name,
-        },
-      );
-
-      const initializeReadOnlyContracts = () => {
-        try {
-          if (typeof window !== "undefined" && process.env.DEBUG) {
-            console.log("[useContracts] Initializing read-only contracts...");
-          }
-
-          // Initialize all contracts with read-only provider
-          const productCatalog = ProductCatalog__factory.connect(
-            ACTIVE_NETWORK.contracts.ProductCatalog,
-            readOnlyProvider,
-          );
-
-          const tranchePoolFactory = TranchePoolFactory__factory.connect(
-            ACTIVE_NETWORK.contracts.TranchePoolFactory,
-            readOnlyProvider,
-          );
-
-          const insuranceToken = InsuranceToken__factory.connect(
-            ACTIVE_NETWORK.contracts.InsuranceToken,
-            readOnlyProvider,
-          );
-
-          const settlementEngine = SettlementEngine__factory.connect(
-            ACTIVE_NETWORK.contracts.SettlementEngine,
-            readOnlyProvider,
-          );
-
-          const oracleRouter = OracleRouter__factory.connect(
-            ACTIVE_NETWORK.contracts.OracleRouter,
-            readOnlyProvider,
-          );
-
-          const usdt = DinUSDT__factory.connect(
-            ACTIVE_NETWORK.contracts.DinUSDT,
-            readOnlyProvider,
-          );
-
-          const registry = DinRegistry__factory.connect(
-            ACTIVE_NETWORK.contracts.DinRegistry,
-            readOnlyProvider,
-          );
-
-          const feeTreasury = FeeTreasury__factory.connect(
-            ACTIVE_NETWORK.contracts.FeeTreasury,
-            readOnlyProvider,
-          );
-
-          setContracts({
-            productCatalog,
-            tranchePoolFactory,
-            insuranceToken,
-            settlementEngine,
-            oracleRouter,
-            usdt,
-            registry,
-            feeTreasury,
-            isInitialized: true,
-            error: null,
-          });
-        } catch (error) {
-          console.error("Error initializing read-only contracts:", error);
-          setContracts((prev) => ({
-            ...prev,
-            isInitialized: false,
-            error: error as Error,
-          }));
-        }
-      };
-
-      initializeReadOnlyContracts();
+      console.log("[useContracts] No provider found");
       return;
     }
 
-    const initializeContracts = () => {
-      try {
-        if (typeof window !== "undefined" && process.env.DEBUG) {
-          console.log("[useContracts] Initializing contracts...");
-        }
-
-        // Use signer if available, otherwise use provider
-        const signerOrProvider = signer ?? provider;
-
-        // Initialize all contracts
-        const productCatalog = ProductCatalog__factory.connect(
-          ACTIVE_NETWORK.contracts.ProductCatalog,
-          signerOrProvider,
-        );
-
-        const tranchePoolFactory = TranchePoolFactory__factory.connect(
-          ACTIVE_NETWORK.contracts.TranchePoolFactory,
-          signerOrProvider,
-        );
-
-        const insuranceToken = InsuranceToken__factory.connect(
-          ACTIVE_NETWORK.contracts.InsuranceToken,
-          signerOrProvider,
-        );
-
-        const settlementEngine = SettlementEngine__factory.connect(
-          ACTIVE_NETWORK.contracts.SettlementEngine,
-          signerOrProvider,
-        );
-
-        const oracleRouter = OracleRouter__factory.connect(
-          ACTIVE_NETWORK.contracts.OracleRouter,
-          signerOrProvider,
-        );
-
-        const usdt = DinUSDT__factory.connect(
-          ACTIVE_NETWORK.contracts.DinUSDT,
-          signerOrProvider,
-        );
-
-        const registry = DinRegistry__factory.connect(
-          ACTIVE_NETWORK.contracts.DinRegistry,
-          signerOrProvider,
-        );
-
-        const feeTreasury = FeeTreasury__factory.connect(
-          ACTIVE_NETWORK.contracts.FeeTreasury,
-          signerOrProvider,
-        );
-
-        setContracts({
-          productCatalog,
-          tranchePoolFactory,
-          insuranceToken,
-          settlementEngine,
-          oracleRouter,
-          usdt,
-          registry,
-          feeTreasury,
-          isInitialized: true,
-          error: null,
-        });
-      } catch (error) {
-        console.error("Error initializing contracts:", error);
-        setContracts((prev) => ({
-          ...prev,
-          isInitialized: false,
-          error: error as Error,
-        }));
+    try {
+      if (typeof window !== "undefined" && process.env.DEBUG) {
+        console.log("[useContracts] Initializing contracts...");
       }
-    };
 
-    initializeContracts();
-  }, [provider, signer]);
+      // Initialize all contracts
+      const productCatalog = ProductCatalog__factory.connect(
+        ACTIVE_NETWORK.contracts.ProductCatalog,
+        provider,
+      );
+
+      const tranchePoolFactory = TranchePoolFactory__factory.connect(
+        ACTIVE_NETWORK.contracts.TranchePoolFactory,
+        provider,
+      );
+
+      const insuranceToken = InsuranceToken__factory.connect(
+        ACTIVE_NETWORK.contracts.InsuranceToken,
+        provider,
+      );
+
+      const settlementEngine = SettlementEngine__factory.connect(
+        ACTIVE_NETWORK.contracts.SettlementEngine,
+        provider,
+      );
+
+      const oracleRouter = OracleRouter__factory.connect(
+        ACTIVE_NETWORK.contracts.OracleRouter,
+        provider,
+      );
+
+      const usdt = DinUSDT__factory.connect(
+        ACTIVE_NETWORK.contracts.DinUSDT,
+        provider,
+      );
+
+      const registry = DinRegistry__factory.connect(
+        ACTIVE_NETWORK.contracts.DinRegistry,
+        provider,
+      );
+
+      const feeTreasury = FeeTreasury__factory.connect(
+        ACTIVE_NETWORK.contracts.FeeTreasury,
+        provider,
+      );
+
+      setContracts({
+        productCatalog,
+        tranchePoolFactory,
+        insuranceToken,
+        settlementEngine,
+        oracleRouter,
+        usdt,
+        registry,
+        feeTreasury,
+        isInitialized: true,
+        error: null,
+      });
+    } catch (error) {
+      console.error("Error initializing contracts:", error);
+      setContracts((prev) => ({
+        ...prev,
+        isInitialized: false,
+        error: error as Error,
+      }));
+    }
+  }, [provider]);
 
   // Add alias for backward compatibility
   return {
     ...contracts,
     usdtContract: contracts.usdt, // Alias for easier use
   };
-}
-
-// Helper hook to get a specific pool contract
-export function useTranchePool(poolAddress: string | null) {
-  const { provider, signer } = useWeb3();
-  const [pool, setPool] = useState<TranchePoolCore | null>(null);
-
-  useEffect(() => {
-    if (!poolAddress || !provider || poolAddress === ethers.ZeroAddress) {
-      setPool(null);
-      return;
-    }
-
-    try {
-      const signerOrProvider = signer ?? provider;
-      const poolContract = TranchePoolCore__factory.connect(
-        poolAddress,
-        signerOrProvider,
-      );
-      setPool(poolContract);
-    } catch (error) {
-      console.error("Error initializing pool contract:", error);
-      setPool(null);
-    }
-  }, [poolAddress, provider, signer]);
-
-  return pool;
 }

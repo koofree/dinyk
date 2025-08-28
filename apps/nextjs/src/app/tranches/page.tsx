@@ -153,14 +153,24 @@ function TrancheContent() {
           activeTrancheIds.map((id) => Number(id)),
         );
 
-        // Step 2: Fetch each tranche data
+        const tranchePromises = [];
         for (const trancheId of activeTrancheIds) {
           try {
-            const tranche = await productCatalog.getTranche(Number(trancheId));
+            const tranche = productCatalog.getTranche(Number(trancheId));
+            tranchePromises.push(tranche);
+          } catch (error) {
+            console.error(`[Tranche Page] Could not fetch tranche ${trancheId}:`, error);
+          }
+        } 
+        const tranches = await Promise.all(tranchePromises);
 
+        // Step 2: Fetch each tranche data
+        for (const tranche of tranches) {
+          const trancheId = tranche.trancheId;
+
+          try {
             // Validate tranche data
             if (
-              tranche &&
               Number(tranche.productId) > 0 &&
               Number(tranche.premiumRateBps) > 0
             ) {
@@ -215,19 +225,25 @@ function TrancheContent() {
           uniqueProductIds,
         );
 
-        // Step 4: Fetch product details for each unique product
+        const productInfoPromises = [];
         for (const productId of uniqueProductIds.filter(id => id > 1)) {
+          productInfoPromises.push(productCatalog.getProduct(productId));
+        }
+        const productInfos = await Promise.all(productInfoPromises);
+
+        // Step 4: Fetch product details for each unique product
+        for (const productInfo of productInfos) {
+          const productId = Number(productInfo.productId);
+
           try {
-            const productInfo = await productCatalog.getProduct(productId);
-            
             if (Number(productInfo.productId) !== 0) {
               console.log(
                 `[Tranche Page] Product ${productId} from contract:`,
                 {
                   exists: !!productInfo,
-                  productId: productInfo?.productId,
-                  active: productInfo?.active,
-                  metadataHash: productInfo?.metadataHash,
+                  productId: productInfo.productId,
+                  active: productInfo.active,
+                  metadataHash: productInfo.metadataHash,
                 },
               );
 
@@ -371,8 +387,6 @@ function TrancheContent() {
     // Calculate trigger price based on threshold
     const triggerLevel = tranche ? Number(tranche.threshold) : 5;
     const currentPrice = btcPrice && btcPrice < 1 ? 110000 : btcPrice;
-    console.log("currentPrice", currentPrice);
-    console.log("triggerLevel", triggerLevel);
     const triggerRate = ((currentPrice - triggerLevel) / currentPrice) * 100;
 
     // Get round state
@@ -577,7 +591,7 @@ function TrancheContent() {
                 className={`mb-4 flex items-center ${asset === "KAIA" ? "gap-4" : "gap-2"}`}
               >
                 <img
-                  src={`/images/icons/${asset.toLowerCase()}.svg`}
+                  src={`/images/icons/${asset === "KAIA" ? "kaia" : asset.toLowerCase()}.svg`}
                   alt={asset}
                   className={`${asset === "KAIA" ? "h-6 w-6" : "h-10 w-10"}`}
                   style={{ filter: "brightness(0) invert(0.2)" }}

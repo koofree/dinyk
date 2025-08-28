@@ -2,7 +2,6 @@ import { useCallback, useState } from "react";
 import { ethers } from "ethers";
 import { toast } from "sonner";
 
-import { ACTIVE_NETWORK, KAIA_RPC_ENDPOINTS } from "../config/constants";
 import { useWeb3 } from "../providers/Web3Provider";
 import { TranchePoolCore__factory } from "../types/generated";
 import { useContracts } from "./useContracts";
@@ -36,24 +35,12 @@ export interface PurchaseCalculation {
 }
 
 export function useBuyerOperations() {
-  const { signer, account } = useWeb3();
+  const { signer, account, provider } = useWeb3();
   const { productCatalog, tranchePoolFactory, usdt, insuranceToken } =
     useContracts();
+
   const [isLoading, setIsLoading] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
-
-  // Get a provider for read-only operations
-  const getProvider = useCallback(() => {
-    // If we have a signer, use its provider
-    if (signer?.provider) {
-      return signer.provider;
-    }
-    // Otherwise, create a read-only provider
-    return new ethers.JsonRpcProvider(KAIA_RPC_ENDPOINTS[0], {
-      chainId: ACTIVE_NETWORK.chainId,
-      name: ACTIVE_NETWORK.name,
-    });
-  }, [signer, account]);
 
   // Calculate premium for a coverage amount
   const calculatePremium = useCallback(
@@ -164,7 +151,7 @@ export function useBuyerOperations() {
 
         // Check USDT balance
         const balance = await usdt.balanceOf(account);
-        if (balance < calculation.totalCost) {
+        if (BigInt(balance) < calculation.totalCost) {
           throw new Error(
             `Insufficient USDT balance. Need ${ethers.formatUnits(calculation.totalCost, 6)} USDT`,
           );
@@ -296,10 +283,7 @@ export function useBuyerOperations() {
         const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
         if (poolAddress === ethers.ZeroAddress) return null;
 
-        const pool = TranchePoolCore__factory.connect(
-          poolAddress,
-          getProvider(),
-        );
+        const pool = TranchePoolCore__factory.connect(poolAddress, provider);
         const order = await pool.getBuyerOrder(roundId, buyerAddress);
 
         return {
@@ -313,7 +297,7 @@ export function useBuyerOperations() {
         return null;
       }
     },
-    [productCatalog, tranchePoolFactory, account, getProvider],
+    [productCatalog, tranchePoolFactory, account, provider],
   );
 
   // Get buyer's insurance tokens with details
@@ -404,10 +388,7 @@ export function useBuyerOperations() {
 
         // Get pool to check buyer order
         const poolAddress = await tranchePoolFactory.getTranchePool(trancheId);
-        const pool = TranchePoolCore__factory.connect(
-          poolAddress,
-          getProvider(),
-        );
+        const pool = TranchePoolCore__factory.connect(poolAddress, provider);
 
         const buyerOrder = await pool.getBuyerOrder(roundId, account);
 
@@ -433,7 +414,7 @@ export function useBuyerOperations() {
         };
       }
     },
-    [productCatalog, tranchePoolFactory, account, getProvider],
+    [productCatalog, tranchePoolFactory, account, provider],
   );
 
   // Claim insurance payout (if triggered and settled)
