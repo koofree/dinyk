@@ -245,7 +245,7 @@ export default function TrancheDetailPage() {
   ]);
 
   const getTriggerDisplay = (trigger: bigint) => {
-    return `$${Number(trigger / BigInt(1e18))}`;
+    return `$${(Number(trigger) / 1e18).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   };
 
   const getPremiumDisplay = (premiumBps: bigint) => {

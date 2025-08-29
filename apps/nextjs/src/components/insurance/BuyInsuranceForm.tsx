@@ -268,7 +268,7 @@ export function BuyInsuranceForm({
                 <span className="text-sm font-medium text-white">Trigger Price</span>
               </div>
               <p className="text-lg font-bold text-red-500">
-                ${tranche.trigger / BigInt(1e18)}
+                {(Number(tranche.trigger) / 1e18).toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
             </div>
             <div className="rounded-lg border border-gray-600 p-3">

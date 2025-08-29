@@ -96,8 +96,8 @@ export function useBuyerOperations() {
         const roundState = Number(roundInfo.state);
 
         // Validate round state
-        if (roundState !== 1) {
-          // Not OPEN
+        if (roundState !== 1 && roundState !== 2) {
+          // Not OPEN or ACTIVE
           const stateNames = [
             "ANNOUNCED",
             "OPEN",
